@@ -1,2 +1,2 @@
 1、此项目由深圳市万墨信息科技有限公司开发，如果有任何疑问请联系开发团队。
-2、node_modules需要解压到当前目录
+2、node_modules 无法上传请自行安装node 并根据package.json文件中的dependencies 自行安装对应组件
