@@ -1,6 +1,6 @@
 <template>
-   <div style="flex-grow: 1;">
-	 <el-tabs v-model="editableTabsValue" type="card" tab-position="bottom" @tab-click="pushShow"    @tab-remove="removeTab"  style="margin-left:32px;">
+   <div class="tab-head"  style="width:600px;">
+	 <el-tabs v-model="editableTabsValue" type="card" tab-position="bottom" @tab-click="pushShow"    @tab-remove="removeTab" >
     <el-tab-pane
       v-for="item in editableTabs"
       :key="item.name"
@@ -8,21 +8,40 @@
       :name="item.name"
       :closable="item.closable"
     >
+	<template #label> 
+		<span>{{item.title}}</span>
+		<el-dropdown trigger="click" class="closeTab">
+		        <span >
+		         <el-icon><arrow-down /></el-icon>
+		        </span>
+		        <template #dropdown>
+		          <el-dropdown-menu>
+		            <el-dropdown-item @click="closeOther()">关闭其他页签</el-dropdown-item>
+		            <el-dropdown-item @click="closeRight()">关闭右边</el-dropdown-item>
+		            <el-dropdown-item @click="closeLeft()">关闭左边</el-dropdown-item>
+		          </el-dropdown-menu>
+		        </template>
+		      </el-dropdown>
+	</template>
     </el-tab-pane>
   </el-tabs>
   </div>
 </template>
 <script>
 import { useRoute,useRouter } from 'vue-router'
-import { defineComponent,ref,reactive,watch,onMounted } from 'vue'
+import { defineComponent,ref,reactive,watch,onMounted,inject } from 'vue'
+	import {ArrowDown,} from '@element-plus/icons-vue'
 export default defineComponent({
+	components:{ArrowDown},
      setup(){
          let editableTabsValue =ref('/home')
          let editableTabs =ref([
              {
                  title: '首页',
                  name: '/home',
-                 closable:false
+				 path: '/home',
+                 closable:false,
+				 meta:{ keepAlive: true }
              },
          ])
          let route = useRoute()
@@ -30,27 +49,103 @@ export default defineComponent({
          router.afterEach((to,from)=>{
              //如果to.path该页签存在于当前数组中---就执行激活当前页签---否则就新增加页签
              let newarr =[]
+			 let oldname=editableTabsValue.value;
              editableTabs.value.forEach((item)=>{
                  newarr.push(item.name)
              })
+			 let replace=false;
+			 if(route.query.replace){
+			 	  replace=route.query.replace;
+			 }
             if(newarr.indexOf(to.path)>-1){
                 editableTabsValue.value =to.path
             }else{
                 addTab()
             }
+			if(replace&&oldname!="/home"){
+				 removeTab(oldname);
+			}
          })
+		 onMounted(()=>{
+			 if(route.query.title){
+				 addTab()
+			 }
+		 })
+		 
+		 function closeOther(){
+			 closeRight();
+			 closeLeft();
+		 }
+		 function closeRight(){
+			 let tabs = editableTabs.value
+			 let activeName = editableTabsValue.value
+			 let activeIndex=0;
+			     tabs.forEach((tab, index)=>{
+			         if (tab.name === activeName) {
+			              activeIndex=index;
+			         }
+			     });
+			  if(activeIndex+1<tabs.length){
+				  editableTabs.value =tabs.slice(0,activeIndex+1);
+			  }
+			  
+		 }
+		 function closeLeft(){
+			 let tabs = editableTabs.value
+			 let activeName = editableTabsValue.value
+			 let activeIndex=0;
+			     tabs.forEach((tab, index)=>{
+			         if (tab.name === activeName) {
+			              activeIndex=index;
+			         }
+			     });
+			  if(activeIndex>1){
+				   let mytabs=[tabs[0]];
+				   tabs.slice(activeIndex,tabs.length).forEach((item)=>{
+					   mytabs.push(item);
+				   })
+			 	   editableTabs.value =mytabs; 
+			  }
+		 }
          function pushShow(target) {
-             router.push({
-                 path:target.props.name,
-             })
+			 showTab(target.props.name)
          }
+		 
+		 const emitter = inject("emitter"); // Inject `emitter`
+		 emitter.on("removeTab", (value) => { // 监听事件
+		    removeTab(editableTabsValue.value);
+		 });
+		 function showTab(activeName){
+			 let tabs = editableTabs.value;
+			 let query=null;
+			 if(tabs){
+				 query=tabs[0];
+			 }
+			 tabs.forEach((tab, index)=>{
+			     if (tab.name === activeName) {
+			          query=tab;
+			     }
+			 });
+			 let meta=query.meta;
+			 query.meta="";
+			 router.push({
+						 //删除自己时路由切换到隔壁
+						'path':query.path,
+						'query':query,
+						'meta':meta,
+					 })
+		 }
          function addTab(){
-             editableTabs.value.push({
-                 title:route.query.title,
-                 name:route.query.path,
-                 closable:true
-             })
-             editableTabsValue.value = route.query.path
+			 let tab=route.query;
+			 if(route.query.path=="/home"){
+				 return;
+			 }
+			 tab.title=route.query.title;
+			 tab.name=route.query.path;
+			 tab.closable=true;
+			 tab.meta=route.meta;
+             editableTabs.value.push(tab)
+             editableTabsValue.value = route.query.path;
          }
          function removeTab(targetName){
              let tabs = editableTabs.value
@@ -63,41 +158,64 @@ export default defineComponent({
                              activeName = nextTab.name
                          }
                      }
-                 })
-                 router.push({
-                     //删除自己时路由切换到隔壁
-                    path:activeName,
-                 })
+                 });
+				 showTab(activeName);
              }
 
              editableTabsValue.value = activeName
              editableTabs.value =tabs.filter((tab) => tab.name !== targetName)
-
-
          }
          return{
              pushShow,
              removeTab,
              editableTabsValue,
-             editableTabs
+             editableTabs,
+			 closeOther,closeLeft,closeRight
          }
      },
 })
 </script>
- <style>
- .el-tabs__item.is-active{
+ <style >
+ .tab-head{
+	 flex-grow: 1
+ }
+  .tab-head .el-tabs{
+	 --el-tabs-header-height: inherit;
+ }
+ .tab-head .el-tabs__item.is-active{
 	 background:var(--el-bg-color);
 	 border-bottom: 1px solid var(--el-bg-color)!important;
  }
-   .el-tabs--bottom .el-tabs__header.is-bottom{
-	   margin-top: 22px!important;
+  .tab-head .el-tabs--bottom .el-tabs__header.is-bottom{
+	   margin-top:4px!important;
    }
-     .el-tabs__item{
+ .tab-head .el-tabs__item{
 	border-bottom: 1px solid #fff!important;
-	height:32px !important;
-	line-height:32px !important;
+	height:28px !important;
+	line-height:28px !important;
+	font-size: 12px;
    }
-   .el-tabs--card>.el-tabs__header{
+ .tab-head .el-tabs--card>.el-tabs__header{
      border-bottom: 0px  !important;
+   }
+ .tab-head .el-tabs__item{
+	   display: flex;
+	   align-items: center;
+   }
+   .tab-head  .el-tabs__nav{
+	     display: flex;
+   } 
+   .closeTab{
+	   opacity: 0;
+	  width:0;
+	   height:0;
+	   
+   }
+ .el-tabs__item:hover .closeTab{
+   	   opacity:1;
+   	   width:14px;
+   	   height:14px;
+	   margin-left:8px;
+	   color: #FF6700;
    }
 </style>

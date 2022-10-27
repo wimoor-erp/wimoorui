@@ -9,7 +9,7 @@
           <div class='data-group'>
              <div>
              <div style='font-size:12px;color:#666'>本地库存趋势</div>
-             <div class='pag-data-num' >91981 <up-small  theme="outline" size="20" fill="var(--el-color-success)" :strokeWidth="3"/></div>
+             <div class='pag-data-num' >0<up-small  theme="outline" size="20" fill="var(--el-color-success)" :strokeWidth="3"/></div>
              </div>
               
           </div>
@@ -20,7 +20,7 @@
           <div class='data-group'>
              <div>
              <div style='font-size:12px;color:#666'>FBA库存趋势</div>
-             <div class='pag-data-num' >19860
+             <div class='pag-data-num' >0
                 <down-small  theme="outline" size="20" fill="var(--el-color-danger)" :strokeWidth="3"/>
              </div>
              </div>
@@ -69,7 +69,7 @@ export default {
     {
       
 symbol: 'none' ,
-      data: [820, 1932, 2301, 3934, 2290, 1330,2820, 3932, 2901, 1934, 1290, 1330,],
+      data: [0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0,],
       type: 'line',
       smooth: true
     }
@@ -100,7 +100,7 @@ symbol: 'none' ,
     {
       
 symbol: 'none' ,
-      data: [820, 1132, 1301, 2134, 2990, 3330,3820, 3932, 4901, 5934, 6290, 6330,],
+      data: [0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0,],
       type: 'line',
       smooth: true
     }

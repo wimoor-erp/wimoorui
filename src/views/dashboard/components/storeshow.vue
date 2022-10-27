@@ -2,7 +2,7 @@
   <el-col :span="6">
     <el-space style="margin-bottom:8px;">
       <span class="pag-title">店铺绩效</span>
-      <span class="pag-small-Extra">更新时间2022-02-20</span>
+      <span class="pag-small-Extra">更新时间 {{refreshtime}}</span>
     </el-space>
     <div class="pag-radius-bor">
         <div class="st-list" :class='s.state' v-for="s in storeData" :key="s.id">
@@ -16,21 +16,44 @@
   </el-col>
 </template>
 <script>
+	import { ref,reactive,onMounted,watch } from 'vue'
+	import summaryDataApi from '@/api/amazon/summary/summaryDataApi'
+	import {formatFloat} from '@/utils/index';
 export default {
   name: "storeshow",
   components: {},
-  setup() {
-    let storeData = [
-      { label: "订单缺陷率", data: "0.2%", subdata: "低于1%" },
-      { label: "退货不满意度", data: "0.3%", subdata: "低于10%" },
-      { label: "商品政策合规性", data: "1", subdata: "0" ,state:'danger'},
-      { label: "有效跟踪率", data: "0.1%", subdata: "高于95%" },
-	  { label: "迟发率", data: "0", subdata: "低于4%" },
-	  { label: "订单取消率", data: "0.5%", subdata: "低于1%" }
-    ];
+  props:["parameter"],
+  setup(prop,context){
+    let storeData = ref([
+      { label: "订单缺陷率", data: "0.0%", subdata: "低于0%" },
+      { label: "发票缺陷率", data: "0.0%", subdata: "低于0%" },
+      { label: "商品政策合规性", data: "0", subdata: "0" ,state:'danger'},
+      { label: "有效跟踪率", data: "0.0%", subdata: "高于0%" },
+	  { label: "迟发率", data: "0", subdata: "低于0%" },
+	  { label: "订单取消率", data: "0.0%", subdata: "低于0%" }
+    ]);
+	let refreshtime=ref("");
+	watch(prop.parameter,(val)=>{
+	 
+	        summaryDataApi.sumPerformance(prop.parameter).then((res)=>{
+				refreshtime.value=new Date(res.data.refreshTime).format("yyyy-MM-dd hh:mm:ss"); 
+				storeData.value[0].data=formatFloat(res.data.orderDefectRate*100)+"%";
+				storeData.value[0].subdata="低于"+formatFloat(res.data.orderDefectRateTargetValue*100)+"%";
+				storeData.value[1].data=formatFloat(res.data.invoiceDefectRate*100)+"%";
+				storeData.value[1].subdata="低于"+formatFloat(res.data.invoiceDefectRateTargetValue*100)+"%";
+				storeData.value[2].data=res.data.policyDefectsCount;
+				storeData.value[2].subdata=res.data.policyTargetValue;
+				storeData.value[3].data=formatFloat(res.data.validTrackingRate*100)+"%";
+				storeData.value[3].subdata="高于"+formatFloat(res.data.validTrackingRateTargetValue*100)+"%";
+				storeData.value[4].data=formatFloat(res.data.lateShipmentRate*100)+"%";
+				storeData.value[4].subdata="低于"+formatFloat(res.data.lateShipmentRateTargetValue*100)+"%";
+				storeData.value[5].data=formatFloat(res.data.cancelRate*100)+"%";
+				storeData.value[5].subdata="低于"+formatFloat(res.data.cancelRateTargetValue*100)+"%";
+			});
+	});
     //返回数据
     return {
-		storeData
+		storeData,refreshtime
 	};
   }
 };

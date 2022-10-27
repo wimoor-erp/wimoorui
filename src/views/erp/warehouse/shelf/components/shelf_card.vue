@@ -203,7 +203,7 @@ import shelfApi from '@/api/erp/warehouse/shelf';
 import { ElMessageBox,ElMessage } from 'element-plus';
 
 import myform from "@/hooks/erp/warehouse/form";
-import {fomatFloat,parseTime,deepCopy} from '@/utils/index';
+import {formatFloat,parseTime,deepCopy} from '@/utils/index';
 export default{
 	name:'shelfCard',
 	components: {ArrowDown,Plus,MoreFilled,PayCodeOne,DeleteOne,ArrowRight},
@@ -249,19 +249,19 @@ export default{
 			 emit("add-new",parentNode.data);
 		 }
 		 const capacityFormat=(value)=>{
-			return fomatFloat(parseFloat(value)/1000000) ;
+			return formatFloat(parseFloat(value)/1000000) ;
 		 }
 		 const sizePercent=(data)=>{
 			 let summary=data.summary;
 			 if(summary&&summary.size){
-		       return  '占用：'+fomatFloat(parseFloat(summary.size)/1000000)+'m³,容量：'+fomatFloat(parseFloat(data.capacity)/1000000)+"m³";
+		       return  '占用：'+formatFloat(parseFloat(summary.size)/1000000)+'m³,容量：'+formatFloat(parseFloat(data.capacity)/1000000)+"m³";
 			 }else{
 				 return  '没有占用空间或无法求出';
 			 }
 		 }
 		 const computePercent=(value)=>{
 			 if(value&&parentNode.data.capacity){
-				 return fomatFloat(parseFloat(value)/parseFloat(parentNode.data.capacity))+"%";
+				 return formatFloat(parseFloat(value)/parseFloat(parentNode.data.capacity))+"%";
 			 }else{
 				 return "0%";
 			 }
@@ -402,13 +402,13 @@ export default{
   .text-center{
 	  text-align: center;
   }
-  .el-card{margin-top:16px;height:202px}
+ .list-card  .el-card{margin-top:16px;height:202px}
   .addcard{
 	   display:flex;
 	   align-items: center;
 	   justify-content: center;
   }
-  .el-card .card-head{margin-bottom:16px;display: flex;}
+ .list-card .el-card .card-head{margin-bottom:16px;display: flex;}
   .card-head .r-icon{margin-left:auto;font-size:12px}
   .addcard .el-card__body{
 	  display:flex;

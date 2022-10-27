@@ -1,6 +1,6 @@
 <template>
     <div class="main-sty">
-        <div class="btn-header">
+        <div class="con-header">
         <el-row>
             <el-space >
                 <el-button @click="exportData">
@@ -43,8 +43,10 @@
                 </el-input>
             </el-space>
             <div class='rt-btn-group'>
-				<span class="font-base" style="margin-right:16px;"><span class="font-base-nine">入库数量总计:</span>{{totalamount}}</span>
-                <el-button   class='ic-btn' title='帮助文档'>
+				<el-space :size="16">
+				<span class="font-base"><span class="font-base-nine">入库数量总计:</span>{{totalamount}}</span>
+               </el-space>
+				<el-button   class='ic-btn' title='帮助文档'>
                     <help theme="outline" size="16" :strokeWidth="3"/>
                 </el-button>
             </div>
@@ -63,6 +65,7 @@
     import {Search,ArrowDown,} from '@element-plus/icons-vue'
 	import StorageDetailTable from "./components/storageDetail_table";
 	import storagedetailApi from '@/api/erp/purchase/receive/storagedetailApi';
+	import warehouseApi from '@/api/erp/warehouse/warehouseApi';
     export default{
         name: 'Index',
         components:{
@@ -126,7 +129,7 @@
 			getWarehouseData()
 			})
 			const getWarehouseData = function(){
-				storagedetailApi.getWarehouseList().then(function(res){
+				warehouseApi.getWarehouseList().then(function(res){
 					warehouseData.list = res.data
 				})
 			}
@@ -182,5 +185,4 @@
     }
 </script>
 <style>
-    .btn-header .el-row{margin-bottom:16px;}
 </style>

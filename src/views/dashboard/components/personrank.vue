@@ -2,18 +2,19 @@
   <el-col :span="6">
     <el-space style="margin-bottom:8px;">
       <span class="pag-title">销售业绩排名</span>
-      <span class="pag-small-Extra">2022-02-11 ~ 2022-02-17 </span>
+      <span class="pag-small-Extra">{{refreshtime}} </span>
     </el-space>
     <div class="pag-radius-bor " style='height:394px;'>
-      <el-table :data="tableData" border style="width: 100%;">
-        <el-table-column type="index" label="排名"  width="45" />
-        <el-table-column prop="person" label="负责人"  width="75"  show-overflow-tooltip/>
-        <el-table-column prop="sale" label="销量"  width="65" />
-		<el-table-column prop="amount" label="销售额" width='120'/>
+      <el-table :data="tableData.records" border style="width: 100%;">
+        <el-table-column type="index" label="排名"  width="50" />
+        <el-table-column prop="name" label="负责人"    show-overflow-tooltip/>
+        <el-table-column prop="quantity" label="销量"   />
 		<el-table-column prop="increase" label="环比涨幅" >
 			 <template #default="scope" >
 				  <span class='name'>{{scope.row.increase}}</span>
-                  <el-icon style='margin-left:4px;color:var(--el-color-danger)'><caret-bottom /></el-icon>
+				   
+                  <el-icon v-if="scope.row.isup" style='margin-left:4px;color:var(--el-color-success)'><caret-top /></el-icon>
+				  <el-icon v-else style='margin-left:4px;color:var(--el-color-danger)'><caret-bottom /></el-icon>
 			</template>
 		</el-table-column>
       </el-table>
@@ -21,25 +22,45 @@
   </el-col>
 </template>
 <script>
-import { ref } from 'vue'
-import {CaretBottom,} from '@element-plus/icons-vue'
+import {CaretBottom,CaretTop} from '@element-plus/icons-vue'
+import { ref,reactive,onMounted,watch } from 'vue'
+import summaryDataApi from '@/api/amazon/summary/summaryDataApi'
+import {formatFloat} from '@/utils/index';
 export default {
   name: "Personrank",
-  components: {CaretBottom},
+  components: {CaretBottom,CaretTop},
   setup() {
-    let tableData = [
-      { person: "张三", sale: "624356", amount: "￥68,152.26" , increase: "0.23%" },
-      { person: "李四", sale: "5987", amount: "￥68,152.26" , increase: "0.23%" },
-      { person: "王五", sale: "4987", amount: "￥68,152.26", increase:  "0.23%" },
-      { person: "赵六六六", sale: "3998", amount: "￥68,152.26" , increase: "0.23%" },
-      { person: "刘七", sale: "2996", amount: "￥68,152.26" , increase: "0.23%" },
-	  { person: "陈八", sale: "1997", amount: "￥68,152.26" , increase: "0.23%" },
-	  { person: "孙九", sale: "997", amount: "￥68,152.26" , increase: "0.23%" },
-	  { person: "钱十", sale: "997", amount: "￥68,152.26" , increase: "0.23%" },
-    ];
+	  let pagesize =8;
+	  let currentPage =1;
+	  let tableData =reactive({records:[]});
+	  let refreshtime=ref("");
+	  onMounted(() => {
+		    let param={"daytype":7,"pagesize":pagesize,"currentpage":currentPage};
+	  		summaryDataApi.querySales(param).then((res)=>{
+				if(res&&res.data&&res.data.records){
+					res.data.records.forEach((item)=>{
+						if(refreshtime.value==""){
+							refreshtime.value= new Date(item.createdate).format("yyyy-MM-dd hh:mm:ss"); 
+						}
+						if(parseFloat(item.orderprice)-parseFloat(item.oldorderprice)>0){
+					     	item.increase=formatFloat((parseFloat(item.orderprice)-parseFloat(item.oldorderprice))/parseFloat(item.oldorderprice)*100);
+							item.isup=true;
+						}else{
+							item.increase=formatFloat((parseFloat(item.oldorderprice)-parseFloat(item.orderprice))/parseFloat(item.oldorderprice)*100);
+							item.isup=false;
+						}
+					    
+					})
+					
+				}
+				tableData.records=res.data.records;
+			})
+	  		})
+	  
+    
     //返回数据
     return {
-      tableData
+      tableData,refreshtime
     };
   }
 };

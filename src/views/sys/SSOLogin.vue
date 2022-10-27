@@ -1,6 +1,6 @@
 <template>
     <div style="width: 100%;height: 100vh;background-color:darkslateblue;overflow: hidden;">
-                 自动登录
+                 SSO登录检查...
 
     </div>
 </template>
@@ -21,11 +21,22 @@ import {ElMessage} from "element-plus";
             }
         },
         methods:{
-            userLogin(){
+            async userLogin(){
                    var jsessionid = this.$route.query.jsessionid;
                    let path =sessionStorage.getItem("old_url_before_login");
 		            if(jsessionid){
-		                 sessionStorage.setItem("jsessionid",jsessionid);
+		                 localStorage.setItem("jsessionid",jsessionid);
+						 localStorage.setItem("logintype","sso");
+						 let authserver=  localStorage.getItem("authserver");
+						 if(!authserver){
+							 this.ssologinisrun().then((result)=>{
+								 if(result.data!="false"){
+								 	  localStorage.setItem("authserver",result.data);
+								 }
+							 }).catch(e=>{
+								  this.$router.push("/login");
+							 });
+						 }  
 		                 if(path){
 							if(path.indexOf("auth/getJSession")>0||path.indexOf("ssologin")>0||path=="/"){
 							    this.$router.push("/home"); 
@@ -37,8 +48,18 @@ import {ElMessage} from "element-plus";
 		                	 this.$router.push("/home"); 
 		                 }		             
 		            }else{
-		            	jsessionid=sessionStorage.getItem("jsessionid");
+		            	jsessionid=localStorage.getItem("jsessionid");
 		            	if(jsessionid){
+							let authserver=  localStorage.getItem("authserver");
+							if(!authserver){
+								 this.ssologinisrun().then((result)=>{
+									 if(result.data!="false"){
+										  localStorage.setItem("authserver",result.data);
+									 }
+								 }).catch(e=>{
+								  this.$router.push("/login");
+							    });
+							} 
 	                       if(path){
 								if(path.indexOf("auth/getJSession")>0||path.indexOf("ssologin")>0||path=="/"){
 									this.$router.push("/home"); 
@@ -49,14 +70,26 @@ import {ElMessage} from "element-plus";
 		            		   this.$router.push("/home");
 		            		}
 		            	}else{
-		            	  location="http://192.168.0.129:8087/auth/getJSession"; 
+							 this.ssologinisrun().then(result=>{
+								 if(result.data!="false"){
+								 	  localStorage.setItem("authserver",result.data);
+								 	  location=result.data+"/getJSession";
+								 }else{
+								 	 this.$router.push("/login");
+								 }
+							 }).catch(e=>{
+								  this.$router.push("/login");
+							 });
+							
 		            	}
 		            }
             
-            }
+            },
+			 ssologinisrun(){
+			       return request.post("/api/auth/ssologinisrun");
+			 }
         },
-        created() {
-			   
+        mounted() {
 			    this.userLogin();
 			  }
     }

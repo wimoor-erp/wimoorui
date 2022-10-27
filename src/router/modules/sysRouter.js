@@ -3,6 +3,7 @@ import Login from '@/views/sys/Login.vue'
 import Register from '@/views/sys/Register.vue'
 import SSOLogin from '@/views/sys/SSOLogin.vue'
 import OrderBlank from '@/views/erp/ship/orderblank/index.vue'
+import AuthResult from '@/views/amazon/storeAuth/authResult/index.vue'
 export default [
   {
 	 path: '/ssologin',
@@ -12,7 +13,7 @@ export default [
   {
     path: '/login',
     name: 'Login',
-    component:Login
+    component:Login  
   },
   {
     path: '/register',
@@ -23,5 +24,10 @@ export default [
     path: '/orderblank',
     name: 'OrderBlank',
     component:OrderBlank
+  },
+  {
+    path: '/authresult',
+    name: 'AuthResult',
+    component:AuthResult
   },
 ]

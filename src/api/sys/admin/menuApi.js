@@ -2,13 +2,13 @@ import request from "@/utils/request";
 import store from '@/store/index';
 import {sortByKey} from '@/utils/index';
 export const menuApi={
-	     getRoute:function(){
-	     			return request.get("/api/admin/api/v1/menus/route");
-	           },
-		 cleanUserCache:function(){
-			   			return request.get("/api/admin/api/v1/menus/cleanUserCache");
-		  },
-		  getMenuALL:function(callback){
+	    getRoute:function(){
+	     		return request.get("/api/admin/api/v1/menus/route");
+	    },
+		cleanUserCache:function(){
+			    return request.get("/api/admin/api/v1/menus/cleanUserCache");
+		},
+		getMenuALL:function(callback){
 			 	                 let response={};
 			 	                 let menuDataModel=[];
 			 	                 let submenulistModel=[];

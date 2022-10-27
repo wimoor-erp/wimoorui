@@ -19,18 +19,14 @@ const getShelfInfo=(data)=>{
 	return request.get('/erp/api/v1/warehouse/shelf/getShelfInfo',{params:data });
 }
 function getQRCode(id){
-	let jsessionid = sessionStorage.getItem("jsessionid");
-  return axios({url:'/erp/api/v1/warehouse/shelf/getQRCode/'+id,
+  return request({url:'/erp/api/v1/warehouse/shelf/getQRCode/'+id,
                 responseType:"blob",
-				headers:{"jsessionid":jsessionid},
 				method:'post'});
 }
 function getQRCodePdf(shelfid,parentshelfid){
-let jsessionid = sessionStorage.getItem("jsessionid");
-  return axios({url:'/erp/api/v1/warehouse/shelf/getQRCodePdf',
+  return request({url:'/erp/api/v1/warehouse/shelf/getQRCodePdf',
                 responseType:"blob",
 				params:{"shelfid":shelfid,"parentshelfid":parentshelfid},
-				headers:{"jsessionid":jsessionid},  
 				method:'get'});
 }
 export default{getWarehouseShelf ,saveWarehouseShelf,

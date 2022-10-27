@@ -1,18 +1,31 @@
 <template>
-    <div id="menubar">
-        <el-menu style="min-height: calc(100vh - 56px);"
-                :default-active="activeIndex"
-                class="el-menu-vertical"
-                :default-openeds="[1]">
-              <!--主菜单-->  
-            <el-menu-item  @mouseleave="laveMenu"   @mouseenter="changeMenu(item.id,index)" @click="changeDrawer(item)" v-for="(item,index) in menuData.list" :key="item.id" :index='index+""' >
-                <icon-park :type="item.iconName" theme="outline" size="20" :strokeWidth="3"/>
-                <span>{{item.name}}</span>
-            </el-menu-item>
-           
-        </el-menu>
+    <div id="menubar" >
+		 <el-scrollbar height="calc(100vh)" >
+			 <div class="aside-flex" style="height:calc(100vh)">
+			 <div>
+			 <div class="logo">
+			 <el-image 
+			   :src="require('@/assets/image/common/color-logo.png')"
+			 ></el-image>
+			 </div>
+		   <el-menu 
+		           :default-active="activeIndex"
+		           class="el-menu-vertical"
+		           :default-openeds="[1]">
+		         <!--主菜单-->  
+		       <el-menu-item  @mouseleave="laveMenu"   @mouseenter="changeMenu(item.id,index)" @click="changeDrawer(item)" v-for="(item,index) in menuData.list" :key="item.id" :index='index+""' >
+		           <icon-park :type="item.iconName" theme="outline" size="18" :strokeWidth="3"/>
+		           <span>{{item.name}}</span>
+		       </el-menu-item>
+		      
+		   </el-menu>
+		   </div>
+		   <div>  
+			<HeaderPlatform/>
+		   </div>
+		    </div>
+		  </el-scrollbar>
        <!--弹出层!-->
-	   
        <el-drawer v-model="drawer"  size="" direction="ltr" title="I am the title" :with-header="false" destroy-on-close='true'>
 		  <el-scrollbar height="calc(100vh - 80px)" >   
             <div v-show='submenu.isShow' v-for="submenu in submenus.list" :key="submenu.id">
@@ -38,15 +51,18 @@
 
 <script>
 import {IconPark} from '@icon-park/vue-next/es/all';
-import {Commodity,SalesReport,ShoppingBag,Home,Ship,Ad,Finance,HeadsetOne,Config,Workbench,Calculator} from '@icon-park/vue-next';
+import {Commodity,SalesReport,ShoppingBag,Home,Ship,Ad,Finance,HeadsetOne,Config,Workbench,Calculator,Cruise,HomeTwo} from '@icon-park/vue-next';
 import { defineComponent,ref,reactive,watch,onMounted } from 'vue'
 import {  useRoute } from 'vue-router'
 import {menuApi} from '@/api/sys/admin/menuApi';
 import {menuDataModel,submenulistModel,allMenuModel} from '@/model/sys/admin/menu';
+ import HeaderPlatform from "../Header/HeaderPlatform";
 import router from "@/router";
 export default defineComponent({
         name: "AsideMenu",
         components:{
+			Cruise, HeaderPlatform,
+			HomeTwo, 
             Commodity,
             SalesReport,
 			Calculator,
@@ -144,7 +160,7 @@ export default defineComponent({
 	  color:var(--el-text-color-primary);
 	  font-size:14px;
 	  padding:8px 16px;
-	  border-radius: 2px;
+	  border-radius: 4px;
 	  cursor: pointer;
 	  transition: background-color var(--el-transition-duration),color var(--el-transition-duration);
       display:flex;
@@ -154,6 +170,7 @@ export default defineComponent({
 	}
  .item .active{
          color:var(--el-color-primary);
+		  background-color: var(--el-color-primary-light-9);
 	}
 #menubar{
 width:64px;
@@ -161,6 +178,7 @@ background:var( --el-bg-color);
 }
 .el-menu{
     background-color: var(--el-bg-color);
+	border-right: 0;
 }
 .el-menu-item{
     flex-direction: column;
@@ -178,12 +196,79 @@ background:var( --el-bg-color);
 .el-menu-item:hover{
     background-color: var(--el-border-color-light);
 }
-.el-menu-vertical{
-    padding-top:16px;
+.el-menu-item .i-icon{
+    display:  none;
 }
+.el-menu-item {
+     height: 30px;
+ }
+@media(min-height:300px) {
+ .el-menu-item {
+      height: 24px;
+ 	  font-size:12px;
+  }
+ }
+@media(min-height:500px) {
+ .el-menu-item .i-icon{
+     display:inherit;
+ }
+ .el-menu-item {
+      height: 44px;
+	  font-size:12px;
+  }
+ }
+ @media(min-height:700px) {
+ .el-menu-item .i-icon{
+     display:inherit;
+ }
+ .el-menu-item {
+      height: 50px;
+	  font-size:12px;
+  }
+ }
+ @media(min-height:800px) {
+ .el-menu-item .i-icon{
+     display:inherit;
+ }
+ .el-menu-item {
+      height: 60px;
+	  font-size:14px;
+  }
+ }
+@media(min-height:900px) {
+.el-menu-item .i-icon{
+	display:inherit;
+}
+
+ .el-menu-item {
+      height:60px;
+	  font-size:14px;
+  }
+ }
+ .el-menu-vertical{
+      padding-top:16px;
+ }
 
 .el-menu-item.is-active{
      background-color: var(--el-border-color-light);
 }
 /*过渡动画*/
+
+.logo{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.logo .el-image{
+	height:28px;
+	width: 28px;
+	margin-top:16px;
+}
+.aside-flex {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	border-right: solid 1px #e6e6e6;
+}
+   
 </style>

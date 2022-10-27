@@ -356,12 +356,34 @@ export function removeClass(ele, cls) {
   }
 }
 
-export function fomatFloat(src,pos){   //四舍五入,保留2位小数    
-	if(pos==null){
-		pos=2;
-	}
-    return Math.round(src*Math.pow(10, pos))/Math.pow(10, pos);       
+export function formatFloat(src,pos){   //四舍五入,保留2位小数 
+   if(src==""||src==undefined){
+   	return "";
+   }else{
+		if(pos==null){
+			pos=2;
+		}
+		return Math.round(src*Math.pow(10, pos))/Math.pow(10, pos);      
+   }
 } 
+
+export function formatPercent(src){   //四舍五入,保留2位小数 再算出百分比  
+	if(src && src!=0){
+		src=src*100;
+		return Math.round(src*Math.pow(10, 2))/Math.pow(10, 2);  
+	}else{
+		return 0;
+	}
+} 
+
+export function formatInteger(src){
+	if(src==""||src==undefined){
+		return "--"
+	}else{
+		 return parseInt(src);    
+	}//取整数  
+}
+
 
 export function number(value){
 	return value.replace(/[^\d.]/g,'');
@@ -398,6 +420,7 @@ Date.prototype.format = function(fmt) {
 }     
 
 export function dateFormat(time){
+	if(!time)return "";
 	if (('' + time).length === 10) {
 	  time = parseInt(time) * 1000;
 	} else if(('' + time).indexOf("-")>0||('' + time).indexOf("/")>0){
@@ -405,6 +428,16 @@ export function dateFormat(time){
 	}
 	const d = new Date(time);
 	return d.format("yyyy-MM-dd");
+}
+
+export function dateTimesFormat(time){
+	if (('' + time).length === 10) {
+	  time = parseInt(time) * 1000;
+	} else if(('' + time).indexOf("-")>0||('' + time).indexOf("/")>0){
+	  return time;
+	}
+	const d = new Date(time);
+	return d.format("yyyy-MM-dd hh:mm:ss");
 }
  
 export  function deepCopy(obj){
@@ -429,3 +462,133 @@ export  function deepCopy(obj){
      }
      return target
  }
+ 
+export  function CheckInputFloat(value) { 
+	value=value+"";
+ 	if(value&& '' != value.replace(/\d{1,}\.{0,1}\d{0,}/,'')) { 
+ 		value = value.match(/\d{1,}\.{0,1}\d{0,}/) == null ? '' :value.match(/\d{1,}\.{0,1}\d{0,}/); 
+ 	} 
+	return value;
+ }
+ 
+export function CheckInputInt(value) {
+	value=value+"";
+ 	if(value&&'' != value.replace(/\d{1,}/,'')) { 
+ 		value = value.match(/\d{1,}/) == null ? '' :value.match(/\d{1,}/); 
+ 	} 
+	return value;
+ }
+export function CheckInputUpper(value) {
+	value=value+"";
+ 	if(value){
+ 		value=value.toUpperCase();
+ 	}
+	 return value;
+ }
+export function CheckInputIntLGZero(value) {
+	value=value+"";
+ 	if(value&&'' != value.replace(/^[1-9]\d{0,}$/,'')) { 
+ 		value = value.match(/^[1-9]\d{0,}$/) == null ? '' :value.match(/^[1-9]\d{0,}$/); 
+ 	} 
+	return value;
+ }
+
+export function isInt(value){
+	value=value+"";
+ 	var re = /^\d+$/;// /^[1-9]+[0-9]*]*$/;  
+     if (re.test(value)) {  
+ 		return true;
+ 	} else {
+ 		return false;
+ 	}
+ }
+export function isFloat(value) {
+	 value=value+"";
+     var partten =/(^[1-9][0-9]*[\.]{0,1}[0-9]*[0-9]$)|(^[0].[0-9]*[0-9]$)|(^[0-9]$)/;
+     if (partten.test(value)) {  
+ 		return true;
+ 	} else {
+ 		return false;
+ 	}
+  }
+
+ export function getValue(value,prefix,suffix){
+ 	if(value==null||value==""||typeof(value)=="undefined"||(typeof(value) === "number" && isNaN(value))){
+ 		return "--";
+ 	}else {
+ 		if(prefix){
+ 			value=prefix+value;
+ 		}
+ 	    if(suffix){
+ 	    	value=value+suffix;
+ 		} 
+ 	  return value;
+ 	}
+ }
+ export function getCountryCode(value){
+ 	 if(value=="ATVPDKIKX0DER"){
+		 value="US";
+	 }
+	 if(value=="A13V1IB3VIYZZH"){
+	 		 value="FR";
+	 }
+	 if(value=="A17E79C6D8DWNP"){
+	 		 value="SA";
+	 }
+	 if(value=="A1805IZSGTT6HS"){
+	 		 value="NL";
+	 }
+	 if(value=="A19VAU5U5O7RUS"){
+	 		 value="SG";
+	 }
+	 if(value=="A1AM78C64UM0Y8"){
+	 		 value="MX";
+	 }
+	 if(value=="A1C3SOZRARQ6R3"){
+	 		 value="PL";
+	 }
+	 if(value=="ATVPDKIKX0DER"){
+	 		 value="US";
+	 }
+	 if(value=="A1F83G8C2ARO7P"){
+	 		 value="UK";
+	 }
+	 if(value=="A1PA6795UKMFR9"){
+	 		 value="DE";
+	 }
+	 if(value=="A1RKKUPIHCS9HS"){
+	 		 value="ES";
+	 }
+	 if(value=="A1VC38T7YXB528"){
+	 		 value="JP";
+	 }
+	 if(value=="A21TJRUUN4KGV"){
+	 		 value="IN";
+	 }
+	 if(value=="A2EUQ1WTGCTBG2"){
+	 		 value="CA";
+	 }
+	 if(value=="A2NODRKZP88ZB9"){
+	 		 value="SE";
+	 }
+	 if(value=="A2Q3Y263D00KWC"){
+	 		 value="BR";
+	 }
+	 if(value=="A2VIGQ35RCS4UG"){
+	 		 value="AE";
+	 }
+	 if(value=="A33AVAJ2PDY3EV"){
+	 		 value="TR";
+	 }
+	 if(value=="A39IBJ37TRP1C6"){
+	 		 value="AU";
+	 }
+	 if(value=="APJ6JRA9NG5V4"){
+	 		 value="IT";
+	 }
+	 if(value=="ARBP9OOSHTCHU"){
+	 		 value="EG";
+	 }
+	 return value;
+ }
+

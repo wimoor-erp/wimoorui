@@ -10,7 +10,7 @@
 				</el-button>
 				</div>
 				</div>
-				<div class='gird-body'>
+				<div class='gird-body' style="height:calc(100vh - 110px);">
 				<ShelfTree ref="leftSearchTree"   @node-click="treeSeletecd"/>
 		       </div>
 	    </div>
@@ -46,7 +46,7 @@ export default {
 		const props = {
 		  expandTrigger: 'hover',
 		}
-	
+	  
 		const selfDialogRef = ref();
 		const handleChange = (value) => {
 			

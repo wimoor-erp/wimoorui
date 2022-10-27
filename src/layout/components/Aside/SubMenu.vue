@@ -15,20 +15,5 @@
 </template>
 <script>
 </script>
-<style>
-  .text{
-	  color:var(--el-text-color-primary);
-	  font-size:14px;
-	  padding:8px 16px;
-	  border-radius: 2px;
-	  cursor: pointer;
-	  transition: background-color var(--el-transition-duration),color var(--el-transition-duration);
-  }
-    .text:hover{
-     background-color: var(--el-bg-color);
-	}
-	.text:active{
-		color:var(--el-color-primary);
-		 background-color:var(--el-color-primary-light-7);
-	}
+<style >
 </style>

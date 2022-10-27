@@ -169,10 +169,10 @@
 		padding:16px;
 	}
 	.gird-body .title{
-		font-size:16px;
+		font-size:15px;
 		margin-top:16px;
 		margin-bottom:8px;
-		font-weight:700;
+		font-weight:600;
 	}
 	.el-tree--highlight-current .el-tree-node.is-current>.el-tree-node__content{
 		background-color: var(--el-color-primary-light-9);

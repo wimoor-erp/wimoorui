@@ -1,7 +1,7 @@
 <template>
  <el-col :span='12'>
 		  <el-space style='margin-bottom:8px;'>
-		    <span class='pag-title'>广告表现</span><span class='pag-small-Extra'>2022-02-11 ~ 2022-02-17</span>
+		    <span class='pag-title'>广告表现</span><span class='pag-small-Extra'>{{chartTitle}}</span>
 		  </el-space>
 		  <div class='pag-radius-bor'>
 		<div class='ch-da-toggle'>
@@ -22,110 +22,135 @@
 </template>
 <script>
 import * as echarts from 'echarts'
+import { ref,reactive,onMounted,watch } from 'vue'
+import reportApi from '@/api/amazon_adv/report/reportApi'
+import {formatFloat} from '@/utils/index';
 export default{
 	 name: 'Adchart',
 	 components:{},
-	 setup(){
-      let adData = [{
-		  label:'广告销售额($)',
-		  data:'845,788,78.38',
-		  checked:true,
+     props:["parameter"],
+     setup(prop,context){
+	  let chartTitle =ref();
+	  let adData = ref([{
+	  		  label:'广告销售额($)',
+	  		  data:'',
+	  		  checked:true,
 	  },
 	  {
-		  label:'广告花费',
-		  data:'78,344,64.78',
-		  checked:true,
+	  		  label:'广告花费',
+	  		  data:'',
+	  		  checked:true,
 	  },
 	  {
-		  label:'广告订单量',
-		  data:'29478',
+	  		  label:'广告订单量',
+	  		  data:'',
 	  },
 	  {
-		  label:'ACOS',
-		  data:'36.5%',
+	  		  label:'ACOS',
+	  		  data:'0.0%',
 	  },
-	  ]
+	  ]);
+	  function generateChart(label,title,series){
+	  	  var myChart = echarts.init(document.getElementById('adchart'))
+	  	  var option = {
+	           tooltip : {
+	  			trigger : 'axis',
+	  		},
+	            legend: {
+	  				data:title,
+	  				right:0,
+	  				top:16,
+	  				icon: "circle",
+	  				itemWidth:6,
+	  				itemHeight:6
+	  				
+	            },
+	            xAxis: {
+	  				boundaryGap:false,
+	  				data: label,
+	  				axisLine:{
+	                show: false
+	  				},
+	  				axisTick:{
+	  				show: false
+	  				},
+	  				axisLabel:{
+	                 color:"#acb0b9"
+	  				},
+	  				
+	  			},
+	  			grid:{
+	  				right:32,
+	  				left:32,
+	                bottom:32
+	  			},
+	            yAxis: {
+	  				axisLabel:{
+	                 color:"#acb0b9"
+	  				},
+	  				splitLine:{
+	  					lineStyle:{
+	  					color:"#F2F3F6"
+	  					}
+	  				}
+	  			},
+	            series:series
+	  	  }
+	  	   
+	  	   myChart.setOption(option);
+	  	   window.addEventListener('resize',()=>{
+	  		   myChart.resize();
+	  	   })
+	  }
+	  
+		 watch(prop.parameter,(val)=>{
+		 	      chartTitle.value=prop.parameter.beginDate+ " ~ "+prop.parameter.endDate.substring(0,10);
+				   let myparam=prop.parameter;
+			 
+				  myparam.profileid="all";
+				  reportApi.getsumproduct(myparam).then((res)=>{
+				       adData.value[0].data=res.data.summary.attributedSales;
+					   adData.value[1].data=res.data.summary.cost;
+					   adData.value[2].data=res.data.summary.attributedUnitsOrdered;
+					   adData.value[3].data=formatFloat(res.data.summary.acos)+"%";
+		 			   let label=res.data.impressions.listLabel;
+					   let title=['广告销售额','广告花费'];
+					   let series=[{
+					       smooth: 0.5,
+					       name: '广告销售额',
+					       type: 'line',
+							data: res.data.attributedSales.listData,
+							lineStyle:{
+								color:'#409eff',
+							},
+							itemStyle:{
+								color:'#409eff',
+							}
+						   },
+					      {
+					       smooth: 0.5,
+					       name: '广告花费',
+					       type: 'line',
+							data:res.data.cost.listData,
+							lineStyle:{
+								color:'#FF6700',
+							},
+							itemStyle:{
+								color:'#FF6700',
+							}
+					      }]
+					   generateChart(label,title,series);
+		 		  });
+		 });
+		
+   
            //返回数据
 		 return{
-          adData,
+          adData,chartTitle
 		 }
 		 
 	 },
-	  mounted(){
-	  var myChart = echarts.init(document.getElementById('adchart'))
-	  var option = {
-           tooltip : {
-			trigger : 'axis',
-		},
-            legend: {
-				data:['广告销售额','广告花费'],
-				right:0,
-				top:16,
-				icon: "circle",
-				itemWidth:6,
-				itemHeight:6
-				
-            },
-            xAxis: {
-				boundaryGap:false,
-				data: ["02-11","02-12","02-13","02-14","02-15","02-16","02-17"],
-				axisLine:{
-                show: false
-				},
-				axisTick:{
-				show: false
-				},
-				axisLabel:{
-                 color:"#acb0b9"
-				},
-				
-			},
-			grid:{
-				right:32,
-				left:32,
-                bottom:32
-			},
-            yAxis: {
-				axisLabel:{
-                 color:"#acb0b9"
-				},
-				splitLine:{
-					lineStyle:{
-					color:"#F2F3F6"
-					}
-				}
-			},
-            series: [{
-                smooth: 0.5,
-                name: '广告销售额',
-                type: 'line',
-				data: [22452, 27564, 18958,19861, 28994, 21859,23648],
-				lineStyle:{
-					color:'#409eff',
-				},
-				itemStyle:{
-					color:'#409eff',
-				}
-			},
-			{
-                smooth: 0.5,
-                name: '广告花费',
-                type: 'line',
-				data: [2452, 7564, 8958,9861, 8994, 1859,3648],
-				lineStyle:{
-					color:'#FF6700',
-				},
-				itemStyle:{
-					color:'#FF6700',
-				}
-            }]
-	  }
-	   
-	   myChart.setOption(option);
-	   window.addEventListener('resize',()=>{
-		   myChart.resize();
-	   })
-  }
+	  
 }
 </script>
 <style>

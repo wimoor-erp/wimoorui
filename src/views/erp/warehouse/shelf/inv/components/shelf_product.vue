@@ -1,13 +1,12 @@
 <template>
-	<div class="con-header">
+	<div class="shelf-header">
 		<el-row>
 			<div>
 				<h3><span v-if='shelfdata.data.length!==null'>{{shelfdata.data.number}}-</span>{{shelfdata.data.name}}
 				</h3>
-				<el-space class='font-extraSmall'>
+				<el-space class='font-extraSmall' :spacer="spacer">
 					<span v-if="shelfdata.data.treepath">规格(cm):{{shelfdata.data.length}}*{{shelfdata.data.width}}*{{shelfdata.data.height}}</span>
 					<span v-if="shelfdata.data.treepath">已用容量:{{shelfdata.usesize}}%</span> 
-					<span> </span>
 				</el-space>
 			</div>
 			<div class='rt-btn-group'>
@@ -71,7 +70,7 @@
 				<el-table-column prop="quantity" label="库位库存" sortable="custom" />
 				<el-table-column prop="operate" label="操作" width="120"  >
 					<template #default="scope">
-						<el-popover v-model:visible="scope.row.visible" placement="top" :width="160">
+						<el-popover v-model:visible="scope.row.visible" placement="top" trigger="click" :width="160">
 							<el-input v-model="scope.row.amount" @input="scope.row.amount=number(scope.row.amount)"
 								class='inp-box' placeholder="下架数量" />
 							<div style="text-align: right; margin: 0">
@@ -123,7 +122,7 @@
 				<el-table-column prop="quantity" label="暂存库存" sortable="custom" />
 				<el-table-column prop="operate" label="操作" width="120" >
 					<template #default="scope">
-						<el-popover v-model:visible="scope.row.visible" placement="top" :width="160">
+						<el-popover v-model:visible="scope.row.visible" placement="top" trigger="click" :width="160">
 							<el-input v-model="scope.row.amount" @input="scope.row.amount=number(scope.row.amount)"
 								class='inp-box' placeholder="上架数量" />
 							<div style="text-align: right; margin: 0">
@@ -212,14 +211,14 @@
 </template>
 
 <script>
-	import {ref,reactive,onMounted,watch} from 'vue'
+	import {ref,reactive,onMounted,watch,h} from 'vue'
 	import {Help,Plus,} from '@icon-park/vue-next';
 	import shelfproductApi from '@/api/erp/warehouse/shelfproductApi';
 	import shelfApi from '@/api/erp/warehouse/shelf';
 	import {number} from '@/utils/index';
-	import {ElMessage} from 'element-plus';
+	import {ElMessage,ElDivider} from 'element-plus';
 	import {Search} from '@element-plus/icons-vue';
-	import {fomatFloat,parseTime} from '@/utils/index';
+	import {formatFloat,parseTime} from '@/utils/index';
  
 	export default {
 		name: 'ShelfProduct',
@@ -258,6 +257,7 @@
 			let unshelftableData = reactive({ records: [],total:0,page:1,pageSize:10,sort:"orderitem",order:"desc"});
 			let tableData = reactive({ records: [],total:0 ,page:1,pageSize:10,sort:"",order:""});
 			let offShelftableData = ref();
+			let spacer = h(ElDivider, { direction: 'vertical' })
 			const unShelfPaginationSize=function(data){
 				 getunshelfList(1,data);
 			}
@@ -312,6 +312,7 @@
 				param.pagesize=pagesize;
 				param.currentpage= currentpage;
 		        param.search=shelfdata.data.search;
+				console.log("param",param.search)
 				if(allchildren.value){
 				   param.allchildren=  "true";
 				}else{
@@ -375,6 +376,7 @@
 			}
            watch(skuSearch, (val) => {
 				shelfdata.data.search = val
+				
 				getunshelfList();
 				getshelfList();
 			})
@@ -606,6 +608,7 @@
 				allchildrendisabled,
 				shelfSort,
 				unshelfSort,
+				spacer,
 			}
 		},
 
@@ -622,10 +625,9 @@
 	.btn-header .rt-btn-group button{
 		margin-right:8px;
 	}
-	.con-header {
+	.shelf-header {
 		padding: 16px;
 		border-bottom: 1px solid var(--el-border-color-light);
-		margin-bottom: 16px;
 	}
 
 	.sys-table {
@@ -642,7 +644,4 @@
 		margin: 16px;
 	}
 
-	.rt-btn-group {
-		display: flex;
-	}
 </style>

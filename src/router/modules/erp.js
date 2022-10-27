@@ -1,0 +1,60 @@
+/** When your routing erp is too long, you can split it into small modules **/
+export default [
+ {
+ 		 path:'shipment_handing/shipstep',
+ 		 name:'shipstep',
+ 		 component:()=>import("@/views/erp/ship/shipment_handing/shipstep/index"),
+ },
+ {
+ 		 path:'shipment_handing/pehuo',
+ 		 name:'pehuo',
+ 		 component:()=>import("@/views/erp/ship/orderblank/index.vue"),
+ },
+ {
+ 	path:"e/s/p",
+ 	name:'plan_submit',
+ 	component:()=>import("@/views/erp/ship/ship_plan/plan_submit/index")  
+ },
+ {
+ 	path:"e/s/p/e",
+ 	name:'eu_split',
+ 	component:()=>import("@/views/erp/ship/ship_plan/plan_submit/eu_split")  
+ },
+ {
+ 		 path:'e/s/a',
+ 		 name:'shiptongbu',
+ 		 component:()=>import("@/views/erp/ship/shipment_handing/list/components/async.vue"),
+ },
+ 
+ {
+ 	path:"transportation/edit",
+ 	name:'transportation_edit',
+ 	component:()=>import("@/views/erp/ship/transportation/edit_transportation.vue"),  
+ },
+ {
+ 	path:"transportation/details",
+ 	name:'transportation_details',
+ 	component:()=>import("@/views/erp/ship/transportation/details_transportation.vue"),  
+ },
+ {
+ 		 path:'material/photoupload',
+ 		 name:'photoupload',
+ 		 component:()=>import("@/views/erp/baseinfo/material/photoupload/index.vue"),
+ },
+ {
+ 	path:"localproduct/editinfo",
+ 	name:'edit',
+ 	component:()=>import("@/views/erp/baseinfo/material/editinfo/index")  
+ },
+ {
+ 	path:"localproduct/editinfo/assemble",
+ 	name:'assemble',
+ 	component:()=>import("@/views/erp/baseinfo/material/editinfo/assemble_edit")  
+ },
+ {
+ 	path:"material/details",
+ 	name:'details',
+ 	component:()=>import("@/views/erp/baseinfo/material/details/index")  
+ },
+
+]

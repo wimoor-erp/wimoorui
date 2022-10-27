@@ -1,4 +1,4 @@
-﻿<template>
+<template>
 	<div class="card">
 	<el-card class="box-card">
 	   <div class="card-header">
@@ -91,8 +91,8 @@ export default {
 		let shipQRcodeUrl=ref()
 		let skuData = reactive({list:[]})
 		let shipFormData = reactive({list:[]})
-                                const route = useRoute()
-                                const shipmentid=route.query.shipmentid;
+		const route = useRoute()
+		const shipmentid=route.query.shipmentid;
 	  
 		let getshipFormData = function(){
 			orderblankApi.getQuotainfo(shipmentid).then((res)=>{

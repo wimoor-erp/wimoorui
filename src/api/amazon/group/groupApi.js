@@ -1,0 +1,20 @@
+import request from "@/utils/request";
+function getAmazonGroup(){
+	 return request.get('/amazon/api/v1/amzauthority/getAmazonGroup');
+}
+
+function AmazonGroupSave(data){
+	 return request.put('/amazon/api/v1/amzgroup/save',data);
+}
+function getAmazongroupList(){
+	 return request.get('/amazon/api/v1/amzgroup/list');
+}
+function deleteAmazongroup(id){
+	 return request.delete('/amazon/api/v1/amzgroup/delete/'+id);
+}
+function updateBatch(data){
+	return request.post('/amazon/api/v1/amzgroup/updateBatch',data);
+}
+export default{
+	AmazonGroupSave,getAmazongroupList,deleteAmazongroup,getAmazonGroup,updateBatch,	
+}

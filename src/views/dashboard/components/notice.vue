@@ -5,32 +5,58 @@
       <span class="pag-small-Extra"> </span>
     </el-space>
     <div class="pag-radius-bor " style='height:392px;'>
-		<div class='mes-list' v-for='(m,index) in messageData' :key="index">
-           <el-tag :type='m.state' size="small" class='mes-tag'>{{m.tag}}</el-tag>
-		   <div class='mes-text'>{{m.text}}</div>
-		   <div class='mes-time'>{{m.time}}</div>
+		<div class='mes-list' v-for='(m,index) in messageData.list' :key="index">
+           <el-tag :type='m.state' size="small" class='mes-tag'>{{titleFormat(m.title)}}</el-tag>
+		   <el-popover
+		      placement="top-start"
+		      :title="m.title"
+		      :width="600"
+		      trigger="hover"
+		    >
+			<div v-html="m.content"></div> 
+		      <template #reference>
+		       <div class='mes-text'>{{contentFormat(m.title)}}</div>
+		       <div class='mes-time'>{{dateFormat(m.createdat)}}</div>
+		      </template>
+		    </el-popover>
+		 
 		</div>
     </div>
   </el-col>
 </template>
 <script>
-import { ref } from 'vue'
-import {CaretBottom,} from '@element-plus/icons-vue'
+import { ref,reactive,onMounted,watch } from 'vue'
+import notifyApi from '@/api/sys/admin/notify'
 export default {
   name: "Notice",
-  components: {CaretBottom},
+  components: {},
   setup() {
-    let messageData = [
-	  { tag: "公告", text: "关于春节期间系统客服的调整", time: "2020-03-02",state:'',},
-	  { tag: "通知", text: "关于发货货件：现可正常提交箱子信息", time: "2020-03-02",state:'success',},
-	  { tag: "消息", text: "你提交的采购订单D4A48WA已通过审核", time: "2020-03-02",state:'warning',},
-	  { tag: "消息", text: "你的账号还有30天到期，请联系管理员！", time: "2020-03-02",state:'warning',},
-	  { tag: "公告", text: "2021年07月05日 ERP V1.6.0 上线！", time: "2020-03-02",state:'',},
-	  { tag: "公告", text: "2021年07月05日 ERP V2.6.0 上线！", time: "2020-03-02",state:'',},
-    ];
+	  let messageData =reactive({list: []});
+	  onMounted(()=>{
+		   notifyApi.getMsgLimit().then((res)=>{
+			   messageData.list=res.data;
+		   })
+	  });
+	 function dateFormat(date){
+		 return new Date(date).format("yyyy-MM-dd"); 
+	 }
+    function contentFormat(value){
+		if(value.indexOf("】")){
+			return value.substring(value.indexOf("】")+1,value.length);
+		}else{
+			return value;
+		}
+	}
+	function titleFormat(value){
+		if(value.indexOf("】")){
+			return value.substring(1,value.indexOf("】"));
+		}else{
+			return "通知";
+		}
+	}
     //返回数据
     return {
-      messageData
+      messageData,dateFormat,titleFormat,contentFormat
     };
   }
 };

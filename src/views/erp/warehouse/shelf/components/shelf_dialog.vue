@@ -8,7 +8,7 @@
 
   <el-row style="border-top:solid 1px #dcdde0;">
      <el-col :span="4" >
-	   <div class=" bg-purple-light " style="min-height:350px;height:100%; border-right:solid 1px #dcdde0">
+	   <div class=" bg-purple-light gird-body" style="min-height:350px;height:100%; border-right:solid 1px #dcdde0">
         <ShelfTree ref="lefttree" @node-click="setNodeValue"></ShelfTree>
 	   </div>
      </el-col>
@@ -49,23 +49,13 @@
 	       </el-form-item>
 	   
 			<el-form-item label="规格" label-position="top" prop="specifications">
-			 <el-row  :gutter="0">
-				 <el-col :span="7">
-					 <el-form-item    prop="length" >
-					   <el-input v-model="formdata.length" class='input-left pull-left '    placeholder="长"></el-input>
-					 </el-form-item>
-				 </el-col>
-				 <el-col :span="7">
-					 <el-form-item    prop="width" >
-					  <el-input v-model="formdata.width"  class='input-mid pull-left  '      placeholder="宽"></el-input>
-					 </el-form-item>
-				</el-col>
-				<el-col :span="10">
-					 <el-form-item    prop="height" > 
-					   <el-input v-model="formdata.height" class='input-right pull-left  '   placeholder="高" > <template #append >cm</template></el-input> 
-					</el-form-item>
-				 </el-col>
-			 </el-row>
+				<div class="el-input-group-thir">
+					<el-input v-model="formdata.length" placeholder="长"></el-input>
+					<el-input v-model="formdata.width" placeholder="宽"></el-input>
+					<el-input v-model="formdata.height" placeholder="高">
+						<template #append>cm</template>
+					</el-input>
+				</div>
 			</el-form-item>
 	       
 		    <el-form-item  label="库位数量" prop="quantity">
@@ -77,9 +67,10 @@
 			<el-divider style="margin:0px" />
 		  
 		   <el-form class="itemlist"  ref="itemForm"     :rules="rules" label-width="100px" :model="listitem" label-position="top">
-			<el-row >
-				 <el-col :span="2"><h3>库位列表</h3></el-col><el-col style="padding-top:4px;" :span="22"><span :style="`font-size:var(--el-font-size-small)`">生成的库位名称，规格只做参考，可根据实际情况修改</span></el-col>
-			</el-row>
+			<el-space :size="16" class="shelf-title">
+				<h4>库位列表</h4>
+				<span class="font-extraSmall">生成的库位名称，规格只做参考，可根据实际情况修改</span>
+			</el-space>
 			<el-row  :gutter="20" v-if="listitem&&listitem.list&&listitem.list.length >=1">
 			   <el-col :span="8" v-for="item in listitem.list">
 				   <el-card class="box-card">
@@ -100,24 +91,14 @@
 							   </el-col>
 						   </el-row>
 						</el-form-item>
-					    <el-form-item label="规格" label-position="top" prop="specifications" style="margin-top: -20px;">
-						 <el-row  :gutter="0">
-							 <el-col :span="7">
-								 <el-form-item   >
-								   <el-input v-model="item.length" class='input-left pull-left '    placeholder="长"></el-input>
-								 </el-form-item>
-							 </el-col>
-							 <el-col :span="7">
-								 <el-form-item    >
-								  <el-input v-model="item.width"  class='input-mid pull-left  '      placeholder="宽"></el-input>
-								 </el-form-item>
-							</el-col>
-							<el-col :span="10">
-								 <el-form-item     >
-								   <el-input v-model="item.height" class='input-right pull-left  '   placeholder="高" > <template #append >cm</template></el-input> 
-								</el-form-item>
-							 </el-col>
-						 </el-row>
+					    <el-form-item label="规格" label-position="top" prop="specifications" >
+							<div class="el-input-group-thir">
+								<el-input v-model="item.length" placeholder="长"></el-input>
+								<el-input v-model="item.width" placeholder="宽"></el-input>
+								<el-input v-model="item.height" placeholder="高">
+									<template #append>cm</template>
+								</el-input>
+							</div>
 						</el-form-item>
 				   		 
 				   </el-card>
@@ -219,19 +200,11 @@
 
 </script>
 <style>
-    .input-left input{
-		border-top-right-radius:0em;
-		border-bottom-right-radius:0em;
+	.shelf-title{
+		margin-bottom:16px;
 	}
 	.input-mid input{
 		border-radius:0em;
-	}
-	.input-right input{
-		border-top-left-radius:0em;
-		border-bottom-left-radius:0em;
-	}
-	.pull-left{
-		float:left;
 	}
 	.width30p .el-input-group__append{
 		padding:0 10px !important;

@@ -1,7 +1,7 @@
 <template>
 	<el-table :data="tableData.list" border style="width: 100%;margin-bottom:16px;"  @sort-change="tableSort"  height="calc(100vh - 190px)">
 	    <el-table-column type="selection" width="38" />
-	    <el-table-column prop="number"  label="订单编号" width="120" sortable="custom" />
+	    <el-table-column prop="number"  label="订单编号" width="130" sortable="custom" />
 		<el-table-column prop="image" label="图片" width="60" >
 		   <template #default="scope">
 		    <el-image :src="scope.row.image"   style="width:40px;height:40px;"  ></el-image>
@@ -20,7 +20,7 @@
 		      <span >{{dateFormat(scope.row.audittime)}}</span>
 			   </template>
 		   </el-table-column>
-		  <el-table-column prop="deliverydate" width="120" label="预计到货日期"  sortable="custom" >
+		  <el-table-column prop="deliverydate" width="130" label="预计到货日期"  sortable="custom" >
 		  			  <template #default="scope">
 		       <span >{{dateFormat(scope.row.deliverydate)}}</span>
 		  			   </template>
@@ -93,6 +93,7 @@
 				}).then(function(res){
 					tableData.list = res.data
 					total.value = res.total
+					if(res.data.length>0)
 					context.emit("getTotalmount",res.data[0].totalamount)
 				})
 			}
