@@ -1,5 +1,5 @@
 此项目由深圳市万墨信息科技有限公司开发，如果有任何疑问请联系开发团队。
-1、安装node (注意将Bin添加环境变量Path中)
+1、安装node (注意将Bin添加环境变量Path中) 
   1>下载node[](https://nodejs.org/en/download/)
 2、安装vue
 npm install -g @vue/cli
