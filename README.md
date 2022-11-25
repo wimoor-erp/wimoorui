@@ -10,18 +10,18 @@
 操作说明
 ====
 * 1、安装node (注意将Bin添加环境变量Path中) 
-*   下载node[](https://nodejs.org/en/download/)
+  * 下载node[](https://nodejs.org/en/download/)
   
 * 2、安装vue
-*    npm install -g @vue/cli
+  * npm install -g @vue/cli
 
 * 3、创建项目
-*   1>vue create 项目名称
-*   2>选择手动(Manually select features)
-*   3>[chose vue version,Babel,Router,Vuex]
-*   4>3.x
-*   5>Use history for route (Y)
-*   6>save this config(N)
+  * 1>vue create 项目名称
+  * 2>选择手动(Manually select features)
+  * 3>[chose vue version,Babel,Router,Vuex]
+  * 4>3.x
+  * 5>Use history for route (Y)
+  * 6>save this config(N)
   
 * 4、进入项目目录(安装依赖)
 *   npm install axios --save
