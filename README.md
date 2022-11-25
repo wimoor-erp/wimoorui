@@ -7,7 +7,7 @@
 * 系统注册地址：https://erp.wimoor.com/toRegister.do 大家可免费使用
 * 欢迎加入Wimoor ERP开源项目交流群（可联系客服QQ或微信拉你入群）
 
-操作说明
+部署说明
 ====
 * 1、安装node (注意将Bin添加环境变量Path中) 
   * 下载node[](https://nodejs.org/en/download/)
