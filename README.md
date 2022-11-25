@@ -24,17 +24,16 @@
   * 6>save this config(N)
   
 * 4、进入项目目录(安装依赖)
-npm install axios --save
- 
-npm install @icon-park/vue-next --save
-*   npm install @element-plus/icons-vue
-*   npm install element-plus --save
-*   npm install echart --save
-*   npm install mitt
-*   npm i -S vuedraggable@next
+  * npm install axios --save
+  * npm install @icon-park/vue-next --save
+  * npm install @element-plus/icons-vue
+  * npm install element-plus --save
+  * npm install echart --save
+  * npm install mitt
+  * npm i -S vuedraggable@next
 
 * 5、运行项目
-*   npm run serve
+  * npm run serve
 
 * 6、发布项目
-*   npm run build
+  * npm run build
