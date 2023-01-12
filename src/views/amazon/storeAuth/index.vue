@@ -97,7 +97,6 @@
 			function loadStoreList(){
 				groupApi.getAmazongroupList().then((res)=>{
 					storeList.list = res.data
-					console.log("storeList",res.data)
 				})
 			}
 			function updataStorename(item){
@@ -111,7 +110,6 @@
 			}
 			function delectStore(item){
 			  let id =item.id
-			  console.log(id)
 			  ElMessageBox.confirm(
 					    '你确定要删除该店铺吗?',
 					    {

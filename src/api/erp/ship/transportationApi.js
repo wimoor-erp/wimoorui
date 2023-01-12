@@ -68,7 +68,7 @@ function downloadList(data){
 									method:'get'}).then(res => {
 						downloadhandler.downloadSuccess(res,"ShipTransList.xlsx")
 				}).catch(e=>{
-					    downloadhandler.downloadFail();
+					    downloadhandler.downloadFail(e);
 				});
 		}
 function uploadTransFile(FormData){

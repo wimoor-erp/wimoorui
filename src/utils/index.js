@@ -396,7 +396,9 @@ export function sortByKey(array,key){
 		return ((x<y)?-1:(x>y)?1:0);
 	})
 }
-
+Date.prototype.clone=function(){
+		  return new Date(this.valueOf());
+ }
 Date.prototype.format = function(fmt) { 
      var o = { 
         "M+" : this.getMonth()+1,                 //月份 
@@ -418,13 +420,18 @@ Date.prototype.format = function(fmt) {
     return fmt; 
 	//yyyy-MM-dd hh:mm:ss日期格式
 }     
-
+export function guid() {
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+	return v.toString(16);
+	});
+}
 export function dateFormat(time){
 	if(!time)return "";
 	if (('' + time).length === 10) {
 	  time = parseInt(time) * 1000;
 	} else if(('' + time).indexOf("-")>0||('' + time).indexOf("/")>0){
-	  return time;
+	  return time.substring(0,10);
 	}
 	const d = new Date(time);
 	return d.format("yyyy-MM-dd");
@@ -592,3 +599,58 @@ export function isFloat(value) {
 	 return value;
  }
 
+
+export function getCurrencyMark(currency){
+	    var fcuurency="";
+		if (currency != null) {
+			if (currency=="USD") {
+				fcuurency = "$";
+			}
+			if (currency=="GBP") {
+				fcuurency = "£";
+			}
+			if (currency=="EUR") {
+				fcuurency = "€";
+			}
+			if (currency=="JPY") {
+				fcuurency = "¥";
+			}
+			if (currency=="CNY") {
+				fcuurency = "¥";
+			}
+			if (currency=="RMB") {
+				fcuurency = "¥";
+			}
+			if (currency=="CAD") {
+				fcuurency = "C$";
+			}
+			if (currency=="INR") {
+				fcuurency = "₹";
+			}
+			if (currency=="AUD") {
+				fcuurency = "A$";
+			}
+			if (currency=="MXN") {
+				fcuurency = "Mex$";
+			}
+			if (currency=="SEK") {
+				fcuurency = "Kr";
+			}
+			if (currency=="PLN") {
+				fcuurency = "zł";
+			}
+			return fcuurency;
+		}else{
+			return "";
+		}
+}
+ export function getDateValue(value){
+					if(value){
+						if (('' + value).length === 10) {
+						   value = parseInt(value) * 1000;
+						} else if(('' +value).indexOf("-")>0||('' +value).indexOf("/")>0){
+						   value= new Date(value);;
+						}
+					}
+					return value;
+				}

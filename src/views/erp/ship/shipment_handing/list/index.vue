@@ -83,6 +83,9 @@
 				obj.company =data.company;
 				obj.channel =data.channel;
 				obj.transtype =data.transtype;
+				if(data.searchwords&&data.searchwords.indexOf("FBA")==0){
+					activeName.value="0";
+				}
 				tableRef.value.getshipmentData(obj)
 			}
 			return{

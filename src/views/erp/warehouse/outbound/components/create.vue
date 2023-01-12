@@ -1,0 +1,263 @@
+<template>
+	<div >
+					 <el-scrollbar class="he-scr-car" @scroll="scroll">
+						 <div class="gird-line-head">
+						 <h3>填写出库单</h3>
+						 <el-button   class='ic-btn' title='帮助文档'>
+						   <help theme="outline" size="16" :strokeWidth="3"/>
+						 </el-button>
+						 </div>
+						 <div class="fill-from-body">
+							
+						 <el-form :model="form"
+						   :rules="rules"
+						   label-width="120px">
+							  <el-row>
+							 <el-col :span="12">
+							 <el-form-item label="单据编码"   >
+							 	<el-input class="in-wi-24" disabled  v-model="form.number" placeholder="请输入"> </el-input>
+							 </el-form-item>
+							 </el-col>
+							 <el-col :span="12">
+							 <el-form-item label="供应商" >
+								 <span>{{form.customername}}</span>
+								 <el-button style="margin-left: 10px;" @click.stop="showSupplier">选择供应商</el-button>
+							 </el-form-item>
+							 </el-col>
+							 <el-col :span="12">
+								 <el-form-item label="出库仓库" prop="warehouse">
+									 <el-space>
+										 <Warehouse @changeware="getWarehouse" defaultValue="only" :isform="true" />
+									 </el-space>
+								 </el-form-item>
+							 </el-col>
+							 <el-col :span="12">
+							 <el-form-item label="快递单号" >
+							 	<el-input class="in-wi-24" v-model="form.expressno" placeholder="请输入快递单号"> </el-input>
+							 </el-form-item>
+							 </el-col>
+							 <el-col :span="12">
+							 <el-form-item label="备注"  >
+							 	<el-input class="in-wi-24" type="textarea" v-model="form.remark" placeholder="请输入备注"> </el-input>
+							 </el-form-item>
+							 </el-col>
+							  <el-col :span="12">
+							 <el-form-item label="物流快递" >
+							 	<el-input class="in-wi-24" v-model="form.express" placeholder="请输入物流快递"> </el-input>
+							 </el-form-item>
+							 </el-col>
+							  </el-row>
+						 </el-form>
+						
+						 <el-divider></el-divider>
+						 <div class="mark-re">
+							<div>
+						   <h5 >出库商品 </h5>
+						   </div>
+						   <el-button @click="handleAdd" type="primary">添加商品</el-button>
+						 </div>
+						 <el-table border :data="tableData">
+							 <el-table-column label="序号" type="index" width="80"/> 
+							 <el-table-column  prop="image" label="图片"  width="65" >
+							    <template #default="scope">
+							     <el-image v-if="scope.row.image" :src="scope.row.image"   width="40" height="40"  ></el-image>
+							 	<el-image v-else :src="require('@/assets/image/empty/noimage40.png')"   width="40" height="40"  ></el-image>
+							   </template>
+							 </el-table-column>
+							 <el-table-column  prop="product" label="名称/SKU"  show-overflow-tooltip>
+							    <template #default="scope">
+							       <div class='name'>{{scope.row.name}}</div>
+							       <div class='sku'>{{scope.row.sku}}
+							       </div>
+							   </template>
+							 </el-table-column>
+							 <el-table-column label="出库数量">
+								  <template #default="scope">
+									  <el-input v-model="scope.row.outamount">
+									  </el-input>
+								  </template>  
+							 </el-table-column>
+							 <el-table-column label="操作" width="80">
+								  <template #default="scope">
+								    <el-button @click="handleDelete(scope.$index)" link type="primary" >删除</el-button>
+					        	  </template>
+							 </el-table-column>
+						 </el-table>
+						</div>
+					</el-scrollbar>
+						<div class='text-center mar-top-16'>
+							 <div style="padding-top:10px;">
+								<el-space>
+									<el-button type="" @click="closeTab">关闭</el-button>
+									<el-button type="primary" @click="submitForm">提交</el-button>
+								</el-space>
+							</div>
+						</div>
+	</div>
+	<MaterialDialog  ref = "MaterialRef" @getdata="getRows" />
+	<SupplierDialog ref='supDiaRef' @getdata="getSupplierRows" />
+</template>
+
+<script setup>
+	import {ArrowDown,Edit} from '@element-plus/icons-vue';
+	import {Plus,Minus,Help} from '@icon-park/vue-next';
+	import { ref,reactive,onMounted,watch,inject,toRefs } from 'vue';
+	import {ElMessage } from 'element-plus';
+	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog";
+	import { useRoute,useRouter } from 'vue-router';
+	import serialnumberApi from '@/api/erp/common/serialnumberApi.js';
+	import outApi from '@/api/erp/inventory/outApi.js';
+	import Warehouse from '@/components/header/warehouse.vue';
+	import SupplierDialog from "@/views/erp/baseinfo/supplier/supplier_dialog";
+	const router = useRouter()
+	const MaterialRef = ref();
+	const supDiaRef =ref();
+	const emitter = inject("emitter"); // Inject `emitter`
+	function closeTab(){
+		emitter.emit("removeTab", 100);
+	};
+	const state = reactive({
+		form:{
+			name:'',
+			number:'',
+			warehouseid:'',
+			remark:'',
+			customer:'',
+			expressno:'',
+			express:'',
+			customername:'无',
+		},
+		rules: {
+			warehouse: [{ required: true, message: '出库仓库不能为空', trigger: 'blur' }],
+		},
+		tableData:[],
+		skulist:{},
+	})
+	const {
+		form,
+		rules,
+		tableData,
+		skulist
+	}=toRefs(state)
+	onMounted(()=>{
+		load();
+	});
+    function handleAdd(){
+		MaterialRef.value.show()
+	}
+	function load(){
+		serialnumberApi.getSerialNumber({"ftype":"O","isfind":"true"}).then((res)=>{
+			if(res.data){
+				state.form.number=res.data;
+			}
+		});
+	}
+	function getWarehouse(wid){
+		state.form.warehouseid=wid;
+	}
+	function getRows(rows){
+		state.tableData=rows;
+	}
+	 function getSKUList() {
+		    state.skulist={};
+			var flag=true;
+			state.tableData.forEach(function(item){
+				var sku = item.id;
+				var amount = item.outamount;
+				if(state.skulist[sku]){
+					ElMessage({
+					  type: 'error',
+					  message: "不能重复添加SKU！ ",
+					})
+					flag=false;
+				}
+				if (typeof(sku)!="undefined"&&sku!=""&&amount!="") {
+					state.skulist[sku]=amount;
+				}
+			});
+			
+			return flag;
+	}
+	function submitForm(){
+		var isok=getSKUList();
+		if(isok==true){
+			var data={};
+			data.skumapstr=JSON.stringify(state.skulist);
+			data.remark=state.form.remark;
+			data.warehouseid=state.form.warehouseid;
+			data.purchaser=state.form.customer;
+			data.express=state.form.express;
+			data.expressno=state.form.expressno;
+			data.toaddress="";
+			data.id="";
+			outApi.saveData(data).then((res)=>{
+				isok=true;
+				if(res.data){
+					ElMessage({
+					  type: 'success',
+					  message: "添加成功！",
+					});
+					closeTab();
+					if(res.data && res.data.id && res.data.id!=null && res.data.id!="" && res.data.id!=undefined){
+						setTimeout(function(){
+							router.push({
+								path:"/e/w/o/d",
+								query:{
+									title:'出库单详情',
+									path:"/e/w/o/d",
+									id:res.data.id
+								},
+							})
+						},1000)
+					}
+				}else{
+					ElMessage({
+					  type: 'error',
+					  message: res.data,
+					})
+				}
+			});
+		}
+	}
+	function handleDelete(index){
+		state.tableData.splice(index,1);
+	}
+	function showSupplier(){
+		supDiaRef.value.show();
+	}
+	function getSupplierRows(rows){
+		if(rows && rows[0] && rows[0].id){
+			state.form.customer=rows[0].id;
+			state.form.customername=rows[0].name;
+		}
+	}
+</script>
+
+<style>
+	.font-12{font-size: 12px;margin-right:4px;}
+		.he-scr-car{
+			height:calc(100vh - 176px);
+			margin-bottom: 20px;
+		}
+	.in-wi-24{
+			width: 400px;
+		}
+		.mark-re{
+			margin-top: 16px;
+			margin-bottom:16px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+	.mark-re h5::before{
+		content: "";
+		display: inline-block;
+		height: 13px;
+		width: 4px;
+		margin-right:8px;
+		background-color: #FF6700;
+	}
+	.fill-from-body{
+		margin:16px 24px;
+	}
+</style>

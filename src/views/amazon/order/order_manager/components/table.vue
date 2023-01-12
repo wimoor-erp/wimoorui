@@ -45,7 +45,7 @@
 	  	        <template #default="scope">
 	  	          <el-space>
 	  	            <el-button class='el-button--blue' @click="showOrderModal(scope.row)">详情</el-button>
-	  	            <el-button class='el-button--blue' v-if="scope.row.region=='EU'||scope.row.region=='UK'" @click="showVatModal(scope.row)">上传发票</el-button>
+	  	            <el-button class='el-button--blue' @click="showVatModal(scope.row)">上传发票</el-button>
 	  	           
 	  	            <el-dropdown :hide-on-click="false">
 	  	              <span class="el-dropdown-link">
@@ -181,6 +181,7 @@
 	</el-dialog>	
 	<!-- 编辑发票信息 -->
 	<el-dialog v-model="editvatVisible" title="编辑发票详情"  @close='closeDialog'>
+	 
 		<el-descriptions>
 			<el-descriptions-item label="公司LOGO">
 				<el-image :src="invoiceData1.logourl"   width="180" height="60"></el-image>
@@ -260,6 +261,7 @@
 				</template>
 			</el-table-column>
 		</el-table>
+ 
 		  <template #footer>
 		  	<span class="dialog-footer">
 				<el-button @click="editvatVisible = false">关闭</el-button>
@@ -267,13 +269,14 @@
 		  		<el-button @click="submitVatInfo" type="primary">提交</el-button>
 		  	</span>
 		  </template>
+		
 	</el-dialog>	
 	<!-- 预览发票信息 -->
 	<el-dialog v-model="lookvatVisible"   title="预览发票详情"  @close='closeDialog'>
-		<div style="border: 1px solid #5A5E66;" v-loading="orderloading">
+		<div style="border: 1px solid #5A5E66;" v-if="invoiceData1" v-loading="orderloading">
 			<el-descriptions :column="2">
 				<el-descriptions-item :span="1">
-					<el-image style="border-right: 1px solid #5A5E66;" :src="invoiceData1.logourl"   width="180" height="60"></el-image>
+					<el-image style="border-right: 1px solid #5A5E66;" v-if="invoiceData1" :src="invoiceData1.logourl"   width="180" height="60"></el-image>
 				</el-descriptions-item>
 				<el-descriptions-item  align="right" :span="1"   ><h2 style="padding-right: 20px;font-size: 32px;"> INVOICE </h2>
 				</el-descriptions-item>   
@@ -412,6 +415,14 @@
 			GlobalTable,View,FeedStatus
 		},
 		setup(props){
+			let invoiceModel={logourl:"",
+			                      company:"",
+			                      country:"",
+								  province:"",
+								  city:"",
+			                      address:"",
+				                  phone:"",postalcode:"",email:"",
+			                     }
 			let showVatField =ref(false);
 			let orderVisible =ref(false)
 			let vatVisible=ref(false)
@@ -425,7 +436,7 @@
 			let pagesize=ref(10)
 			let currentPage=ref(1)
 			let total = ref()
-			let orderData=ref({})
+			let orderData=ref(invoiceModel)
 			let invoiceData1=ref({})
 			let invoiceData2=reactive({list:[]})
 			let buyername=ref("")
@@ -465,7 +476,6 @@
 			const {statusFunc,countryFunc,currencyFunc,totalRowFunc}=myUtil();
 			function getDataParams(rows){
 				//隐藏字段
-				console.log('rows',rows.pointname)
 				if(rows.pointname=='Amazon.de'||rows.pointname=='Amazon.it'||rows.pointname=='Amazon.co.uk'||rows.pointname=='Amazon.fr'||rows.pointname=='Amazon.es'){
 					showVatField.value=true
 				}else{
@@ -568,7 +578,6 @@
 			}
 			function vatotalPriceAmount(){
 				if(productData.list){
-					console.log(productData)
 					var subtotals=0;var shippingfee=0;
 					var promotionaldiscount=0;var vattotals=0;
 					var total=0;
@@ -598,7 +607,6 @@
 				if(row.marketname=="英国" || row.marketname=="法国" || row.marketname=="德国" || row.marketname=="西班牙" || row.marketname=="意大利"){
 					vathidden.value=" ";
 				}
-				console.log(row.value);
 				var rows=JSON.parse(JSON.stringify(row));
 				orderData.value=rows;
 				feedid.value="";
@@ -610,7 +618,11 @@
 					"groupid":orderData.value.groupid
 				}).then(function(res){
 					if(res.data){
-						invoiceData1.value=res.data.data1;
+						if(res.data.data1){
+						   invoiceData1.value=res.data.data1;
+						}else{
+							invoiceData1.value=invoiceModel;
+						}
 						invoiceData2.list=res.data.data2;
 						vatNo.value=res.data.vatNo;
 						if(vattype.value!="Vat"){

@@ -8,12 +8,11 @@
   >
      <el-tabs
        v-model="activeName"
-       type="card"
        tab-position="right" 
-       @tab-click="handleClick"
      >
-       <el-tab-pane v-for="market in countryOptions" :label="market.name" :name="market.market">
-		   <div v-if="tableData.country&&tableData.country[market.market]&&tableData.country[market.market].productTier">
+	 <div v-for="market in countryOptions"  > 
+       <el-tab-pane  v-if="tableData.country&&tableData.country[market.market]&&tableData.country[market.market].productTier&&tableData.country[market.market].sellingPrice" :label="market.name" :name="market.market" >
+		   <div  >
 			   <el-table :data="loadData(tableData.country[market.market])" size="small"  v-loading="loading"     show-summary>
 					  <el-table-column label="序号"  width="50" type="index" />
 					  <el-table-column label="费用项">
@@ -31,28 +30,38 @@
 					  </template>
 					  </el-table-column>
 			   </el-table>
+			   <span v-if="tableData.country&&tableData.country[market.market]&&tableData.country[market.market].productTier">
+			   <el-link :href="countryFee[market.market]" v-if="market.market=='US'&&tableData.country[market.market].outboundWeight<1">
+			      Product Tier:  {{tableData.country[market.market].productTier}} {{tableData.country[market.market].outboundWeight*16}} oz</el-link>
+			   <el-link  :href="countryFee[market.market]" v-else-if="market.market=='US'">
+			     Product Tier:  {{tableData.country[market.market].productTier}} {{tableData.country[market.market].outboundWeight}} lb</el-link>
+			   <el-link  :href="countryFee[market.market]" v-else>
+			   	 Product Tier:  {{tableData.country[market.market].productTier}}</el-link>  
+			   	</span>
 		   </div>
 	   </el-tab-pane>
-        
+        </div>
      </el-tabs>
   </el-drawer>
   </template>
 <script setup>
-	 import {ref,reactive,defineProps,toRefs,onMounted, defineEmits,defineExpose}from"vue"
+	 import {ref,reactive,toRefs,onMounted,watch, defineEmits}from"vue"
 	 import countryFee from '@/model/amazon/profit/countryFee.json';
 	 import {formatFloat} from '@/utils/index';
 	let drawer = ref(false)
-	let activeName =ref("US")
+	let activeName =ref("")
 	let props = defineProps({
 	   tableData:{country:[{currency:"",resultList:[{}]}]},
 	   countryOptions:[],
 	})
 	const state=reactive({
-	    activeCard:[1],
+	    activeCard:[0],
 	})
+
 	defineExpose({
 	  drawer
 	})
+ 
 	 function loadData(datas){
 	 	var data={};
 	 			var arrs=[];
@@ -66,6 +75,9 @@
 	 			if(datas.country=='IN'){
 	 				row5_1={"name":"固定结算费","enname":"Fixed Closing Fee","cost":formatFloat(datas.closingFee),"prefix":datas.currency,"suffix":""};
 	 			}
+				if(activeName.value==''){
+					activeName.value=datas.country;
+				}
 	 			var row5_2={};
 	 			if(datas.country=='IN' || datas.country=='CA'){
 	 				row5_2={"name":"FBA GST/HST 税率","enname":"FBA GST/HST Taxes","cost":formatFloat(datas.fbaTaxFee),"prefix":"","suffix":""};
@@ -94,13 +106,13 @@
 	 			var row15={"name":"按件收费，适用个人版","enname":"Per-Item Fee","cost":formatFloat(datas.perItemFee) ,"prefix":datas.currency,"suffix":""};
 	 			var row15_1={};
 	 			if(datas.country=='UK' || datas.country=='DE' || datas.country=='IT' || datas.country=='ES'|| datas.country=='FR'|| datas.country=='NL'){
-	 				row15_1={"name":"欧洲增值税","enname":"Vat Tax Fee","cost":formatFloat(datas.vatFee),"prefix":"","suffix":"%"};
+	 				row15_1={"name":"欧洲增值税","enname":"Vat Tax Fee","cost":formatFloat(datas.vatFee),"prefix":"","suffix":""};
 	 			}
 	 			var row15_2={};
 	 			var row15_3={};
 	 			if(datas.country=='IN'){
-	 				row15_2={"name":"销售GST税率","enname":"Selling GST Tax","cost":formatFloat(datas.selling_GST) ,"prefix":"","suffix":"%"};
-	 				row15_3={"name":"企业所得税率","enname":"Corporate Income Tax","cost":formatFloat(datas.corporateInFee) ,"prefix":"","suffix":"%"};
+	 				row15_2={"name":"销售GST税率","enname":"Selling GST Tax","cost":formatFloat(datas.selling_GST) ,"prefix":"","suffix":""};
+	 				row15_3={"name":"企业所得税率","enname":"Corporate Income Tax","cost":formatFloat(datas.corporateInFee) ,"prefix":"","suffix":""};
 	 			}
 	 			arrs.push(row1);arrs.push(row2);arrs.push(row3);arrs.push(row4);arrs.push(row5);
 	 			if(row5_1 && row5_1.name){

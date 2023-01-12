@@ -3,7 +3,7 @@
 		 <el-scrollbar height="calc(100vh)" >
 			 <div class="aside-flex" style="height:calc(100vh)">
 			 <div>
-			 <div class="logo">
+			 <div class="logo pointer" @click="goHome">
 			 <el-image 
 			   :src="require('@/assets/image/common/color-logo.png')"
 			 ></el-image>
@@ -13,8 +13,17 @@
 		           class="el-menu-vertical"
 		           :default-openeds="[1]">
 		         <!--主菜单-->  
-		       <el-menu-item  @mouseleave="laveMenu"   @mouseenter="changeMenu(item.id,index)" @click="changeDrawer(item)" v-for="(item,index) in menuData.list" :key="item.id" :index='index+""' >
-		           <icon-park :type="item.iconName" theme="outline" size="18" :strokeWidth="3"/>
+		       <el-menu-item  
+			       @mouseleave="laveMenu"   
+			       @mouseenter="changeMenu(item.id,index)" 
+				   @click="changeDrawer(item)" 
+				   v-for="(item,index) in menuData.list" 
+				   :key="item.id" :index='index+""' >
+		                     <icon-park 
+							    :type="item.iconName" 
+				                 theme="outline" 
+							     size="18" 
+							    :strokeWidth="3"/>
 		           <span>{{item.name}}</span>
 		       </el-menu-item>
 		      
@@ -30,7 +39,8 @@
 		  <el-scrollbar height="calc(100vh - 80px)" >   
             <div v-show='submenu.isShow' v-for="submenu in submenus.list" :key="submenu.id">
                  <div class="item" v-for="subgroup in submenu.menugroup" :key="subgroup.id" style="margin-bottom:20px;">
-                     <div v-for='sub in subgroup.namegroup' :key='sub.id'>
+                   <!--  <span class="font-extraSmall">{{subgroup.name}}</span> -->
+					 <div v-for='sub in subgroup.namegroup' :key='sub.id'>
 					 <a class="text" v-if="((sub.isout))" :href="sub.path" target="_blank">
 						 {{sub.name}}
 					 </a>	 
@@ -95,6 +105,11 @@ export default defineComponent({
 				}
 			}
         //方法
+		 function goHome(){
+			 router.push({ 'path':'/home',
+			 			   'query': '/home' });
+						   drawer.value = false
+		 }
          function changeMenu(id,currentIndex){
             timer =setTimeout(()=>{
 			 submenus.list.forEach(submenu => {
@@ -146,6 +161,7 @@ export default defineComponent({
 		   activeIndex,
            submenus,
            drawer,
+		   goHome,
     }
   },
 
@@ -175,6 +191,9 @@ export default defineComponent({
 #menubar{
 width:64px;
 background:var( --el-bg-color);
+}
+#menubar {
+	z-index:1999;
 }
 .el-menu{
     background-color: var(--el-bg-color);

@@ -32,7 +32,7 @@
 							<div class='item-list-from'>
 								<div class="label">货件状态</div>
 								<div class="value">
-									<el-tag v-if="shipmentInfo.status">{{statusFunc(shipmentInfo.status)}}</el-tag>
+									 <el-tag :type="tranStatusType(shipment)" v-if="shipment.status">{{tranStatus(shipment)}}</el-tag>
 								</div>
 							</div>
 							<div class='item-list-from'>
@@ -59,21 +59,25 @@
 							</div>
 							<div class="ship-dea-data">
 								<div class="ship-text">{{weighttxt}}</div>
-								<div class="ship-num">{{weightvalue}}</div>
+								<div class="ship-num" v-if="weightvalue">{{weightvalue}}</div>
+								<div class="ship-num" v-else>无</div>
 							</div>
 							<div class="ship-dea-data">
 								<div class="ship-text">体积(立方)</div>
-								<div class="ship-num">{{volume}}</div>
+								<div class="ship-num" v-if="volume">{{volume}}</div>
+								<div class="ship-num" v-else>无</div>
 							</div>
 						</el-space>
 						<el-space :size="32">
 							<div class="ship-dea-data">
 								<div class="ship-text">亚马逊运输方式</div>
-								<div class="ship-num">{{shiptype}}</div>
+								<div class="ship-num" v-if="shiptype">{{shiptype}}</div>
+								<div class="ship-num" v-else>无</div>
 							</div>
 							<div class="ship-dea-data">
 								<div class="ship-text">装箱箱数</div>
-								<div class="ship-num">{{boxnum}}</div>
+								<div class="ship-num" v-if="boxnum">{{boxnum}}</div>
+								<div class="ship-num" v-else>无</div>
 							</div>
 							<div class="ship-dea-data">
 								<div class="ship-text ">总货值</div>
@@ -94,16 +98,16 @@
 						</div>
 						<el-timeline >
 						    <el-timeline-item  :hollow="true"  timestamp="发货地址" >
-								<p>{{getValue(fromAddress.name)}}</p>
-								<p>{{getValue(fromAddress.addressline1)}},{{getValue(fromAddress.addressline2)}}</p>
-								<p>{{getValue(fromAddress.city)}},{{getValue(fromAddress.stateorprovincecode)}}</p>
-								<p>{{getValue(fromAddress.countrycode)}},{{getValue(fromAddress.postalcode)}}</p>
+								<p>{{fromAddress.name}}</p>
+								<p>{{fromAddress.addressline1}}{{getValue(fromAddress.addressline2)}}</p>
+								<p>{{fromAddress.city}}{{getValue(fromAddress.stateorprovincecode)}}{{getValue(fromAddress.postalcode)}}</p>
+								<p>{{fromAddress.countrycode}}</p>
 						    </el-timeline-item>
 							<el-timeline-item :hollow="true"   timestamp="收货地址" >
-								 <p>{{getValue(toAddress.name)}}</p>
-								 <p>{{getValue(toAddress.addressline1)}},{{getValue(toAddress.addressline2)}}</p>
-								 <p>{{getValue(toAddress.city)}},{{getValue(toAddress.stateorprovincecode)}}</p>
-								 <p>{{getValue(toAddress.countrycode)}},{{getValue(toAddress.postalcode)}},({{getValue(shipment.destinationfulfillmentcenterid)}})</p>
+								 <p>{{toAddress.name}}</p>
+								 <p>{{toAddress.addressline1}}{{getValue(toAddress.addressline2)}}</p>
+								 <p>{{toAddress.city}}{{getValue(toAddress.stateorprovincecode)}}{{getValue(toAddress.postalcode)}}</p>
+								 <p>{{toAddress.countrycode}}-({{shipment.destinationfulfillmentcenterid}})</p>
 							</el-timeline-item>
 						  </el-timeline>
 					</div>
@@ -118,6 +122,7 @@
 	import { ref,reactive,onMounted } from 'vue';
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
 	import { useRoute,useRouter } from 'vue-router'
+	import {tranStatus,tranStatusType} from "@/hooks/erp/shipment/shipment_status.js"
 	
 	export default{
 		name:'Shipment_info',
@@ -148,38 +153,13 @@
 					return val
 				}
 			}
-			function statusFunc(value){
-				if(value=="-1"){
-					return "已驳回";
-				}
-				if(value=="1"){
-					return "待审核";
-				}
-				if(value=="2"){
-					return "配货（已确认货件）";
-				}
-				if(value=="3"){
-					return "装箱";
-				}
-				if(value=="4"){
-					return "物流信息确认";
-				}
-				if(value=="5"){
-					return "已发货";
-				}
-				if(value=="6"){
-					return "已完成";
-				}
-				if(value=="0"){
-					return "取消货件";
-				}
-			}
+		 
 			function getValue(value){
 				if(value==null||value==""||typeof(value)=="undefined"||(typeof(value) === "number" && isNaN(value))){
-					return "--";
+					return "";
 				}
 				else {
-				  return value;
+				  return ","+value;
 				}
 			}
 			function getBaseInfo(){
@@ -189,9 +169,9 @@
 					if(res.data){
 						var data=res.data;
 						shipment.value=data.shipment;
-						volume.value=getValue(data.totalBoxSize);
-						shiptype.value=getValue(data.shipment.transtyle);
-						boxnum.value=getValue(data.shipment.boxnum);
+						volume.value=data.totalBoxSize;
+						shiptype.value=data.shipment.transtyle;
+						boxnum.value=data.shipment.boxnum;
 						totalprice.value="￥"+getValue(parseFloat(data.detail.itemprice));
 						if(data["fromAddress"]){
 							fromAddress.value=data["fromAddress"];
@@ -227,8 +207,8 @@
 			}
 			
 			return{
-				shipmentInfo,noDatatran,statusFunc,getBaseInfo,weighttxt,weightvalue,getValue,volume,shiptype,boxnum,totalprice,
-				totalfee,fromAddress,toAddress,shipment
+				shipmentInfo,noDatatran,getBaseInfo,weighttxt,weightvalue,getValue,volume,shiptype,boxnum,totalprice,
+				totalfee,fromAddress,toAddress,shipment,tranStatus,tranStatusType
 				
 			}
 		}

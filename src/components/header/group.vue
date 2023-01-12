@@ -4,11 +4,11 @@
 	        <el-option  v-for="item in groupList"   :key="item.id"  :label="item.name" :value="item.id"   >
 	        </el-option>
 	  </el-select>
+	  </el-space> 
 	  <el-select   v-model="marketplaceid"    placeholder="全部国家" @change="marketChange">
 	        <el-option  v-for="item in marketList"   :key="item.marketplaceid"  :label="item.name" :value="item.marketplaceid"   >
 	        </el-option>
 	  </el-select>
-	  </el-space> 
 </template>
 
 <script>
@@ -35,7 +35,7 @@
 			function getGroupData(){
 				groupApi.getAmazonGroup().then((res)=>{
 					 if(props.defaultValue!="only"){
-						 res.data.push({"id":"","name":"全部"})
+						 res.data.push({"id":"","name":"全部店铺"})
 					 }
 					groupList.value=res.data;
 					if(res.data&&res.data.length>0){
@@ -54,8 +54,27 @@
 					if(props.isproduct=='ok'){
 						res.data.push({"id":"IEU","name":"欧洲(不含UK)","marketplaceid":"IEU"})
 					}
+					if(props.defaultValue=="onlyEU"){
+						 var hasEu=false;
+						if(res.data&&res.data.length>1){
+								var list=[]
+							 for(var i=0;i<res.data.length;i++){
+								 if(res.data[i].region=='EU'){
+									 res.data.splice(i,1);
+									 hasEu=true;
+								 }else{
+									 list.push(res.data[i]);
+								 }
+							 }
+							 if(hasEu){
+								list.push({"id":"EU","name":"欧洲(不含UK)","marketplaceid":"EU"}); 
+							 }
+							res.data=list;
+						}
+					
+					} 
 					if(props.defaultValue!="only"){
-						res.data.push({"id":"","name":"全部","marketplaceid":""})
+						res.data.push({"id":"","name":"全部国家","marketplaceid":""})
 					}
 					marketList.value=res.data;
 					if(res.data&&res.data.length>0){

@@ -1,13 +1,12 @@
 <template>
 	<h3 id="purchase" class="tab-scroll">采购信息</h3>
-	<el-form-item label="采购员">
-		<el-select class="in-wi-24" v-model="form.brand" placeholder="采购员">
-				<el-option label="Zone one" value="shanghai" />
-				<el-option label="Zone two" value="beijing" />
+	<!-- <el-form-item label="采购员">
+		<el-select class="in-wi-24" v-model="dataForms.buyer" placeholder="采购员">
+				<el-option v-for="(item,index) in buyerList" :label="item.name" :value="item.id" />
 		</el-select>
-	</el-form-item>
+	</el-form-item> -->
 	<el-form-item label="供应商" class="grid-row">
-		<el-table border :data="cusTableData" >
+		<el-table border :data="dataForms" >
 			<el-table-column width="50" type="index">
 						 <template #header >
 							   <el-link :underline="false" type="primary" @click="addSupplier">
@@ -18,7 +17,7 @@
 			<el-table-column label="供应商名称" width="240">
 				<template #default="scope">
 					<el-space :size="0">
-					<div @click="selectSupplier">	
+					<div @click="selectSupplier(scope.row)">	
 					<el-input v-model="scope.row.name" placeholder="选择供应商" ></el-input>
 					</div>
 					<el-button type="primary"  link  @click="jumpsupplier">
@@ -32,7 +31,7 @@
 			<el-table-column label="首选" width="80">
 				<template #default="scope">
 					<el-switch
-					    v-model="scope.row.check"
+					    v-model="scope.row.isdefault"
 					    inline-prompt
 					    active-text="是"
 					    inactive-text="否"
@@ -41,39 +40,47 @@
 			</el-table-column>
 			<el-table-column label="供货周期" width="160">
 				<template #default="scope">
-					<el-input  placeholder="默认为0">
+					<el-input v-model.number="scope.row.deliverycycle"  placeholder="默认为0">
 						  <template #append>天</template>
 					</el-input>
 				</template>
 			</el-table-column>
 			<el-table-column label="采购阶梯价" width="300" >
 				<template #default="scope">
-					<div class="position-edit" @click="editPrice">
+					<div class="position-edit" @click="editPrice(scope.row)">
 					 <el-icon class="ic-cen"><Edit /></el-icon>	
-					<el-table :data="priceTableData" class="small-tab" border size="small">
+					<el-table :data="scope.row.stepList" class="small-tab" border size="small">
 						<el-table-column label="采购量">
 							<template #default="scope">
-								<span>{{scope.row.starnum}}</span>-{{scope.row.endnum}}
+								<span>{{scope.row.amount}}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="币种" prop="currenty"/>
+						<el-table-column label="币种" prop="currency">
+							<template #default="scope">
+								RMB
+							</template>
+						</el-table-column>
 						<el-table-column label="采购单价" prop="price"/>
 					</el-table>
 					</div>
 				</template>
 			</el-table-column>
+			<el-table-column label="其它成本" width="100">
+				<template #default="scope">
+					<el-input v-model="scope.row.otherCost"   type="text"  ></el-input>
+				</template>
+			</el-table-column>
+			<el-table-column label="供应商代码" width="120">
+				<template #default="scope">
+					<el-input v-model="scope.row.productCode"   type="text"  ></el-input>
+				</template>
+			</el-table-column>
 			<el-table-column label="采购链接" width="120">
 				<template #default="scope">
-					<el-input    type="textarea" :rows="4"></el-input>
+					<el-input v-model="scope.row.purchaseUrl"   type="textarea" :rows="4"></el-input>
 				</template>
 			</el-table-column>
-			<el-table-column label="税率" width="170">
-				<template #default="scope">
-					<el-input v-model="scope.row.tax"  placeholder="为空不含税">
-						  <template #append>%</template>
-					</el-input>
-				</template>
-			</el-table-column>
+			
 			<el-table-column label="不良率" width="150">
 				<template #default="scope">
 					<el-input v-model="scope.row.badrate"  placeholder="不良率">
@@ -91,89 +98,107 @@
 			</el-table-column>
 		</el-table>
 	</el-form-item>
-	<SupplierDialog ref='supDiaRef'/>
+	<SupplierDialog ref='supDiaRef' @getdata="getSupplierRows" />
 	<!-- 采购价编辑弹窗 -->
 	<PriceDialog ref ="priDiaRef" @getprice="getprice"/>
 </template>
 
-<script>
+<script setup>
 	import {ArrowDown,Edit} from '@element-plus/icons-vue'
 	import {Plus,Minus} from '@icon-park/vue-next';
-	import { ref,reactive,onMounted,watch } from 'vue'
+	import { ElMessage } from 'element-plus'
+	import { ref,reactive,onMounted,watch,defineProps,toRefs } from 'vue'
 	import SupplierDialog from "@/views/erp/baseinfo/supplier/supplier_dialog"
 	import PriceDialog from"./purchase_price_dialog"
-	import {useRouter } from 'vue-router'
-	export default{
-		components: {
-			Plus,Edit,Minus,
-			SupplierDialog,PriceDialog,
-		},
-		setup(){
-			let router = useRouter();
-			let supDiaRef =ref()
-			let priDiaRef =ref()
-			let priceTableData =ref()
-			let form = {
-				name:'',
-				brand:'',
-				type:"",
-				person:'',
+	import {useRouter } from 'vue-router';
+	let router = useRouter();
+	const supDiaRef =ref()
+	const priDiaRef =ref()
+	onMounted(()=>{
+		 
+	})
+	let props = defineProps({
+	  dataForms:Object
+	})
+	let state=reactive({
+		nowRows:{},
+	});
+	 let {dataForms} =toRefs(props);
+	 let { nowRows } =toRefs(state);
+	 
+	// let cusTableData =reactive([
+	// 	{
+	// 	 name:"义乌市烈火包装制品有限公司",
+	// 	 currency:["CNY","USD"],
+	// 	 price:"",
+	// 	 check:true,
+	// 	},
+	// ])
+	function jumpsupplier(){
+		router.push({
+			path:"/erp/baseinfo/supplier",
+			query:{
+				title:'供应商',
+				path:'/erp/baseinfo/supplier',
 			}
-			let cusTableData =reactive([
-				{
-				 name:"义乌市烈火包装制品有限公司",
-				 currency:["CNY","USD"],
-				 price:"",
-				 check:true,
-				},
-			])
-			function jumpsupplier(){
-				router.push({
-					path:"/erp/baseinfo/supplier",
-					query:{
-						title:'供应商',
-						path:'/erp/baseinfo/supplier',
-					}
-				})
-			}
-			function selectSupplier(){
-				supDiaRef.value.suplierVisible = true
-			}
-			function addSupplier(){
-				cusTableData.push({
-					name:"义乌市烈火包装制品有限公司",
-					currency:["CNY","USD"],
-					price:"",
-					check:false,
-				})
-			}
-			function editPrice(){
-				priDiaRef.value.priceVisable =true
-			}
-			function getprice(data){
-				priceTableData.value =data
-			}
-			function removeSupplier(index){
-				cusTableData.splice(index,1)
-			}
-			return{
-				priDiaRef,
-				editPrice,
-				supDiaRef,
-				form,
-				cusTableData,
-				selectSupplier,
-				jumpsupplier,
-				getprice,
-				priceTableData,
-				addSupplier,
-				removeSupplier,
-			}
+		})
+	}
+	function selectSupplier(row){
+		state.nowRows=row;
+		supDiaRef.value.show();
+	}
+	function addSupplier(){
+		var row={};
+		row.isdefault=false;
+		row.stepList=[];
+		row.name='';
+		props.dataForms.push(row);
+		// cusTableData.push({
+		// 	name:"义乌市烈火包装制品有限公司",
+		// 	currency:["CNY","USD"],
+		// 	price:"",
+		// 	check:false,
+		// })
+	}
+	function editPrice(row){
+		priDiaRef.value.priceVisable =true;
+		state.nowRows=row;
+		if(row.stepList && row.stepList.length>0){
+			//不做处理
+		}else{
+			row.stepList=[{
+				amount:'',
+				currency:'0',
+				price:'',
+			}];
 		}
-		}
+		priDiaRef.value.tableData=row.stepList;
+	}
+	function getprice(data){
+		state.nowRows.stepList=data;
+	}
+	function removeSupplier(index){
+		props.dataForms.splice(index,1);
+	}
+	function getSupplierRows(rows){
+		 var name=rows[0].name;
+		 var ispush=true;
+		 props.dataForms.forEach(function(item){
+			 if(name==item.name){
+				 ispush=false;
+			 }
+		 });
+		 if(ispush==true){
+			state.nowRows.name=rows[0].name;
+			state.nowRows.supplierid=rows[0].id; 
+		 }else{
+			 ElMessage.error('已有重复的供应商！')
+		 }
+		
+	}
 </script>
 
-<style>
+<style scoped>
 	.position-edit{
 		position: relative;
 		border: 1px dashed #a4d8ff;

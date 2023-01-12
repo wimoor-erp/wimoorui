@@ -1,112 +1,221 @@
 <template>
-	  <el-table :data="tableData.records" v-loading="loading" :default-sort="defaultSort"
+	  <el-table v-if="tableData"
+	    :data="tableData.records" 
+		:id="uuid"
+		ref="globalTableRef"
+	    v-loading="loading" 
+		:default-sort="defaultSort"
 	    :stripe="stripe" 
 		:border="border"
 		:height="height"
 		:show-summary="showSummary"
 		:summary-method="summaryMethod"
+	    :row-class-name="rowClassName"
+		@row-click="rowClick"
+		:row-key="rowKey"
 	    @sort-change="tableSort" 
+		@expand-change="expandChange"
 		@selection-change='selectChange'  
 	     style="width: 100%;margin-bottom:16px;">
 		  <slot  name="field"></slot>
 	  </el-table>
 	  
-	  <el-pagination background v-if="inDialog"  layout="total, sizes, prev, next, jumper"   :total="tableData.total"
+	  <el-table v-else
+	         :id="uuid"
+	         :data="mTableData.records" 
+	  		 ref="globalTableRef"
+	         v-loading="loading" 
+	  		:default-sort="defaultSort"
+	        :stripe="stripe" 
+	  		:border="border"
+	  		:height="height"
+	  		:show-summary="showSummary"
+	  		:summary-method="summaryMethod"
+			:row-key="rowKey"
+			:row-class-name="rowClassName"
+			@row-click="rowClick"
+	        @sort-change="tableSort" 
+			@expand-change="expandChange"
+	  		@selection-change='selectChange'  
+	         style="width: 100%;margin-bottom:16px;">
+	  		<slot  name="field"></slot>
+	  </el-table>
+	  <el-pagination background v-if="inDialog&&tableData"  layout="total, sizes, prev, next, jumper"   :total="tableData.total"
 	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
 	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
 	  </el-pagination>
-	  <el-pagination background v-else  layout="total, sizes, prev, pager, next, jumper"   :total="tableData.total"
+	  <el-pagination background v-else-if="tableData"  layout="total, sizes, prev, pager, next, jumper"   :total="tableData.total"
+	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
+	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
+	  </el-pagination>
+	  <el-pagination background v-else-if="inDialog"   layout="total, sizes, prev, next, jumper"   :total="mTableData.total"
+	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
+	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
+	  </el-pagination>
+	  <el-pagination background v-else  layout="total, sizes, prev, pager, next, jumper"   :total="mTableData.total"
 	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
 	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
 	  </el-pagination>
 </template>
-<script>
-  import {vue,reactive,ref,watch,onMounted} from "vue";
+<script setup>
+  import { reactive,ref,watch,onMounted,toRefs,nextTick} from "vue";
   import { ElMessage,ElLoading } from 'element-plus';
-  export default{
-	  name:'GlobalTable',
-	  components:{},
-	  props:["tableData","inDialog","defaultSort","stripe","border","height","showSummary","summaryMethod"],
-	  emits:["loadTable","selectionChange"],
-  	  setup(prop,context){
-		let pagesize =ref(10);
-		let currentPage =ref(1);
-		let loading =ref(false);
-		let params=reactive({pagesize:10,currentpage:1});
+  import { useRoute,useRouter } from 'vue-router'
+  import {tableHeaderFloat,screenToTop} from '@/utils/jquery/table/float-header';
+  import {guid} from '@/utils/index';
+  	let props = defineProps({
+  	 	                       tableData:{records:[],total:""},
+							   queryParams:{},
+		                       inDialog:"",
+							   inTable:"",
+							   defaultSort:{}, 
+							   stripe:"",
+							   border:"",
+							   size:"",
+							   height:undefined,
+							   showSummary:"",
+							   summaryMethod:"",
+							   rowKey:undefined,
+							   rowClassName:undefined,
+  	                       });
+	const { tableData,inDialog,inTable,defaultSort,size,queryParams,
+	        stripe,border,height,showSummary,summaryMethod,rowKey,rowClassName} = toRefs(props);
+	const emit = defineEmits(['loadTable',"selectionChange","row-click","expandChange"]);
+	let globalTableRef=ref();
+	const state = reactive({
+					  pagesize:10  ,
+					  currentPage: 1 ,
+					  mTableData:{records:[],total:""},
+					  mQueryParams: {pagesize:10,currentpage:1} ,
+					  loading: false ,
+					  uuid:guid(),
+					});
+	const {
+	  uuid,
+	  pagesize,
+	  currentPage,
+	  mTableData,
+	  mQueryParams,
+	  loading,
+	} = toRefs(state);
+	 let route = useRoute();
   		function handleSizeChange(size){
-			pagesize.value=size;
-			params.pagesize=size;
-			params.currentpage=1;
-			currentPage.value=1;
+			state.pagesize=size;
+			state.mQueryParams.pagesize=size;
+			state.mQueryParams.currentpage=1;
+			state.currentPage=1;
 			refreshTable();
   		}
-		if(prop.defaultSort){
-			params.sort=prop.defaultSort.prop;
-			params.order=prop.defaultSort.order=="ascending"?"asc":"desc";
-		}
-		const tableSort=function(option){
-			  params.sort=option.prop;
-			  params.order=option.order=="ascending"?"asc":"desc";
-			  params.currentpage=1;
-			  currentPage.value=1;
+ 
+	   function tableSort(option){
+			  state.mQueryParams.sort=option.prop;
+			  state.mQueryParams.order=option.order=="ascending"?"asc":"desc";
+			  state.mQueryParams.currentpage=1;
+			  state.currentPage=1;
 			  refreshTable();
 		}
   		function handleCurrentChange(page){
-			currentPage.value=page;
-			params.currentpage=page;
+			state.currentPage=page;
+			state.mQueryParams.currentpage=page;
 			refreshTable();
   		}
-		function refreshTable(){
-			 loading.value=true;
-			 params.loadType="refreshTable";
-			 context.emit("loadTable",params) ;
+		const callback =function(res){
+			     if(props.tableData){
+					 if(res&&res["records"]&&res["total"]){
+							   props.tableData.records=res.records;
+							   props.tableData.total=res.total;
+					 }else if(res&&res["data"]&&res["data"]["records"]&&res["data"]["total"]){
+							  props.tableData.records=res.data.records;
+							  props.tableData.total=res.data.total;
+					 }else{
+							  props.tableData.records=[];
+							  props.tableData.total=0; 
+					 }
+				 }else{
+					 if(res&&res["records"]&&res["total"]){
+							   state.mTableData.records=res.records;
+							   state.mTableData.total=res.total;
+					 }else if(res&&res["data"]&&res["data"]["records"]&&res["data"]["total"]){
+							  state.mTableData.records=res.data.records;
+							  state.mTableData.total=res.data.total;
+					 }else{
+							  state.mTableData.records=[];
+							  state.mTableData.total=0; 
+					 }
+				 }
+				 state.loading=false;
 		}
+		function refreshTable(){
+			 state.loading=true;
+			 state.mQueryParams.loadType="refreshTable";
+			 emit("loadTable", state.mQueryParams,callback) ;
+			 if(!props.height){
+			     screenToTop();
+			   }
+		}
+		
 		function loadTable(param){
-			 loading.value=true;
-			 params.currentpage=1;
-			 currentPage.value=1;
+			 state.loading=true;
+			 state.mQueryParams.currentpage=1;
+			 state.currentPage=1;
 			 if(param){
-			    params=Object.assign(params, param);
+			    state.mQueryParams=Object.assign(state.mQueryParams, param);
 			 }
-			 params.loadType="loadTable";
-			 context.emit("loadTable",params) ;
+			 state.mQueryParams.loadType="loadTable";
+			 emit("loadTable",state.mQueryParams,callback ) ;
+			 if(!props.height){
+			     screenToTop();
+			   }
+		
+		}
+		function toggleRowSelection(row, selected){
+			globalTableRef.value.toggleRowSelection(row,selected);
 		}
 		function selectChange(selection){
-			 context.emit("selectionChange",selection) ;
+			  emit("selectionChange",selection) ;
+			  emit("selection-change",selection) ;
+		}
+		function toggleRowExpansion(row){
+			globalTableRef.value.toggleRowExpansion(row);
+		}
+		function expandChange(row, expandedRows){
+			 emit("expandChange",row, expandedRows) ;
+		}
+		function rowClick(row, column, event){
+			  emit("row-click",row, column, event) ;
 		}
 		 onMounted(() => {
-			 if(prop.stripe==undefined){
-				 prop.stripe=true;
-			 }
-			 if(prop.border==undefined){
-			 	 prop.border=false;
-			 }
-			 if(prop.height==undefined){
-				 prop.height="calc(100vh - 220px)";
-			 }
-			 if(prop.inDialog){
+			 if(props.inDialog){
 		         refreshTable();
 			 }
-			 
+			 if(props.size){
+				 state.pagesize=props.size;
+				 state.mQueryParams.pagesize=props.size;
+			 }
+			 if(props.defaultSort){
+			 	state.mQueryParams.sort=props.defaultSort.prop;
+			 	state.mQueryParams.order=props.defaultSort.order=="ascending"?"asc":"desc";
+			 }
 		 })
-		 
-		 watch(prop.tableData,(val)=>{
-		 		  loading.value = false;
+		 defineExpose({ loadTable,toggleRowExpansion })
+		 watch(props.queryParams,(val)=>{
+			loadTable(props.queryParams);
+		 });
+		 watch(route,()=>{ 
+			  tableHeaderFloat(state.uuid);
 		 })
-  		return {
-			currentPage,
-			pagesize,
-  			handleSizeChange,
-			handleCurrentChange,
-			params,
-			loadTable,
-			loading,
-			tableSort,
-			selectChange,
-  		}
-  	}
-  }
+		 watch(props.tableData,(val)=>{
+		 		  state.loading = false;
+				  if(!props.height&&!props.inTable){
+					  tableHeaderFloat(state.uuid);
+		           }
+			});
 </script>
 
 <style>
+	.floathead{
+		position:fixed;
+		z-index:100;
+		top:34px;
+	}
 </style>

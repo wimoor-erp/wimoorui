@@ -131,37 +131,7 @@
 							</div>
 						</div>
 	</div>
-	<!-- 运输方式 -->
-	<el-dialog v-model="Tranvisable"   title="编辑运输方式">
-		<el-table border :data="transTypeList.list">
-			<el-table-column type="index" >
-				<template #header >
-				   <el-link :underline="false" type="primary" @click="addTransportName">
-				       <plus  class="ic-cen" theme="outline" size="24" :strokeWidth="3"/>
-				   </el-link>
-				</template>
-			</el-table-column>
-			<el-table-column label="运输方式">
-				<template #default="scope">
-				<el-input v-model="scope.row.name"></el-input>
-				</template>
-			</el-table-column>
-			<el-table-column label="操作">
-				<template #default="scope">
-					<el-link title="删除"  type="primary" :underline="false" @click="removeTransportName(scope.$index)">
-						 删除
-					</el-link>
-				</template>
-			</el-table-column>
-		</el-table>
-		<template #footer>
-		      <span class="dialog-footer">
-		        <el-button @click="Tranvisable = false">取消</el-button>
-		        <el-button type="primary" @click="submitTransType()"
-		          >保存</el-button >
-		      </span>
-		    </template>
-	</el-dialog>
+	<TransTypeDailog ref="transTypeDailogRef" @confirm="loadTransTypeAllList"></TransTypeDailog>
 	<!-- 渠道类型 -->
 	<el-dialog v-model="Channelvisable"   title="编辑渠道类型">
 		<el-table border :data="channelList.list">
@@ -202,15 +172,16 @@
 	import { ref,reactive,onMounted,watch,inject } from 'vue'
 	import transportationApi from '@/api/erp/ship/transportationApi';
 	import marketApi from '@/api/amazon/market/marketApi.js';
+	import TransTypeDailog from "./components/trans_type_dialog.vue";
 	import {ElMessage } from 'element-plus'
 	import { useRoute,useRouter } from 'vue-router'
 	export default{
 		components: {
-			Plus,Edit,Minus,Help
+			Plus,Edit,Minus,Help,TransTypeDailog
 		},
 		setup(){
-			let Tranvisable =ref(false)
 			let Channelvisable =ref(false)
+			let transTypeDailogRef=ref();
 			let apiList =reactive({list:[]});
 			let marketList=reactive({list:[]});
 			let weightList=reactive({list:[
@@ -248,7 +219,6 @@
 				if(id){
 					transportationApi.showCompanyDetail({'id':id}).then((res)=>{
 						if(res&&res.data){
-							console.log(res);
 						   form.name=res.data.name;
 						   form.simplename=res.data.simplename;
 						   if(res.data.api){
@@ -269,9 +239,9 @@
 			emitter.emit("removeTab", 100);
 		};
 		 
-			function editModeoftransport(){
-				Tranvisable.value =true
-			}
+		function editModeoftransport(){
+			transTypeDailogRef.value.show();
+		}
 			function showTranInfo(id){
 				router.push({
 					path:'/transportation/details',
@@ -301,14 +271,8 @@
 			function removeTransportation(index){
 				tranTableData.list.splice(index,1)
 			}
-			function addTransportName(){
-				transTypeList.list.push({
-					label:'',
-				})
-			}
-			function removeTransportName(index){
-				transTypeList.list.splice(index,1)
-			}
+			
+			
 			
 			function editChannel(){
 				Channelvisable.value = true
@@ -337,11 +301,7 @@
 					transTypeAllList.list=res.data;
 				});
 			}
-			function loadTransTypeList(){
-				transportationApi.getTransType().then((res)=>{
-					transTypeList.list=res.data;
-				});
-			}
+	
 			function loadChannelAllList(){
 				transportationApi.channelList().then((res)=>{
 						channelAllList.list=res.data;
@@ -354,16 +314,7 @@
 						
 				});
 			}
-			function submitTransType(){
-				transportationApi.saveTransType(transTypeList.list).then((res)=>{
-					ElMessage({
-					   message: '已提交成功！',
-					   type: 'success'
-					 });
-					 loadTransTypeAllList();
-					 Tranvisable.value = false;
-				});
-			}
+			
 			function submitCompanyDetail(){
 				form.detaillist=tranTableData.list;
 				let invaild=false;
@@ -415,7 +366,6 @@
 			   loadMarketList();
 			   loadTransTypeAllList();
 			   loadChannelAllList();
-			   loadTransTypeList();
 			   showCompanyDetail();
 			});
 			return{
@@ -423,12 +373,11 @@
 				tranTableData,
 				addTransportation,
 				removeTransportation,
-				Tranvisable,editModeoftransport,
-				addTransportName,removeTransportName,
+				editModeoftransport,
 				Channelvisable,editChannel,addChannelName,removeChannelName,
-				apiList,marketList,weightList,transTypeAllList,channelAllList,transTypeList,channelList,
-				submitTransType,  submitCompanyDetail,
-				closeTab,
+				apiList,marketList,weightList,transTypeAllList,channelAllList,channelList,
+				submitCompanyDetail,
+				closeTab,transTypeDailogRef,loadTransTypeAllList,
 			}
 		}
 		}

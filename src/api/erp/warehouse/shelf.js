@@ -1,7 +1,7 @@
 import request from "@/utils/request";
- import axios from 'axios';
-function getWarehouseShelf() {
-  return request.get('/erp/api/v1/warehouse/shelf/list');
+function getWarehouseShelf(warehouseid) {
+	var data={'warehouseid':warehouseid};
+  return request.get('/erp/api/v1/warehouse/shelf/list',{params:data});
 }
 function saveWarehouseShelf(data) {
   return request.post('/erp/api/v1/warehouse/shelf/add',data); 

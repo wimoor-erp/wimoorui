@@ -283,7 +283,7 @@
 				}else{
 					ElMessage({
 					  message: '当前存在调价冻结！',
-					  type: 'success',
+					  type: 'error',
 					})
 				}
 			}
@@ -320,7 +320,6 @@
 				bussinessPrice.push(row);
 			}
 			function changeBusPrice(row){
-				console.log(row);
 				if(bussinesstype.value=="fixed"){
 					row.price=row.discount;
 				}else{

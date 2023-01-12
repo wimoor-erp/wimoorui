@@ -105,7 +105,7 @@
 <script setup>
 	import {Edit,Link} from '@element-plus/icons-vue';
 	import Datepicker from '@/components/header/datepicker.vue';
-	import {ref,reactive,defineProps,toRefs,onMounted}from"vue"
+	import {ref,reactive,toRefs,onMounted}from"vue"
 	import * as echarts from 'echarts'
 	let state=reactive({
 		remarkVisable:false,
@@ -139,7 +139,6 @@
 		}
 	}
 	function rate(val){
-		console.log(val)
 		if(val==''||val==undefined){
 			return "-"
 		}else{

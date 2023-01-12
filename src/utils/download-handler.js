@@ -13,7 +13,11 @@ function downloadSuccess(res,filename){
 	}
 }
 function downloadFail(res,filename){
-	ElMessage({  message: '导出失败！',   type: 'error', })
+	if(res.message){
+	  ElMessage({  message: '导出失败！'+res.message,   type: 'error', })
+	}else{
+	  ElMessage({  message: '导出失败！',   type: 'error', })
+	}
 }
 export default{
 	downloadSuccess,downloadFail

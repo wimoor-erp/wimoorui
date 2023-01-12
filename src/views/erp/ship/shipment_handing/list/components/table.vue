@@ -1,6 +1,6 @@
 <template>
 	<el-row>
-	  <GlobalTable ref="globalTable" :tableData="tableData"  @loadTable="loadtableData" height="calc(100vh - 270px)" style="width: 100%;margin-bottom:16px;">
+	  <GlobalTable ref="globalTable" :tableData="tableData"  @loadTable="loadtableData" :defaultSort="{ prop: 'createdate', order: 'descending' }" height="calc(100vh - 270px)" style="width: 100%;margin-bottom:16px;">
 	    <template #field>
 		   <el-table-column type="selection" width="38" />
 		   <el-table-column prop="orderNum" label="货件编码/货件名称" width='170'>
@@ -27,7 +27,7 @@
 		 </el-table-column>
 		  <el-table-column prop="createdate" label="创建日期" width="170"  sortable="custom">
 		  <template #default="scope">
-		       <span >{{dateFormat(scope.row.createdate)}}</span>
+		       <span >{{dateTimesFormat(scope.row.createdate)}}</span>
 			   <span v-if="scope.row.delayDays>0&&scope.row.status==5" style="padding-left:2px;">
 			   <el-tooltip  placement="top">
 			   					   <template #content>
@@ -36,13 +36,12 @@
 			       <el-icon  color="#F56C6C"><WarningFilled /></el-icon>
 			   </el-tooltip>
 			   </span>
-		  	  <p class="font-extraSmall" v-if="scope.row.status==5">预计上架日期:{{dateFormat(scope.row.arrivalTime)}}</p>
-			  <p class="font-extraSmall" v-if="scope.row.status==6">上架日期:
+			  <p class="font-extraSmall" v-if="scope.row.arrivalTime">到货日期:
 					  <el-tooltip  placement="top">
-										   <template #content>
-												 <div >预计上架日期:{{dateFormat(scope.row.arrivalTime)}}</div>
-											</template>
-						 <span>{{dateFormat(scope.row.status6date)}}</span>
+						   <template #content>
+								 <div >发货日期:{{dateFormat(scope.row.status5date)}}</div>
+							</template>
+						 <span>{{dateFormat(scope.row.arrivalTime)}}</span>
 					  </el-tooltip>
 			  </p>
 		    </template>
@@ -71,28 +70,30 @@
 			   <template #default="scope">
 				   <el-tooltip  placement="top">
 					   <template #content>
-					         <div v-if="scope.row.status0date">取消日期：{{dateFormat(scope.row.status0date)}}</div>
-							 <div v-if="scope.row.status1date">创建日期：{{dateFormat(scope.row.status1date)}}</div>
-							 <div v-if="scope.row.status2date">审核日期：{{dateFormat(scope.row.status2date)}}</div>
-							 <div v-if="scope.row.status3date">配货日期：{{dateFormat(scope.row.status3date)}}</div>
-							 <div v-if="scope.row.status4date">装箱日期：{{dateFormat(scope.row.status4date)}}</div>
-							 <div v-if="scope.row.status5date">发货日期：{{dateFormat(scope.row.status5date)}}</div>
-							 <div v-if="scope.row.receivedate">接收日期：{{dateFormat(scope.row.receivedate)}}</div>
-							 <div v-if="scope.row.status6date">结束日期：{{dateFormat(scope.row.status6date)}}</div>
+					         <div v-if="scope.row.status0date">取消日期：{{dateTimesFormat(scope.row.status0date)}}</div>
+							 <div v-if="scope.row.status1date">创建日期：{{dateTimesFormat(scope.row.status1date)}}</div>
+							 <div v-if="scope.row.status2date">审核日期：{{dateTimesFormat(scope.row.status2date)}}</div>
+							 <div v-if="scope.row.status3date">配货日期：{{dateTimesFormat(scope.row.status3date)}}</div>
+							 <div v-if="scope.row.status4date">装箱日期：{{dateTimesFormat(scope.row.status4date)}}</div>
+							 <div v-if="scope.row.status5date">发货日期：{{dateTimesFormat(scope.row.status5date)}}</div>
+							 <div v-if="scope.row.receivedate">接收日期：{{dateTimesFormat(scope.row.receivedate)}}</div>
+							 <div v-if="scope.row.status6date">结束日期：{{dateTimesFormat(scope.row.status6date)}}</div>
 					    </template>
 			            <el-tag :type="tranStatusType(scope.row)" v-if="scope.row.status">{{tranStatus(scope.row)}}</el-tag>
 				   </el-tooltip>
-				     <span v-if="scope.row.status==5" 
+				     <span v-if="(scope.row.status==5||scope.row.status==0)&&(scope.row.shipmentstatus!='状态异常')" 
 					 @click="refreshShipmentRec(scope.row.shipmentid)"
 					 style="padding-left:2px;cursor:pointer;color:#67C23A"> 
 					 <el-icon><Refresh /></el-icon>
 					 </span>
-					 <span v-if="scope.row.sumrec!=scope.row.sumshipped&&scope.row.status==6&&!scope.row.ignorerec"
+					 <span v-if="(scope.row.sumrec!=scope.row.sumshipped
+					             &&scope.row.status==6
+								 &&!scope.row.ignorerec)||(scope.row.shipmentstatus=='状态异常')"
 					 @click="refreshShipmentDialog(scope.row.shipmentid)"
 					 style="padding-left:2px;cursor:pointer;color:#F56C6C"> 
 					<el-icon><CircleClose /></el-icon>
 					 </span>
-				      <div v-if="scope.row.sumrec!='0'"><span class="font-extraSmall"> 已收货:</span>
+				      <div v-if="scope.row.status>=5"><span class="font-extraSmall"> 已收货:</span>
 				   			 <span class="font-extraSmall" v-if="scope.row.sumrec==scope.row.sumshipped||scope.row.ignorerec">{{scope.row.sumrec}}</span>
 				   			 <span style="color:#F56C6C" v-else>{{scope.row.sumrec}}</span>
 				   		 </div> 
@@ -120,7 +121,7 @@
 	  </template>
 	</el-dialog>
 	<TransInfoDailog ref="transInfoDailog"></TransInfoDailog>
-	<AsyncDailog ref="asyncDailog" @submit="loadTable"></AsyncDailog>
+	<AsyncDailog ref="asyncDailog" @change="loadTable"></AsyncDailog>
 </template>
 
 <script>
@@ -129,11 +130,12 @@
 	import shipmentApi from '@/api/amazon/inbound/shipmentApi.js';
 	import {ElMessage } from 'element-plus'
 	import { useRoute,useRouter } from 'vue-router'
-	import {format,dateFormat} from '@/utils/index';
+	import {format,dateFormat,dateTimesFormat} from '@/utils/index';
 	import GlobalTable from "@/components/Table/GlobalTable/index";
 	import {Refresh,CircleClose,WarningFilled} from '@element-plus/icons-vue'
 	import TransInfoDailog from "./transinfo"
 	import AsyncDailog from './asyncdailog.vue'
+	import {tranStatus,tranStatusType} from "@/hooks/erp/shipment/shipment_status.js"
 	export default{
 		name:'Table',
 		components:{
@@ -248,60 +250,13 @@
 					}
 				})
 			}
-			//货件状态
-			function tranStatusType(row){
-				let val = row.status
-				if(val==0){
-					return "danger"
-				}else if(val==1){
-					 return "warning"
-				}else if(val>=5){
-					let status=  row.shipmentstatus;
-					if(status=="已删除"||status=="已取消"){
-						return "danger";
-					}else if(val==6){
-						return "success"
-				    }else{
-						return "success"
-					}
-				}else if(val==2){
-					return "info"
-				}else if(val==4){
-					return "warning"
-				}else if(val==3){
-					return "info"
-				}
-			}
-			function tranStatus(row){
-				let val = row.status
-				if(val==0){
-					return "已取消"
-				}else if(val==1){
-					 return "待确认";
-				}else if(val>=5){
-					let status=  row.shipmentstatus;
-					if(status=="已删除"||status=="已取消"){
-						return "异常";
-					}else if(val==6){
-						return "已完成"
-				    }else{
-						return status;
-					}
-				}else if(val==2){
-					return "配货";
-				}else if(val==4){
-					return "物流"
-				}else if(val==3){
-					return "装箱"
-				}
-			}
 		 
 			return{
 				tableData,shipmentfollow,getshipmentData,dateFormat,globalTable,
 				tranStatus,orderStatus,parmashead,loadtableData,
 				tranStatusType,refreshShipmentRec,dialogVisible,refreshShipmentDialog,
 				ignoreShipmentWarn,showTransInfoDailog,transInfoDailog,toFormApprove,
-				showSyncDailog,asyncDailog,loadTable,
+				showSyncDailog,asyncDailog,loadTable,dateTimesFormat,
 			}
 		}
 	}

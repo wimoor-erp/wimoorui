@@ -223,7 +223,6 @@
 					})
 				}
 			function downloadExcel(){
-				console.log("test")
 				transportationApi.downloadList({'search':myparams.search,'mydate':mydate.value});
 				downloadVisiable.value = false
 			}

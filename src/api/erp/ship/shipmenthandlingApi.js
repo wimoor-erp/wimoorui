@@ -1,4 +1,5 @@
 import request from "@/utils/request";
+import downloadhandler from "@/utils/download-handler";
 function getShipment(shipmentid){ 
 	 return request.get('/amazon/api/v1/shipForm/info/'+shipmentid);
 }
@@ -38,7 +39,7 @@ function disableShipment(data){
 	return request.get('/erp/api/v1/shipForm/disableShipment',{params:data });
 }
 function amazondoneShipment(data){
-	return request.post('/erp/api/v1/shipForm/marketShipped',data);
+	return request.get('/erp/api/v1/shipForm/marketShipped',{params:data});
 }
 function validateShipment(data){
 	return request.get('/amazon/api/v1/shipForm/validateShipment',{params:data });
@@ -63,7 +64,14 @@ function downExcelBoxDetail(data){
 					method:'get'});
 }
 function downLabel(data){
-	return request.get('/amazon/api/v1/shipForm/getPkgLabelUrl',{params:data});
+	return request({url:"/amazon/api/v1/shipForm/getPkgLabelUrl",
+				    responseType:"blob",
+				    params:data,
+					method:'get'}).then(res => {
+						downloadhandler.downloadSuccess(res,"shipment.pdf");
+				}).catch(e=>{
+					    downloadhandler.downloadFail(e);
+				});;
 }
  
 function getShipAmazonInfo(data){
@@ -72,6 +80,9 @@ function getShipAmazonInfo(data){
 function saveSelfTrans(data){
 	return request.post('/amazon/api/v1/shipForm/saveSelfTrans',data);
 }
+function saveTransTrace(data){
+	return request.post('/amazon/api/v1/shipForm/saveTransTrace',data);
+}
 function getSelfTransHis(data){
 	return request.get('/amazon/api/v1/shipForm/getSelfTransHis',{params:data});
 }
@@ -79,7 +90,7 @@ function getConsumableList(data){
 	return request.get('/erp/api/v1/shipForm/getConsumableList',{params:data});
 }
 function saveInventoryConsumable(data){
-	return request.get('/erp/api/v1/shipForm/saveInventoryConsumable',{params:data});
+	return request.post('/erp/api/v1/shipForm/saveInventoryConsumable',data);
 }
 function getShipmentCustomsRecord(data){
 	return request.get('/erp/api/v1/shipForm/getShipmentCustomsRecord',{params:data});
@@ -99,17 +110,10 @@ function getUnSyncShipmentDetial(data){
 	return request.get('/erp/api/v1/shipForm/getUnSyncShipmentDetial',{params:data});
 }
 function saveShipmentItemAndPlanBath(data){
-	return request.get('/erp/api/v1/shipForm/saveShipmentItemAndPlanBath',{params:data});
+	return request.get('/amazon/api/v1/shipFormSync/saveShipmentItemAndPlanBath',{params:data});
 }
 
- 
-
-
-
-
-
-
-
+  
 
 export default{
 	getShipment,
@@ -138,4 +142,5 @@ export default{
 	deleteCustomsFile,
 	getUnSyncShipmentDetial,
 	saveShipmentItemAndPlanBath,
+	saveTransTrace,
 }

@@ -21,7 +21,6 @@
 				      <component :is="Component"
 				                 v-if="!$route.meta.keepAlive" />
 				  </router-view>
-				   
 			</el-main>
 	      </el-container>
 	    </el-container>

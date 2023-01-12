@@ -54,7 +54,7 @@ function downloadOrderList(data){
 									method:'get'}).then(res => {
 											downloadhandler.downloadSuccess(res,"ordersList.xlsx")
 									}).catch(e=>{
-											downloadhandler.downloadFail();
+											downloadhandler.downloadFail(e);
 									});
 }
 function downloadReturnlist(data){
@@ -64,7 +64,7 @@ function downloadReturnlist(data){
 									method:'get'}).then(res => {
 											downloadhandler.downloadSuccess(res,"ordersReturn.xlsx")
 									}).catch(e=>{
-											downloadhandler.downloadFail();
+											downloadhandler.downloadFail(e);
 									}); 
 }
 function downExcelTodayOrdersData(data){
@@ -74,7 +74,7 @@ function downExcelTodayOrdersData(data){
 									method:'post'}).then(res => {
 											downloadhandler.downloadSuccess(res,"salesToday.xlsx")
 									}).catch(e=>{
-											downloadhandler.downloadFail();
+											downloadhandler.downloadFail(e);
 									}); 
 }
 function todaylist(data){

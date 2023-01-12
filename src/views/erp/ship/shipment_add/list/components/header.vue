@@ -78,7 +78,7 @@
 	import {Search,ArrowDown,} from '@element-plus/icons-vue'
 	import {MenuUnfold,Plus,SettingTwo,Help,Copy,MoreOne} from '@icon-park/vue-next';
 	import { useRoute,useRouter } from 'vue-router'
-	 import { ref,reactive,onMounted,watch } from 'vue'
+	 import { ref,reactive,onMounted,watch,onBeforeRouteUpdate } from 'vue'
 	 import groupApi from '@/api/amazon/group/groupApi.js';
 	 import marketApi from '@/api/amazon/market/marketApi.js';
 	 import warehouseApi from '@/api/erp/warehouse/warehouseApi.js';
@@ -97,11 +97,15 @@
 			let moreSearchVisible=ref(false)
 			let color=ref("");
 			let isload=true;
-			onMounted(()=>{
-				
-			})
+		   watch(() =>router.currentRoute.value.query,(newValue,oldValue)=> {
+		         if(newValue&&newValue['refreshSF']){
+					 setTimeout(()=>{
+						 context.emit("getdata",queryParam);
+					 },100);
+				 }
+		         },{ immediate: true });
+				 
 			function addShipment(){
-				console.log(1123)
 				router.push({
 					path:'/invoice/addshipment',
 					query:{

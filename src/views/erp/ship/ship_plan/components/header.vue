@@ -2,61 +2,37 @@
 	<div class="sys-headr-top">
 		<el-space :size="16" class="font-base">
 			<div>
-			<span>发货店铺：</span>
-			<el-select></el-select>
+			<span >发货店铺：</span>
+			<GroupSelect @change="handleGroupChange" defaultValue="only"></GroupSelect>
 			</div>
 			<div>
 			<span>发货仓库：</span>
-			<el-select v-model="localinventoryChecked" filterable placeholder="请选择" >
-				<el-option
-				      v-for="item in localshipInventroys"
-				      :key="item.value"
-				      :label="item.label"
-				      :value="item.value"
-				    />
-			</el-select>
+			 <Warehouse  @change="handleWarehouseChange" defaultValue="only"></Warehouse>
 			</div>
-			<el-space class="font-extraSmall" :size="4">
-				<el-badge is-dot >
-				    <el-button @click="computedShipnum" title="计算可更新产品发货量">计算建议发货量</el-button>
-				  </el-badge>
-				<span> 更新时间:2022-02-23 09:06:29</span>
-				<el-divider direction="vertical" />
-				<span>操作人:钟春煌</span>
-			</el-space>	
 		</el-space>
 		<el-button @click="clearPlan">清空计划</el-button>
 	</div>
-	<div class="main-sty con-header">
+	<div class="main-sty con-header" style="padding-bottom: 0px;">
 		<el-row class="no-flex-warp">
 				<el-space>
-				<el-select v-model="FbaInventorysChecked" multiple clearable placeholder="全部FBA仓库">
-				      <el-option  v-for="item in FbaInventorysData"   :key="item.value"  :label="item.label" :value="item.value"   >
-				      </el-option>
-				</el-select>
-				<el-select v-model="proPerson"  placeholder="负责人" clearable>
-				      <el-option  v-for="item in PersonData"   :key="item.value"  :label="item.label" :value="item.value"   >
-				      </el-option>
-				</el-select>
-				<el-select v-model="proPerson"  placeholder="产品状态">
-				      <el-option  v-for="item in PersonData"   :key="item.value"  :label="item.label" :value="item.value"   >
-				      </el-option>
-				</el-select>
-				 <el-cascader :options="marks"  :props="markprops" placeholder="产品标签" clearable />
-				<el-input  v-model="searchKeywords" placeholder="请输入" class="input-with-select" >
+				   <Market ref="marketRef" @change="handleMarketChange"></Market>
+				   <Owner @owner="getOwner" />
+				   <Status @status="getStatus" />
+				   <Tags @change="getTags"/>
+				<el-input  v-model="queryParams.search" clearable @input="handleQuery"  @clear="handleQuery" placeholder="请输入" class="input-with-select" >
 				   <template #prepend>
-				     <el-select v-model="selectlabel" placeholder="SKU" style="width: 110px">
-				       <el-option label="SKU" value="1"></el-option>
-				       <el-option label="产品名称" value="2"></el-option>
-				       <el-option label="备注" value="3"></el-option>
-					   <el-option label="同级SKU" value="3"></el-option>
-					   <el-option label="ASIN" value="3"></el-option>
+				     <el-select v-model="queryParams.searchtype" placeholder="SKU" style="width: 110px">
+				       <el-option label="SKU" value="sku"></el-option>
+				       <el-option label="产品名称" value="name"></el-option>
+				       <el-option label="备注" value="remark"></el-option>
+					   <el-option label="同级SKU" value="samesku"></el-option>
+					   <el-option label="同级ASIN"  value="sameasin"></el-option>
 				     </el-select>
 				   </template>
 				   <template #append>
 				     <el-button >
 				        <el-icon style="font-size: 16px;align-itmes:center">
-				         <search />
+				         <search @click="handleQuery" />
 				      </el-icon>
 				     </el-button>
 				   </template>
@@ -67,20 +43,20 @@
 				 	<menu-unfold theme="outline" size="16"  :strokeWidth="3"/>
 				 	</el-button>
 				 	</template>
-				 	 <el-form :model="form" label-width="80px">
+				 	 <el-form   label-width="80px">
 				 		 <el-form-item label="类型">
-				 			 <el-radio-group v-model="form.type">
-				 			      <el-radio-button label="全部产品" />
-				 			      <el-radio-button label="普通产品" />
-				 				  <el-radio-button label="组合产品" />
+				 			   <el-radio-group v-model="queryParams.issfg">
+				 			      <el-radio-button label="" >全部产品</el-radio-button>
+				 			      <el-radio-button label="0" >普通产品</el-radio-button>
+				 				  <el-radio-button label="1" >组合产品</el-radio-button>
 				 			    </el-radio-group>
 				 			 </el-form-item>	
 				 		<el-form-item label="产品品类">
-				 		   <el-select :teleported="false"></el-select>
+				 		 <Category @change="getCategory"></Category>
 				 		</el-form-item>
-				 		<el-form-item label="SKU">
+				 		<el-form-item label="平台SKU">
 				 		  <el-input
-				 		      v-model="textarea"
+				 		      v-model="queryParams.skuarray"
 				 		      :rows="2"
 				 		      type="textarea"
 				 		      placeholder="逗号分隔批量搜索..."
@@ -89,34 +65,36 @@
 						 <el-form-item label="断货预警">
 							 <el-row gutter="8">
 								 <el-col :span="12">
-									 <el-select :teleported="false"></el-select>
-								 </el-col>
-								 <el-col :span="12">
-								 	<el-select :teleported="false"></el-select>
+								 	<el-select v-model="queryParams.shortdays" :teleported="false">
+										  <el-option label="不限" value=""></el-option>
+										   <el-option label="15天" value="15"></el-option>
+										   <el-option label="30天" value="30"></el-option>
+										   <el-option label="60天" value="60"></el-option>
+									</el-select>
 								 </el-col>
 							 </el-row>
 						 </el-form-item>
 						 <el-form-item label="是否轻小">
-						   <el-radio-group v-model="form.small">
-						       <el-radio :label="3">不限</el-radio>
-						       <el-radio :label="6">是</el-radio>
-						       <el-radio :label="9">否</el-radio>
+						   <el-radio-group v-model="queryParams.small">
+						       <el-radio label="">不限</el-radio>
+						       <el-radio label="true">是</el-radio>
+						       <el-radio label="false">否</el-radio>
 						     </el-radio-group>
 						 </el-form-item>
 						 <el-form-item label="附加费用">
-						   <el-radio-group v-model="form.extraprice">
-						       <el-radio :label="3">不限</el-radio>
-						       <el-radio :label="6">有</el-radio>
-						       <el-radio :label="9">无</el-radio>
+						   <el-radio-group v-model="queryParams.hasAddFee">
+						       <el-radio label="">不限</el-radio>
+						       <el-radio label="true">有</el-radio>
+						       <el-radio label="false">无</el-radio>
 						     </el-radio-group>
 						 </el-form-item>
 				 		 <el-form-item >
-				 			 <el-button type="primary" @click="submitForm(formRef)">搜索</el-button>
+				 			 <el-button type="primary" @click="handleQuery()">搜索</el-button>
 				 			 <el-button @click="resetForm(formRef)">取消</el-button>	
 				 		</el-form-item>
 				 		 </el-form>
 				 	  </el-popover>
-					  <el-button>重置</el-button>
+					  <el-button @click="resetQuery">重置</el-button>
 				</el-space>
 		</el-row>
 		<el-row>
@@ -125,19 +103,20 @@
 				  <plus theme="outline" size="18" fill="#fff" :strokeWidth="4"/>
 				  <span>发货</span>
 				</el-button>
-				<el-button @click="setFbaDeliveryDate">FBA发货参数</el-button>
-				<el-button @click="FbaShipRank">FBA站点配货优先级</el-button>
+				<el-button @click="showFbaDeliveryDialog">FBA发货配置</el-button>
+				<el-button @click="ShowShipMarketRank">FBA站点配货优先级</el-button>
+				<el-button @click="gotoSalePre" > 销售计划</el-button>
 				</el-space >
 					
 				<div class='rt-btn-group'>
 					<div class="flex-center font-small m-r-16">
-						<el-checkbox v-model="checked1" label="显示已选" size="large" />
+						<el-checkbox v-model="queryParams.selected" label="显示已选" size="large" @change="handleQuery"/>
 						<el-divider direction="vertical" />
-						<span>已选<span class="font-black"> 2 </span>个SKU</span>
+						<span>已选<span class="font-black"> {{summary.skunum}} </span>个SKU</span>
 						<el-divider direction="vertical" />
-						<span>发货总数<span class="font-black"> 200</span></span>
+						<span>发货总数<span class="font-black"> {{summary.amount}}</span></span>
 					</div>
-					<el-space >
+					<el-space v-if="queryParams.marketplaceid" >
 					<el-dropdown :hide-on-click="false" @command="handleCommand"  trigger="click">
 					    <el-button class='ic-btn'  title='排序'>
 					       <sort-one theme="outline" size="16"  :strokeWidth="3"/>
@@ -146,11 +125,11 @@
 					      <el-dropdown-menu >
 							<el-dropdown-item disabled>排序依据</el-dropdown-item>
 					        <el-dropdown-item v-for="(item,index) in rankData"  @click="rankChange(item.value)"
-							 :class="{r_active:currentRank==item.value}" 
+							 :class="{r_active:queryParams.currentRank==item.value}" 
 							>{{item.name}}</el-dropdown-item>
 					        <el-dropdown-item divided  disabled>排序循序</el-dropdown-item>
 					        <el-dropdown-item v-for="item in soltData" @click="soltChange(item.value)" 
-							:class="{r_active:currentSolt==item.value}">{{item.name}}</el-dropdown-item>
+							:class="{r_active:queryParams.currentSolt==item.value}">{{item.name}}</el-dropdown-item>
 					      </el-dropdown-menu>
 					    </template>
 					  </el-dropdown>
@@ -160,114 +139,74 @@
 					</el-space>
 				</div>	
 		</el-row>
-<!-- 		   <div class="flex-v-bet affix-box1" >
-			   <p class="font-bold m-b-4">265</p>
-			   <p class="font-small">已选产品</p>
-			</div>
-			<div class="flex-v-bet affix-box1 p-2" >
-						   <p class="font-bold m-b-4">2565</p>
-						   <p class="font-small">发货总数</p>
-			</div> -->
-		<Table/>
+ 
 	</div>
 	<DeliveryDialog ref="deliverRef" />
-	<ShipmarketRank ref ="ShipmarketRankRef"/>
+	<ShipmarketRank ref ="shipmarketRankRef"/>
+	<CheckDataDialog ref ="checkDataDialogRef" @change="goToPlanConfirm"/>
+	
 </template>
 
 <script setup>
 	import {Search,ArrowDown,} from '@element-plus/icons-vue'
 	import {MenuUnfold,Plus,SettingTwo,Help,Copy,MoreOne,SortOne} from '@icon-park/vue-next';
-	import { ref ,defineEmits,reactive,onMounted} from 'vue'
+	import { ref ,defineEmits,reactive,onMounted,toRefs} from 'vue'
+	import GroupSelect from "@/components/header/group_select.vue"
+	import Warehouse from "@/components/header/warehouse.vue"
+	import Market from "@/components/header/market.vue"
 	import { ElMessage, ElMessageBox } from 'element-plus'
-	import Table from "./table";
+	import Owner from '@/components/header/owner.vue';
+	import Tags from '@/components/header/tags.vue';
+	import Category from '@/components/header/category.vue';
 	import DeliveryDialog from "./delivery_dialog";
 	import ShipmarketRank from "./shipmarket_rank";
+	import Status from '@/views/amazon/listing/products/components/prostatus.vue';
+	import CheckDataDialog from "./check_data_dialog";
+	import {downExcelSales} from "@/api/amazon/listing/preSalesApi.js";
+	// API依赖
+	import planApi from '@/api/erp/ship/planApi';
 	import { useRouter } from 'vue-router'
 	let deliverRef = ref()
-	let ShipmarketRankRef = ref()
+	let marketRef=ref();
+	let shipmarketRankRef = ref()
+	const checkDataDialogRef=ref();
 	let router = useRouter()
+	const state = reactive({
+	  queryParams: {groupid:'',warehouseid:'',
+	                searchtype:'sku',selected:false,small:"",currentRank:"",
+					hasAddFee:"",issfg:"",currentSolt:"desc"} ,
+	  loading:false,
+	  summary:{skunum:0,amount:0},
+	  progress:0,
+	});
+	const {
+	  queryParams,loading,progress, summary,
+	} = toRefs(state);
+	
 			let FbaInventorysChecked = ref([])
 			let moreSearchVisible =ref(false)
 	        let localinventoryChecked=ref(1)
-			let localshipInventroys =reactive([
-				{label:'清湖仓',value:1},
-				{label:'东莞(实际使用)',value:2},
-				{label:'东莞外包仓',value:3},
-				{label:'虾皮仓库',value:5},
-				{label:'龙华仓',value:6},
-				])
-			let FbaInventorysData =	reactive([
-				{label:'美国',value:1},
-				{label:'加拿大',value:2},
-				{label:'英国',value:3},
-				{label:'法国',value:4},
-				{label:'德国',value:5},
-			])
-	    let marks =[
-				{
-				    value: 1,
-				    label: '颜色',
-				    children: [
-				      {
-				        value: 2,
-				        label: '红',
-				      },
-					  {
-					    value: 3,
-					    label: '黄',
-					  },
-					  ]
-			},
-			{
-				    value: 2,
-				    label: '节日',
-				    children: [
-				      {
-				        value: 2,
-				        label: '圣诞节',
-				      },
-					  {
-					    value: 3,
-					    label: '万圣节',
-					  },
-					  ]
-			},
-			{
-				    value: 3,
-				    label: '策略',
-				    children: [
-				      {
-				        value: 2,
-				        label: '促销',
-				      },
-					  {
-					    value: 3,
-					    label: '提价',
-					  },
-					  ]
-			},
-		]
-		let markprops={ multiple: true }
+  
 		let rankData =reactive([
-			{name:'可售库存',},
-			{name:'预估日均销量',},
-			{name:'7日销量',},
-			{name:'30日销量',},
-			{name:'实际发货量',},
-			{name:'建议发货量',},
-			{name:'可售天数',},
-			{name:'发货后可售天数',},
+			{name:'可售库存',value:'afn_fulfillable_quantity'},
+			{name:'预估日均销量',value:'avgsales'},
+			{name:'7日销量',value:'sales_seven'},
+			{name:'30日销量',value:'sales_month'},
+			{name:'实际发货量',value:'marketamount'},
+			{name:'建议发货量',value:'marketneedship'},
+			{name:'可售天数',value:"marketsalesday"},
+			{name:'发货后可售天数',value:"marketaftersalesday"},
 		])
 		let soltData = reactive([
-			{name:'从高到低',},
-			{name:'从低到高',},
+			{name:'从高到低',value:"desc"},
+			{name:'从低到高',value:'asc'},
 		]) 
 		let form = reactive({
 					type:'全部产品',
 					small:3,
 					extraprice:3,
 		})
-				function clearPlan(){
+	   function clearPlan(){
 					ElMessageBox.confirm(
 					    '您确定要清空发货计划吗?',
 					    '清空计划',
@@ -278,10 +217,19 @@
 					    }
 					  )
 					    .then(() => {
-					      ElMessage({
-					        type: 'success',
-					        message: '清除成功！',
-					      })
+							if(state.queryParams.warehouseid&&state.queryParams.groupid){
+								planApi.clear({groupid:state.queryParams.groupid,
+											   warehouseid:state.queryParams.warehouseid}
+											  ).then(res=>{
+													 ElMessage({
+													   type: 'success',
+													   message: '清除成功！',
+													 });
+													 handleQuerySummary();
+													 emits("change",state.queryParams);
+								});
+							}
+					     
 					    })
 					    .catch(() => {
 					      ElMessage({
@@ -290,28 +238,144 @@
 					      })
 					    })
 				}
-			let  emits = defineEmits(['getComputedResult'])		
-			function computedShipnum(){
-				emits("getComputedResult",true)	
-				}	
+				
+			let  emits = defineEmits(['change'])	
+			function handleQuery(type){
+				     if(type&&type=="opt"){
+						 if(state.queryParams.warehouseid&&state.queryParams.groupid){
+						 	emits("change",state.queryParams);
+						 }
+					 }else{
+						 	state.queryParams.currentRank="";
+						 if(state.queryParams.warehouseid&&state.queryParams.groupid){
+						 	emits("change",state.queryParams);
+						 }
+					 }
+					
+				}
+			function handleQuerySummary(){
+				  if(state.queryParams.warehouseid&&state.queryParams.groupid){
+				  	planApi.getSummary({groupid:state.queryParams.groupid,
+					                    warehouseid:state.queryParams.warehouseid}
+									   ).then(res=>{
+				  						   state.summary=res.data;
+				  	});
+				  }
+				   
+			}
+			 defineExpose({ handleQuerySummary });
+			function handleGroupChange(value,isInit){
+				state.queryParams.groupid=value;
+				state.queryParams.marketplaceid="";
+				marketRef.value.show(value,true);
+				handleQuery();
+				handleQuerySummary();
+			}
+			function handleMarketChange(val){
+				state.queryParams.marketplaceid=val;
+				handleQuery();
+			}
+			function getStatus(id){
+				state.queryParams.status=id;
+				handleQuery();
+			}
+			function getOwner(id){
+				state.queryParams.owner=id;
+				handleQuery();
+			}
+			function getTags(tags){
+				state.queryParams.tags=tags;
+				handleQuery();
+			}
+			function getCategory(value){
+				state.queryParams.categoryid=value;
+			}
+			function handleWarehouseChange(value){
+				state.queryParams.warehouseid=value;
+				handleQuery();
+				handleQuerySummary();
+			}
+			function resetQuery(){
+				var groupid=state.queryParams.groupid;
+				var warehouseid=state.queryParams.warehouseid;
+				state.queryParams={groupid:groupid,warehouseid:warehouseid,
+				                   searchtype:'sku',selected:false,categoryid:"",
+								   hasAddFee:"",issfg:"",currentSolt:"desc",currentRank:"",skuarray:""} ;
+				handleQuery();
+			}
 			function resetForm(){
 				moreSearchVisible.value =false
 			}	
-			function setFbaDeliveryDate(){
-				deliverRef.value.dialogVisible = true
+			function rankChange(value){
+				state.queryParams.currentRank=value;
+				state.queryParams.sort=value;
+				state.queryParams.order=state.queryParams.currentSolt;
+				handleQuery("opt");
 			}
-			function FbaShipRank(){
-				ShipmarketRankRef.value.rankVisible = true
+			function soltChange(value){
+				state.queryParams.currentSolt=value;
+				handleQuery("opt");
 			}
-			/* 发货提交 */
-			function submitShip(){
+			function showFbaDeliveryDialog(){deliverRef.value.show()}
+			function ShowShipMarketRank(){ shipmarketRankRef.value.show(state.queryParams.groupid) }
+			function handleCalu(){
+				    state.loading=true;
+				    state.progress=0;
+					planApi.calPlanModel(state.queryParams).then(res=>{
+						state.progress=100;
+						state.loading=false;
+						ElMessage({
+						  type: 'success',
+						  message: '计算成功！',
+						})
+						handleQuery();
+					})
+			}
+			function gotoSalePre(){
+				router.push({
+					path:"/amazon/sales/forecast",
+					query:{
+						title:'销售计划',
+						path:"/amazon/sales/forecast",
+					}
+				})
+			}
+			function goToPlanConfirm(){
 				router.push({
 					path:"/e/s/p",
 					query:{
 						title:'提交发货',
 						path:"/e/s/p",
+						warehouseid:state.queryParams.warehouseid,
+						groupid:state.queryParams.groupid
 					}
 				})
+			}
+			/* 发货提交 */
+			function submitShip(){
+			  if(state.queryParams.groupid&&state.queryParams.warehouseid){
+					var params={};
+					params.groupid=state.queryParams.groupid;
+					params.warehouseid=state.queryParams.warehouseid;
+					params.ischeck="true";
+					params.pagesize=1000;
+					params.currentpage=1;
+					planApi.getShipPlanList(params).then(res=>{
+							   if(res.data&&res.data.records&&res.data.records.length>0){
+								  checkDataDialogRef.value.show(state.queryParams.warehouseid,res.data.records);
+							   }else{
+								   goToPlanConfirm();
+							   }
+					}); 
+			
+					
+				}else{
+					ElMessage({
+					  type: 'error',
+					  message: '请选择对应得店铺和仓库！',
+					})	
+				}
+			
 			}
 </script>
 

@@ -1,15 +1,15 @@
 <template>
-	<el-dialog   v-model="rankVisible" title="设置FBA站点配货优先级" width='600px'>
+	<el-dialog   v-model="dialog.visible" title="设置FBA站点配货优先级" width='600px'>
 	<div class="rank-list-title">
 	<span>FBA仓库</span>
 	<span>优先级</span>
 	</div>	
   <draggable
       class="draggable"
-     :list="list"
-	   animation="300"
-	   @start="onStart"
-	 @end="onEnd"
+     :list="countryOptions"
+	  animation="300"
+	 @start="onStart"
+	 @end="dragEnd"
     >
 	 <template #item="{ element }">
         <div class="item" >
@@ -17,10 +17,10 @@
 			 <el-space class="list-title">
 			<drag class="ic-cen" theme="outline" size="16" fill="#9a9a9a" :strokeWidth="2"/>
 			<span>{{element.name}}
-			<p class="font-extraSmall">{{element.market}}</p>
+			<p class="font-extraSmall">FBA-{{element.market}}</p>
 			</span> 
 			</el-space>
-				<span>{{element.order}}</span>
+				<span>{{element.findex}}</span>
 		  </el-card>
         </div>
 		 </template>
@@ -34,31 +34,50 @@
 	</el-dialog>
 </template>
 
-<script>
-	import { ref ,reactive} from 'vue'
+<script setup>
+	import { ref ,reactive,toRefs} from 'vue'
 	import {Drag} from '@icon-park/vue-next';
 	//需要安装依赖 npm i -S vuedraggable@next
 	//使用文档地址https://www.itxst.com/vue-draggable-next/tutorial.html
 	import draggable from "vuedraggable";
-	import '@/assets/css/draggable.css'
-	export default {  
-	   name: 'index',
-	   components: {
-		  draggable,Drag,
-	   },
-	   setup(){
-		   let rankVisible =ref(false)
-		   let list =reactive([
-			     { name: "美国", order: 0,market:'FBA-US' },
-			      { name: "加拿大", order: 1 ,market:'FBA-CA'},
-			      { name: "英国", order: 2 ,market:'FBA-UK'},
-		   ])
-	 		return{
-				rankVisible,
-				list,   
-			}
-	 }
+	import '@/assets/css/draggable.css';
+	import priorityApi from "@/api/amazon/market/priorityApi.js";
+	import { ElMessage, ElMessageBox } from 'element-plus'
+   let rankVisible =ref(false)
+   const state=reactive({
+   	      queryParams:{transtype:""},
+   		  dialog:{visible:false},
+   		  formData:[],
+		  groupid:"",
+   		  countryOptions:[],
+   		  transtypeOptions:[],
+       });
+   	const {
+   	  queryParams,dialog,formData,countryOptions,transtypeOptions
+   	} = toRefs(state);
+	function show(groupid){
+		state.dialog.visible=true;
+		state.groupid=groupid;
+		priorityApi.list({'groupid':groupid}).then(res=>{
+			state.countryOptions=res.data;
+		})
 	}
+	function dragEnd(){
+		state.countryOptions.forEach((item,index)=>{
+			item.findex = index+1
+		})
+	}
+	function submitFunc(){
+		var formData=[];
+		state.countryOptions.forEach(market=>{
+			formData.push({groupid:state.groupid,marketplaceid:market.marketplaceid,priority:market.findex})
+		})
+		priorityApi.save(formData).then(res=>{
+		    ElMessage({ message: "保存成功", type: 'success', });
+			show(state.groupid);
+		})
+	}
+    defineExpose({ show });
 </script>
 
 <style>

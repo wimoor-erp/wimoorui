@@ -3,7 +3,7 @@
 		<div class="con-header">
 			<el-row >
 				<el-space>
-					<el-button>导出</el-button>
+					<el-button @click.stop="downloadSalesDetail">导出</el-button>
 					<Group @change="getGroup" isproduct="ok" />
 					<Owner @owner="getOwner" />
 					<Datepicker ref="datepickers" :days="1"  @changedate="changeDate" />
@@ -98,6 +98,9 @@
 				 globalTable.value.loadTable(state.queryParam);
 			 }
 		 });
+	}
+	function downloadSalesDetail(){
+		salessumApi.downloadSalesDetail(state.queryParam);
 	}
 	function loadtableData(params){
 		salessumApi.getOrderData(params).then(res=>{

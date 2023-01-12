@@ -259,7 +259,6 @@
 					activeMarket.value=marketplaceid;
 					 shipmentApi.shipLine(productData).then((res)=>{
 					 	if(res.data){
-							console.log(res.data);
 					 		 chart=res.data;
 					 		 saleChart();
 					 	}

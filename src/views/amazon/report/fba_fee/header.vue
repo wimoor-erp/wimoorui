@@ -68,7 +68,6 @@
 		 changeData();
 	 }
 	 function changeOversize(val){
-		 console.log(val);
 		 var strs="false";
 		 if(val==true){
 			 strs="true";

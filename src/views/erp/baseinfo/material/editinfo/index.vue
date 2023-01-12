@@ -1,61 +1,80 @@
 <template>
 	<div class="main-sty gary-bg">
 		<el-row >
-			<el-col :span="4" class="ri-tabs">
+			<el-col :xl="4" :lg="2" class="ri-tabs">
 				<el-tabs tab-position="left"  v-model="activeName">
 				    <el-tab-pane label="基本信息" name="1">
 						<template #label>
-							 <el-link :underline="false"  href="#base">基本信息</el-link>
+							 <el-link  :underline="false"  href="#base">基本信息</el-link>
 						</template>
 					</el-tab-pane>
-				    <el-tab-pane  label="采购信息" name="2">
+					<!-- v-if="router.currentRoute.value.query.isAssemable" -->
+					<el-tab-pane  label="组合信息" name="2"  >
+						<template #label>
+							 <el-link :underline="false" href="#assemble">组合信息</el-link>
+						</template>
+					</el-tab-pane>
+				    <el-tab-pane  label="采购信息" name="3">
 						<template #label>
 							 <el-link :underline="false" href="#purchase">采购信息</el-link>
 						</template>
 					</el-tab-pane>
-					<el-tab-pane label="规格信息" name="3">
+					<el-tab-pane label="规格信息" name="4">
 						<template #label>
 							 <el-link :underline="false" href="#specs">规格信息</el-link>
 						</template>
 					</el-tab-pane>
-					<el-tab-pane label="辅料关联" name="4">
+					<el-tab-pane label="辅料关联" name="5">
 						<template #label>
 							 <el-link :underline="false" href="#consumables">辅料关联</el-link>
 						</template>
 					</el-tab-pane>
-				    <el-tab-pane label="物流信息" name="5">
+				    <el-tab-pane label="物流信息" name="6">
 						<template #label>
 							 <el-link :underline="false" href="#logistics">物流信息</el-link>
 						</template>
 					</el-tab-pane>
 				  </el-tabs>
 			</el-col>
-			<el-col :span="16" >
+			<el-col :xl="16" :lg="21">
 				<el-card class="fr-con">
 					 <el-scrollbar class="he-scr-car" @scroll="scroll">
-					 <el-form :model="form"  label-width="100px">
+					 <el-form ref="globalFormRef" :model="forms"  label-width="100px">
 						 <!-- 基础信息 -->
-						 <Base/>
+						 <Base  ref="baseRef"  :dataForms="forms.baseforms"/>
+						 
 					    <el-divider />
-						 <!-- 采购信息 -->
-						 <Purchase/>
-						  <!-- 组装信息 -->
-						  <Assemble/>
+						
+						<!-- 组装信息 -->
+						<Assemble v-if='forms.baseforms.issfg!="2"' :dataForms="forms.assemblyforms"   />
+						<!--是本成品的时候 展示父亲列表-->
+						<Parents v-else :dataForms="forms.parentList" />
+						
+						 <el-divider />
+						 
+						 <!-- 采购信息 --> 
+						 <Purchase :dataForms="forms.supplierforms" />
+						 
 						   <el-divider />
+						   
 						  <!-- 规格信息 -->
-						  <Specs/>
+						  <Specs :dataForms="forms.specsforms" />
+						  
 						  <el-divider />
+						  
 						  <!-- 辅料关联 -->
-						  <Consumables/>
+						  <Consumables :dataForms="forms.consforms" />
+						  
 						   <el-divider />
+						   
 						    <!--物流信息 -->
-							<Logistics/>
+							<Logistics :dataForms="forms.logisforms" :listForms="forms.logislist" />
 					 </el-form>
 						</el-scrollbar>
 						<div class='text-center mar-top-16'>
 							<el-space>
-								<el-button type="">取消</el-button>
-								<el-button type="primary">提交</el-button>
+								<el-button @click="closeTab">取消</el-button>
+								<el-button @click.stop="submitForm" type="primary">提交</el-button>
 							</el-space>
 						</div>
 						
@@ -65,36 +84,147 @@
 	</div>
 </template>
 
-<script>
-import { ref,reactive,onMounted,watch,onUnmounted} from 'vue'
+<script setup>
+import { ref,reactive,onMounted,watch,onUnmounted,toRefs,inject} from 'vue'
 import Base from"./components/base.vue"
 import Purchase from"./components/purchase.vue"
 import Logistics from"./components/logistics.vue"
 import Consumables from"./components/consumables.vue"
 import Specs from"./components/specs.vue"
+import Assemble from"./components/assemble_info.vue"
+import Parents from "./components/parent_info.vue"
 import tabScroll from"@/utils/tab_scroll"
+import {useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import materialApi from '@/api/erp/material/materialApi.js';
 
-	export default{
-		components: {
-			Base,
-			Purchase,Logistics,Consumables,Specs,
-		},
-		setup(){
-			let activeName =ref('1')
-			let arrDom =ref([])
-			function scroll(obj){
-				activeName.value = tabScroll(obj,"tab-scroll")
-			}
-			return{
-				activeName,
-				scroll,
-				arrDom,
-			}
+      const emitter = inject("emitter"); // Inject `emitter`
+	  let router = useRouter()
+	  const mid=router.currentRoute.value.query.details;
+	  const iscopy=router.currentRoute.value.query.iscopy;
+	  const baseRef=ref({});
+	  const globalFormRef=ref();
+	  onMounted(()=>{
+	  	loadData();
+	  })
+		let state =reactive({
+			activeName:"1",
+			forms:{
+				baseforms:{sku:'',name:'',imgfile:{},taglist:"",effectivedate:new Date(),issfg:"0"},
+				supplierforms:[],
+				specsforms:{pkgdim:{},itemdim:{},boxdim:{},boxnum:0},
+				consforms:[],
+				logisforms:{nameCn:'',nameEn:'',unitprice:0,iselectricity:false,isdanger:false,},
+				assemblyforms:{list:[],assemblyTime:0,issemi:0},
+				logislist:[],
+				parentList:[],
+			},
+			
+		})
+		let {
+			activeName,forms,
+		}=toRefs(state)
+		function closeTab(){
+			emitter.emit("removeTab", 100);
+		};
+		function scroll(obj){
+			state.activeName= tabScroll(obj,"tab-scroll")
 		}
+		function loadData(){
+			materialApi.getMaterialInfo({"id":mid}).then((res)=>{
+				baseRef.value.loadBrandCateList();
+				if(res.data && res.data.material){
+					 if(iscopy=="ok"){
+						res.data.material.id="";
+						res.data.material.sku="";
+					 }
+					 state.forms.parentList=res.data.parentList;
+					 state.forms.baseforms=res.data.material;
+					 state.forms.supplierforms=res.data.supplierList;
+					 var specsformsData={};
+					 var pkgdim={"length":0,"width":0,"height":0,"weight":0};
+					 var itemdim={"length":0,"width":0,"height":0,"weight":0};
+					 var boxdim={"length":0,"width":0,"height":0,"weight":0};
+					 if(res.data.pkgDim!=null && res.data.pkgDim!=undefined && res.data.pkgDim!=""){
+						  specsformsData.pkgdim=res.data.pkgDim;
+					 }else{
+						  specsformsData.pkgdim=pkgdim;
+					 }
+					 if(res.data.itemDim!=null && res.data.itemDim!=undefined && res.data.itemDim!=""){
+						  specsformsData.itemdim=res.data.itemDim;
+					 }else{
+					 	  specsformsData.itemdim=itemdim;
+					 }
+					 if(res.data.boxDim!=null && res.data.boxDim!=undefined && res.data.boxDim!=""){
+					 	  specsformsData.boxdim=res.data.boxDim;
+					 }else{
+					 	  specsformsData.boxdim=boxdim;
+					 }
+					 specsformsData.boxnum=res.data.material.boxnum;
+					 state.forms.specsforms=specsformsData;
+					 state.forms.consforms=res.data.consumableList;
+					 state.forms.baseforms.taglist=res.data.taglist;
+					 if(res.data.customs){
+						 state.forms.logisforms=res.data.customs;
+					 }
+					 if(res.data.customsItemList && res.data.customsItemList.length>0){
+						 var itemlist=[];
+						 state.forms.logislist=res.data.customsItemList;
+					 }
+					 if(res.data.assemblyList && res.data.assemblyList.length>0){
+						 state.forms.assemblyforms.list=res.data.assemblyList;
+						 state.forms.assemblyforms.assemblyTime=state.forms.baseforms.assemblyTime;
+					 }
+					 
+				}
+			});
 		}
+		function submitForm(){
+			//提交表单数据 saveData
+			let FormDatas = new FormData()
+			var datas={};
+			var asstime=state.forms.assemblyforms.assemblyTime;
+			var pricelist=[];
+			state.forms.baseforms.assemblyTime=asstime;
+			if(state.forms.specsforms.boxnum && state.forms.specsforms.boxnum!=""){
+				state.forms.baseforms.boxnum=parseInt(state.forms.specsforms.boxnum);
+			}
+			datas.material=state.forms.baseforms;
+			datas.itemDim= state.forms.specsforms.itemdim;
+			datas.boxDim=state.forms.specsforms.boxdim;
+			datas.pkgDim=state.forms.specsforms.pkgdim;
+			if(state.forms.baseforms.taglist!=null){
+				datas.taglist=state.forms.baseforms.taglist;
+			}
+			datas.customsItemList=state.forms.logislist;
+			datas.customs=state.forms.logisforms;
+			datas.supplierList=state.forms.supplierforms;
+			datas.consumableList=state.forms.consforms;
+			datas.assemblyList=state.forms.assemblyforms.list;
+			if(state.forms.assemblyforms.list && state.forms.assemblyforms.list.length>0){
+				datas.material.issfg="1";
+			}
+			if(iscopy=="ok"){
+				 datas.material.id="";
+				 datas.iscopy="ok";
+			}
+			FormDatas.append("infostr",JSON.stringify(datas));
+			if(state.forms.baseforms.imgfile){
+				FormDatas.append("file",state.forms.baseforms.imgfile);
+			}else{
+				FormDatas.append("file",{});
+			}
+			materialApi.saveData(FormDatas).then((res)=>{
+				  ElMessage({
+					message: "操作成功！",
+					type: 'success'
+				  })
+			});
+		}
+			
 </script>
 
-<style>
+<style scoped>
 	
 .small-tab  th.el-table__cell{
 	background-color: #fff;

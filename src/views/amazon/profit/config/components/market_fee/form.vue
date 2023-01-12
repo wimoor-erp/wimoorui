@@ -311,7 +311,7 @@
 
 <script setup>
 	import configApi from "@/api/amazon/profit/config"
-	import {ref,reactive,defineProps,toRefs,onMounted}from"vue"
+	import {ref,reactive,toRefs,onMounted}from"vue"
 	import countryData from '@/model/amazon/profit/configData.json';
 	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	let props = defineProps({

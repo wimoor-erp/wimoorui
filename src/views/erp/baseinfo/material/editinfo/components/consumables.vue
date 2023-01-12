@@ -1,7 +1,7 @@
 <template>
 	<h3 id="consumables" class="tab-scroll">辅料关联</h3>
 	<el-form-item label="辅料">
-	 <el-table border :data="tableData">
+	  <el-table  :data="dataForms" border >
 		 <el-table-column width="50"  type="index"> 
 		 			 <template #header>
 		 				   <el-link :underline="false" type="primary" @click="addConsumables">
@@ -11,7 +11,8 @@
 		 </el-table-column>
 		 <el-table-column width="80" label="图片">
 			 <template #default="scope">
-			 	<el-image :src="scope.row.img" width="40" height="40"></el-image>
+			 	<el-image v-if="scope.row.image" :src="scope.row.image" width="40" height="40"></el-image>
+				<el-image v-else :src="require('@/assets/image/empty/noimage40.png')" width="40" height="40"></el-image>
 			 </template>
 		 </el-table-column>
 		 <el-table-column label="辅料名称/辅料SKU" width="400">
@@ -27,7 +28,7 @@
 		 </el-table-column>
 		 <el-table-column label="关联数量">
 			 <template #default="scope">
-			 <el-input v-model="scope.row.bindnum"></el-input>
+			 <el-input v-model="scope.row.amount"></el-input>
 			  </template>
 		 </el-table-column>
 		 <el-table-column label="操作">
@@ -40,40 +41,63 @@
 	 </el-table>
 	</el-form-item>
 	<!-- 辅料选择弹窗 -->
-	<ConsumablesDialog ref="conDiaRef" @consumChecked="consumChecked"/>
+	 <MaterialDialog ref="materialDailogRef" @getdata="getRows"  ></MaterialDialog>
 </template>
 
-<script>
+<script setup>
 	import {} from '@element-plus/icons-vue'
 	import {Plus,Minus} from '@icon-park/vue-next';
-	import { ref,reactive,onMounted,watch } from 'vue'
-	import ConsumablesDialog from"./consumables_select_dialog"
-	export default{
-		components: {
-		Plus,ConsumablesDialog,Minus,
-		},
-		setup(){
-			let tableData = reactive([])
-			let conDiaRef =ref()
-			function addConsumables(){
-				conDiaRef.value.consumVisable =true
-			}
-			function consumChecked(rows){
-				console.log("rows",rows)
-				tableData.push(rows)
-			}
-			function removeConsum(index){
-				tableData.splice(index,1)
-			}
-			return{
-				tableData,
-				conDiaRef,
-				addConsumables,
-				consumChecked,
-				removeConsum,
-			}
-		}
-		}
+	import { ref,reactive,onMounted,watch,defineProps,toRefs,defineExpose } from 'vue'
+	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog.vue"
+	let props = defineProps({
+	  dataForms:Object
+	})
+	let materialDailogRef=ref();
+	let state=reactive({
+		
+	});
+	let {dataForms} =toRefs(props);
+	let {   } =toRefs(state);
+	 
+	function addConsumables(){
+		materialDailogRef.value.show();
+	}
+	function consumChecked(rows){
+		props.dataForms.push(rows)
+	}
+	function removeConsum(index){
+		props.dataForms.splice(index,1)
+	}
+	function getRows(selecteds){
+		 //emit("getrows",selecteds);
+		 if(selecteds && selecteds.length>0){
+			  selecteds.forEach(function(item){
+				  var row={};
+				  row.id=item.id;
+				  row.sku=item.sku;
+				  row.image=item.image;
+				  row.price=item.price;
+				  row.name=item.name;
+				  row.amount=0;
+				  var ispush=true;
+				  props.dataForms.forEach(function(items){
+					  if(items.sku==row.sku){
+						 ispush=false; 
+					  }
+				  });
+				  if(ispush==true){
+					   props.dataForms.push(row);
+				  }
+			  });
+		 }
+		 
+	}
+	 
+	 // defineExpose({
+	 //   tableData,
+	 // }); 
+ 
+		 
 </script>
 
 <style>

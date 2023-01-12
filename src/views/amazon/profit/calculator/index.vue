@@ -14,8 +14,8 @@
 						<el-input  v-model="queryParams.searchKeywords" placeholder="请输入" class="input-with-select" >
 						   <template #prepend>
 						     <el-select v-model="queryParams.searchType" placeholder="SKU" style="width:80px">
-						       <el-option label="SKU" value="1"></el-option>
-						       <el-option label="ASIN" value="2"></el-option>
+						       <el-option label="SKU" value="SKU"></el-option>
+						       <el-option label="ASIN" value="ASIN"></el-option>
 							  </el-select> 
 						   </template>
 						   <template #append>
@@ -32,7 +32,7 @@
 				<el-form  :model="formData" label-position="top" :rules="rules">
 					<el-form-item label="利润计算方案"> 
 					   <div class="flex-center w-grow">
-						<el-select class="w-grow m-r-8" v-model="formData.profitCfgId">
+						<el-select class="w-grow m-r-8" v-model="formData.profitCfgId" @change="cfgChange">
 							<el-option v-for="item in configOptions"  :value="item.id"  :label="item.name"></el-option>
 						</el-select>
 						<el-button @click="planConfig">方案配置</el-button>
@@ -63,13 +63,13 @@
 						<div class="flex-center w-grow">
 							<el-row class="w-grow m-r-4" :gutter="8">
 								<el-col :span="8" >
-									<el-input placeholder="长" @input="changeLength"  v-model.number="formData.length"></el-input>
+									<el-input placeholder="长" @input="changeLength"  v-model="formData.length"></el-input>
 								</el-col>
 								<el-col :span="8">
-									<el-input placeholder="宽" @input="changeLength"  v-model.number="formData.width"></el-input>
+									<el-input placeholder="宽" @input="changeLength"  v-model="formData.width"></el-input>
 								</el-col>
 								<el-col :span="8">
-									<el-input placeholder="高" @input="changeLength"  v-model.number="formData.height"></el-input>
+									<el-input placeholder="高" @input="changeLength"  v-model="formData.height"></el-input>
 								</el-col>
 							</el-row>
 							<el-select v-model="formData.lunit" class="w-8" @change="changeLength">
@@ -96,8 +96,24 @@
 							<el-option v-for="item in typeOptions"  :value="item.id"  :label="item.type"></el-option>
 						</el-select>
 					</el-form-item>
+					<el-form-item label="产品运费" v-if="manuShipment">
+						<el-input v-model="formData.shipment"></el-input>
+					</el-form-item>
+					
 					<el-form-item>
+						<el-row class="w-grow m-r-4" :gutter="8">
 						<el-button type="primary" @click.stop="calculateProfit">计算成本利润</el-button>
+						</el-row>
+						<span class="font-extraSmall" style="padding-right:3px;">是否轻小 </span>
+						<el-switch
+						    v-model="formData.isSmlAndLightStr"
+						    inline-prompt
+						    active-text="是"
+							active-value="true"
+						    inactive-text="否"
+							inactive-value="false"
+							@change="reloadSLData"
+						  />
 					</el-form-item>
 				</el-form>
 				<el-divider v-if="'点击了计算按钮'"></el-divider>
@@ -137,6 +153,7 @@
 					<el-row :gutter="16">
 					   <CountryCollapse 
 					   @dataChange="marketPriceInput"
+					   @rateChange="calculateProfit"
 					    v-for="market in  countryMarketOptions" 
 					   :country="market" 
 					   :marginOptions="marginOptions"
@@ -161,12 +178,14 @@
 	import {CheckInputFloat,CheckInputInt,formatFloat} from '@/utils/index';
 	import materialApi from "@/api/erp/material/materialApi"
 	import productinfoApi from "@/api/amazon/product/productinfoApi"
+	import {  ElMessage } from 'element-plus';
 	let router  = useRouter();
 	let profitDetailsRef =ref();
 	let fbaSizeRef = ref();
 	let state = reactive({
 		//下拉选项
 		loading:false,
+		manuShipment:false,
 		currencyOptions:[{label:'RMB',value:'RMB'},{label:'USD',value:'USD'}],
 		weightOptions:[{label:'kg',value:'kg'},{label:'lb',value:'lb'},{label:'oz',value:'oz'}],
 		sizeOptions:[{label:'cm',value:'cm'},{label:'in',value:'in'}],
@@ -197,14 +216,14 @@
 				   width2:'',// 宽
 				   height2:'',// 高
 				   categories:'',
-				   shipmentType:'',//计算印度利润，local,regional,national
+				   shipmentType:'national',//计算印度利润，local,regional,national
 				   declaredValue:'',//申报价值
 				   declaredValueCur:'',//申报价值单位
 				   taxrate:'',//印度进口税率
 				   gstrate:'',//印度进口GST税率
 				   sellingGSTRate:'',//印度销售GST税率
 				   referralrate:'',//印度佣金比率
-				   isSmlAndLightStr:'',//是否轻小
+				   isSmlAndLightStr:'false',//是否轻小
 	},
 	rules:{
 		   cost:[ 
@@ -218,6 +237,7 @@
  
 	 const {
 	   loading,
+	   manuShipment,
 	   queryParams,
 	   tableData,
 	   formData,
@@ -232,6 +252,21 @@
 	   marginOptions,
 	   countryMarketOptions,
 	 } = toRefs(state);
+function cfgChange(){
+	state.manuShipment=false;
+	state.formData.shipment='';
+	if(state.formData.profitCfgId){
+		state.configOptions.forEach(item=>{
+			if(item.id==state.formData.profitCfgId){
+				 if(item.shipmentstyle=='manually'){
+					 state.manuShipment=true;
+				 }
+				
+			}
+		})
+	}
+ 
+}
 function changeLength() {//改变尺寸
 	var length =state.formData.length;
 	var l =state.formData.lunit;
@@ -306,10 +341,10 @@ function changeLength() {//改变尺寸
 	/* 方案配置*/
 	function planConfig(){
 		router.push({
-			path:'/amazon/profit/calculator/calcuiation_plan',
+			path:'/amazon/profit/config',
 			query:{
 				title:"计算方案",
-				path:'/amazon/profit/calculator/calcuiation_plan',
+				path:'/amazon/profit/config',
 			}
 		})
 	}
@@ -323,11 +358,23 @@ function changeLength() {//改变尺寸
 	function searchParam(){
 		if(state.queryParams.searchType=="SKU"){
 			materialApi.getMaterialInventoryInfo({"sku":state.queryParams.searchKeywords,"warehouseid":""}).then(res=>{
-				state.formData.length=res.data.pkgDim.length;
-				state.formData.width =res.data.pkgDim.width;
-				state.formData.height=res.data.pkgDim.height;
-				state.formData.weight=res.data.pkgDim.weight;
-				state.formData.cost=res.data.material.price;
+				if(res.data.material){
+					 state.formData.cost=res.data.material.price;
+				}else{
+					ElMessage.success('未找到对应产品信息');
+					return;
+				}
+				if(res.data.pkgDim){
+					state.formData.length=res.data.pkgDim.length;
+					state.formData.width =res.data.pkgDim.width;
+					state.formData.height=res.data.pkgDim.height;
+					state.formData.weight=res.data.pkgDim.weight;
+				}else{
+					ElMessage.success('未找到对应尺寸信息');
+					return;
+				}
+				
+				
 				state.formData.wunit="kg";
 				state.formData.lunit="cm";
 				changeLength();
@@ -363,6 +410,14 @@ function changeLength() {//改变尺寸
 		}
 		
 	}
+	function reloadSLData(){
+		calculateApi.showProfitPage({"isSmlAndLight":state.formData.isSmlAndLightStr}).then(res=>{
+			state.countryOptions=res.data.countryList;
+			state.countryMarketOptions=res.data.countryMarketlist;
+			 calculateProfit();
+		});
+	}
+ 
 	/**
 	 * 初始化
 	 */
@@ -417,5 +472,13 @@ tbody .green-text{
 tbody .red-text{
 	font-weight: 600;
 	color: var(--el-color-danger);
+}
+.gird-line-left .el-form--default.el-form--label-top .el-form-item .el-form-item__label {
+    margin-bottom: 3px;
+    line-height: 22px;
+}
+
+.gird-line-left .el-form-item--default {
+    margin-bottom: 10px;
 }
 </style>

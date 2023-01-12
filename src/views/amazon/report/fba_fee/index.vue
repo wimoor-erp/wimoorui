@@ -104,12 +104,10 @@
 			})
 		 
 			function loadData(params){
-				console.log(params);
 				globalTable.value.loadTable(params);
 			}
 			
 			function loadTableData(params){
-				console.log(params);
 				state.queryParams=params;
 				productFbaFeeApi.getSizePro(params).then((res)=>{
 					state.tableData.records = res.data.records;

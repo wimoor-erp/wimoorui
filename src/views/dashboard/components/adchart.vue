@@ -11,7 +11,7 @@
                <div style='font-size:12px;color:#666'>{{a.label}}</div>
                <div class='pag-data-num' style='margin:0'>{{a.data}}</div>
 			   </div>
-			   <el-checkbox v-model="a.checked"  label="" size="large"></el-checkbox>
+			   
             </div>
 			</el-space>
 		 </div>
@@ -31,23 +31,26 @@ export default{
      props:["parameter"],
      setup(prop,context){
 	  let chartTitle =ref();
-	  let adData = ref([{
-	  		  label:'广告销售额($)',
+	  let adData = ref([
+	  {
+	  		  label:'点击量',
 	  		  data:'',
 	  		  checked:true,
 	  },
 	  {
-	  		  label:'广告花费',
+	  		  label:'广告销量',
 	  		  data:'',
-	  		  checked:true,
+			  checked:false,
 	  },
 	  {
-	  		  label:'广告订单量',
+	  		  label:'广告费$',
 	  		  data:'',
+	  		  checked:true,
 	  },
 	  {
 	  		  label:'ACOS',
 	  		  data:'0.0%',
+			  checked:false,
 	  },
 	  ]);
 	  function generateChart(label,title,series){
@@ -108,35 +111,59 @@ export default{
 				   let myparam=prop.parameter;
 			 
 				  myparam.profileid="all";
+				  myparam.currency="USD";
 				  reportApi.getsumproduct(myparam).then((res)=>{
-				       adData.value[0].data=res.data.summary.attributedSales;
-					   adData.value[1].data=res.data.summary.cost;
-					   adData.value[2].data=res.data.summary.attributedUnitsOrdered;
+					   adData.value[0].data=res.data.summary.clicks;
+					   adData.value[1].data=res.data.summary.attributedUnitsOrdered;
+					   adData.value[2].data=formatFloat(res.data.summary.cost);
 					   adData.value[3].data=formatFloat(res.data.summary.acos)+"%";
 		 			   let label=res.data.impressions.listLabel;
-					   let title=['广告销售额','广告花费'];
+					   let title=['点击量','广告销量','广告费$','ACOS'];
 					   let series=[{
 					       smooth: 0.5,
-					       name: '广告销售额',
+					       name: '点击量',
 					       type: 'line',
-							data: res.data.attributedSales.listData,
+							data:res.data.clicks.listData,
+							lineStyle:{
+								color:'#67C23A',
+							},
+							itemStyle:{
+								color:'#67C23A',
+							},
+							},
+					      {
+					       smooth: 0.5,
+					       name: '广告销量',
+					       type: 'line',
+							data:res.data.order.listData,
+							lineStyle:{
+								color:'#FF6700',
+							},
+							itemStyle:{
+								color:'#FF6700',
+							}
+					      },{
+					       smooth: 0.5,
+					       name: '广告费$',
+					       type: 'line',
+							data: res.data.cost.listData,
 							lineStyle:{
 								color:'#409eff',
 							},
 							itemStyle:{
 								color:'#409eff',
 							}
-						   },
+						   }, 
 					      {
 					       smooth: 0.5,
-					       name: '广告花费',
+					       name: 'ACOS',
 					       type: 'line',
-							data:res.data.cost.listData,
+							data:res.data.acos.listData,
 							lineStyle:{
-								color:'#FF6700',
+								color:'#E6A23C',
 							},
 							itemStyle:{
-								color:'#FF6700',
+								color:'#E6A23C',
 							}
 					      }]
 					   generateChart(label,title,series);

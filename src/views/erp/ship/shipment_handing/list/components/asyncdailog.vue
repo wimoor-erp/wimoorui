@@ -26,9 +26,8 @@
 		</el-table>
 		<template #footer>
 		  <span class="dialog-footer">
-		    <el-button @click="dialogVisible = false">关闭</el-button>
-		    <el-button type="primary"  @click="submitDialog">确认出库</el-button
-		    >
+		    <el-button type="primary"  @click="submitDialog">同步并出库</el-button>
+		    <el-button  @click="closeDialog">仅同步货件</el-button>
 		  </span>
 		</template>
    </el-dialog>
@@ -41,7 +40,7 @@
 	export default{
 		name:'shipAsyncDailog',
 		components:{Warehouse},
-		emits:["submit"],
+		emits:["change"],
 		setup(props,context){
 		   let dialogVisible=ref(false);
 		   let tableData=ref([]);
@@ -49,12 +48,16 @@
 		   let warehouseid="";
 		   let title=ref("");
 		   let loading =ref(false);
+		   function closeDialog(){
+			    dialogVisible.value = false;
+				context.emit("change");
+		   }
 		   function showDailog(params){
 			   myParams=params;
 			   params.warehouseid=warehouseid;
 			    loading.value=true;
+				dialogVisible.value=true;   
 			   shipmenthandlingApi.getUnSyncShipmentDetial(params).then(res=>{
-			   		dialogVisible.value=true;   
 					title.value="货件信息:"+params.shipmentid;
 					tableData.value=res.data.itemList;
 					loading.value=false;
@@ -86,7 +89,7 @@
 				      message: '同步成功！',
 				      type: 'success'
 				    });
-					context.emit("submit",getData())
+					context.emit("change");
 			   })
 			   
 		   }
@@ -96,7 +99,7 @@
 		   }
 		   return {
 			   dialogVisible, //ref
-			   showDailog, submitDialog, getWarehouse,  //function
+			   showDailog,closeDialog, submitDialog, getWarehouse,  //function
 			   title,tableData,loading,//value
 		   }
 		  }

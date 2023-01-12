@@ -3,7 +3,7 @@
 	<el-dialog v-model="saleStatusVisable" title="销售状态管理" destroy-on-close='true' width="600px"  >
 	<h4 class="m-b-8">默认销售状态</h4>
 	<el-space class="m-b-32">
-		<el-tag  v-for="item in statusSysList" :type="colorFunc(item.color)"    effect="dark">
+		<el-tag  v-for="item in statusSysList" :type="item.color"    effect="dark">
 			{{item.name}}
 		</el-tag>
 	  </el-space>
@@ -15,7 +15,7 @@
 	      v-for="item in statusList"
 	      :key="item.id"
 	      closable
-		  :type="colorFunc(item.color)"
+		  :type="item.color"
 		  effect="dark"
 	      :disable-transitions="false"
 	      @close="handleClose(item.id)"
@@ -27,7 +27,7 @@
 		        <el-dropdown-item   v-for="sub in colorList" :command="{tag:item.name,color:sub.value,id:item.id}">
 					<div class="color-select">
 					  <span >{{ sub.label }}</span>
-					  <span :class="'cilcle-'+sub.value"></span  >
+					  <span :class="'cilcle-'+colorTran(sub.value)"></span  >
 					</div> 
 				</el-dropdown-item>
 		      </el-dropdown-menu>
@@ -47,13 +47,6 @@
 	    </el-button>
 		</el-space>
 		</el-row>
-		<!-- <h4 class="m-b-8">填写备注</h4>
-		<el-row>
-			<el-space>
-				 <el-input :rows="3" v-model="remark" type="textarea"></el-input>
-			</el-space>
-		</el-row> -->
-	
 	  <template #footer>
 	  	<span class="dialog-footer">
 	  		<el-button @click="saleStatusVisable = false">关闭</el-button>
@@ -77,13 +70,11 @@
 			let statusList=ref([]);
 			let statusSysList=ref([]);
 			let colorList = [
-				{label:"蓝色",value:"blue"},
-				{label:"红色",value:"red"},
-				{label:"绿色",value:"green"},
-				{label:"黄色",value:"yellow"},
-				{label:"灰色",value:"gray"},
-				{label:"黑色",value:"black"},
-				{label:"橙色",value:"orange"},
+				{label:"蓝色",value:""},
+				{label:"红色",value:"danger"},
+				{label:"绿色",value:"success"},
+				{label:"黄色",value:"warning"},
+				{label:"灰色",value:"info"},
 				];
 			let statuscolor=ref("blue");
 			let remark=ref("");
@@ -220,21 +211,21 @@
 					
 				});
 			}
-			function colorFunc(color){
-				if(color=="blue"){
-					color = ""
-				}else if(color=="red"){
-					color = "danger"
-				}else if(color=="green"){
-					color = "success"
-				}else if(color=="yellow" || color=="orange"){
-					color = "warning"
-				}else if(color=="gray" || color=="black"){
-					color = "info"
-				}else{
-					color = "";
-				}
-				return color;
+			function colorTran(color){
+				    if(color==""){
+						color = "blue"
+					}else if(color=="danger"){
+						color = "red"
+					}else if(color=="success"){
+						color = "green"
+					}else if(color=="warning"){
+						color = "yellow"
+					}else if(color=="info"){
+						color = "gray"
+					}else{
+						color = "gray";
+					}
+					return color;
 			}
 			return{
 				//value
@@ -244,7 +235,7 @@
 				InputRef,
 				//function
 				submitStatus,loadData,changeColor,deleteItem,updateItem,command,
-				handleClose,showInput,handleInputConfirm,colorFunc,handleInputCancel,
+				handleClose,showInput,handleInputConfirm,handleInputCancel,colorTran,
 			}
 		}	
 	}

@@ -3,6 +3,7 @@
 	  <el-row>
 	    <el-space >
 	  <Group ref="groups" @change="changeGroup" defaultValue="only"/>
+	  <Region ref="regionRef" @change="changeRegion" defaultValue="only"/>
 	  <Datepicker ref="datepickers" @changedate="changedate" />
 	   <el-input  v-model="searchKeywords" @input="searchConfirm" placeholder="请输入" class="input-with-select" >
 	      <template #prepend> 
@@ -59,13 +60,14 @@
 	import {Search,ArrowDown,} from '@element-plus/icons-vue'
 	import { ElDivider } from 'element-plus'
 	import {MenuUnfold,Plus,SettingTwo,Help,Copy,MoreOne,ChartPie} from '@icon-park/vue-next';
-	import Group from '@/components/header/group.vue';
+	import Group from '@/components/header/groupWithoutMarket.vue';
+	import Region from '@/components/header/region.vue';
 	import Datepicker from '@/components/header/datepicker.vue';
 	export default{
 		name:'Header',
 		components:{
 			MenuUnfold,Plus,SettingTwo,Help,Copy,MoreOne,Search,ArrowDown,
-			ChartPie,Group,Datepicker
+			ChartPie,Group,Datepicker,Region
 		},
 		emits:["getdata","download"],
 		setup(props,context){
@@ -75,6 +77,7 @@
 			let searchKeywords =ref()
 			let selectlabel = ref("sku")
 			let moreSearchVisible =  ref()
+			let regionRef=ref(Region);
 			var queryParam={};
 			let isload=true;
 			onMounted(()=>{
@@ -88,12 +91,16 @@
 					context.emit("getdata",queryParam);
 				}
 			}
-			function changeGroup(obj){
-				queryParam.groupid=obj.groupid;
-				queryParam.marketplaceid=obj.marketplaceid;
+			function changeGroup(data){
+				queryParam.groupid=data.groupid;
+				regionRef.value.getData(data.groupid)
+				
+			}
+			function changeRegion(authid){
 				queryParam.searchtype=selectlabel.value;
-				context.emit("getdata",queryParam);
+				queryParam.amazonauthid=authid;
 				isload=false;
+				context.emit("getdata",queryParam);
 			}
 			//搜索内容
 			function searchConfirm(){
@@ -117,9 +124,9 @@
 			}
 			 
 			return{
-				searchKeywords,isload,
+				searchKeywords,isload,regionRef,
 				searchConfirm,searchTypeChange,resetForm,moreSearchVisible,
-				changeGroup,changedate,selectlabel,downloadExcel
+				changeGroup,changedate,selectlabel,downloadExcel,changeRegion
 			}
 		}
 	}

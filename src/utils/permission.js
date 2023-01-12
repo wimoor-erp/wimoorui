@@ -1,4 +1,3 @@
-import store from '@/store'
 import router from "@/router";
 
 export  const hasPerm = {

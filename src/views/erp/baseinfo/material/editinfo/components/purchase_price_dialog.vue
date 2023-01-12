@@ -9,18 +9,17 @@
 			<el-table-column label="采购量">
 				<template #default="scope">
 					<el-space>
-						<el-input v-model="scope.row.starnum" placeholder="起订量" :disabled="scope.$index!==0"></el-input>
-						<span>-</span>
-						<el-input v-model="scope.row.endnum" @change="putval(scope.row,scope.$index)"></el-input>
+						<el-input v-model="scope.row.amount" placeholder="起订量" ></el-input>
+						<!-- <span>-</span> :disabled="scope.$index!==0"
+						<el-input v-model="scope.row.endnum" @change="putval(scope.row,scope.$index)"></el-input> -->
 					</el-space>
 				</template>	
 			</el-table-column>
 			<el-table-column label="币种">
 				<template #default="scope">
-					<el-select  v-model="scope.row.currenty" placeholder="USD" >
-					  <el-option label="USD" value="USD" />
-					  <el-option label="CNY" value="CNY" />
-					  <el-option label="ES" value="ES" />
+					<el-select  v-model="scope.row.currency" placeholder="币别" >
+					  <el-option  label="CNY" value="0" />
+					  <el-option  label="USD" value="1" />
 					 </el-select>
 				</template>
 			</el-table-column>
@@ -49,78 +48,78 @@
 	</el-dialog>
 </template>
 
-<script>
-	import {ref,reactive} from 'vue'
+<script setup>
+	import {ref,reactive,defineEmits,toRefs,onMounted} from 'vue'
 	import {Plus,Minus} from '@icon-park/vue-next';
 	import {ElMessage} from 'element-plus';
-	export default{
-		components: {
-			Plus,Minus,
-		},
-		emits:["getprice"],
-		setup(props,context){
-			let priceVisable = ref(false)
-			let tableData =reactive([
-				{
-					starnum:'',
-					endnum:'',
-					currenty:'USD',
-					price:'',
-				},
-			])
-			function addladder(row,index){
-				tableData.push({
-					starnum:'',
-					endnum:'',
-					currenty:'USD',
-					price:'',
-				})
-				putval(row,index)
-			}
-			function removePrice(){
-				tableData.pop()
-			}
-			function putval(row,index){
-				if(parseInt(row.endnum)<=parseInt(row.starnum)){
-					ElMessage({
-						message:'需大于起订量',
-						type:"error",
-					})
-					row.endnum = ""
-				}
-				if(tableData[index+1]){
-					if(row.endnum==""){
-						tableData[index+1].endnum = ''
-					}else{
-						tableData[index+1].starnum = parseInt(row.endnum)+1
-					}
-					
-				}
+	const emit = defineEmits(['getprice']);
+	 
+	let state=reactive({
+		priceVisable:false,
+		tableData:[],
+		
+	});
+	let { priceVisable,tableData } =toRefs(state);
+	// let tableData =reactive([
+	// 	{
+	// 		starnum:'',
+	// 		endnum:'',
+	// 		currenty:'USD',
+	// 		price:'',
+	// 	},
+	// ])
+	function addladder(row,index){
+		state.tableData.push({
+			amount:'',
+			currency:'0',
+			price:'',
+		})
+		putval(row,index)
+	}
+	function removePrice(){
+		state.tableData.pop()
+	}
+	function putval(row,index){
+		if(parseInt(row.endnum)<=parseInt(row.starnum)){
+			ElMessage({
+				message:'需大于起订量',
+				type:"error",
+			})
+			row.endnum = ""
+		}
+		if(state.tableData[index+1]){
+			if(row.endnum==""){
+				state.tableData[index+1].endnum = ''
+			}else{
+				state.tableData[index+1].starnum = parseInt(row.endnum)+1
 			}
 			
-			function submitprice(){
-				tableData.forEach((item)=>{
-					if(item.starnum!==""&&item.endnum!==""&&item.price!==""){
-						priceVisable.value =false
-						context.emit("getprice",tableData)
-					}else{
-						ElMessage({
-							message:'数据不能为空',
-							type:"error",
-						})
-					}
-				})
-			}
-			return{
-			priceVisable,
-			tableData,
-			addladder,
-			removePrice,
-			putval,
-			submitprice,
-			}
 		}
+	}
+	
+	function submitprice(){
+		var isok=true;
+		state.tableData.forEach((item)=>{
+			if(item.amount==""|| item.price==""){
+				isok=false;  
+			}
+		})
+		if(isok==true){
+			state.priceVisable =false;
+			emit("getprice",state.tableData);
+		}else{
+			ElMessage({
+				message:'数据行不能为空',
+				type:"error",
+			})
 		}
+		
+	}
+		
+	defineExpose({
+	  tableData,priceVisable
+	}); 
+		 
 </script>
 
 <style>

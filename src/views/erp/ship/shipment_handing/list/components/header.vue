@@ -156,6 +156,9 @@
 				}
 			}
 			function searchConfirm(){
+				if(searchKeywords.value&&searchKeywords.value.indexOf("FBA")==0){
+					selectlabel.value="number";
+				}
 				queryParam.searchwords=searchKeywords.value;
 				if(isload==false){
 					context.emit("getdata",queryParam);

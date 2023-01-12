@@ -13,9 +13,9 @@
 	  </el-row>
 	 </div>	
 	  <div class="con-body">
-		  <OnePicking @stepdata="stepChanges" ref="oneRef" v-show="step==0"/>
-		  <TwoBox @stepdata="stepChanges" ref="twoRef" v-show="step==1" />
-		  <ThreeDeliver @stepdata="stepChanges" ref="threeRef" v-show="step==2" />
+		  <OnePicking @stepdata="stepChanges" ref="oneRef"  v-show="step==0"/>
+		  <TwoBox @stepdata="stepChanges" ref="twoRef"  @change="stepLoad(1)" v-show="step==1" />
+		  <ThreeDeliver @stepdata="stepChanges" ref="threeRef" @change="stepLoad(3)" v-show="step==2" />
 		  <FourReceive ref="fourRef" v-show="step==3"/>
 	  </div>
 	 <el-divider />
@@ -55,13 +55,8 @@
 			function loadshipmentData(){
 				let shipmentid = router.currentRoute.value.query.shipmentid;
 				shipmenthandlingApi.getShipment(shipmentid).then((res)=>{
-					console.log(res.data);
 					oneRef.value.productData.list = res.data.itemList;
-					oneRef.value.loadOptData(res.data);
-					twoRef.value.loadOptData(res.data);
-					threeRef.value.loadOptData(res.data);
 					shipmentRef.value.shipmentInfo=res.data;
-					fourRef.value.productData.list=res.data.itemList;
 					if(res.data.status=="0"){
 						step.value=0;
 					}else if(res.data.status=="2"){
@@ -75,17 +70,43 @@
 					}else if(res.data.status=="6"){
 						step.value=3;
 					}
+					handleStep(step.value,res);
 				})
+			}
+			function handleStep(val,res){
+				oneRef.value.productData.list = res.data.itemList;
+				shipmentRef.value.shipmentInfo=res.data;
+				if(val==0){
+					oneRef.value.loadOptData(res.data);
+				}else if(val==1){
+					twoRef.value.loadOptData(res.data);
+				}else if(val==2){
+					threeRef.value.loadOptData(res.data);
+				}else if(val==3){
+					fourRef.value.productData.list=res.data.itemList;
+				}
+				shipmentRef.value.getBaseInfo();
+				step.value=val;
+			}
+			function stepLoad(val){
+				let shipmentid = router.currentRoute.value.query.shipmentid;
+				shipmenthandlingApi.getShipment(shipmentid).then((res)=>{
+					handleStep(val,res)
+					
+				});
+				
 			}
 			function stepChange(val){
 				step.value=val;
+				 stepLoad(val);
 			}
 			function stepChanges(val){
-				console.log(val);
 				step.value=val;
+				 stepLoad(val);
 			}
 			return{
-				step,stepChange,loadshipmentData,oneRef,shipmentRef,threeRef,fourRef,twoRef,stepChanges
+				step,stepChange,loadshipmentData,oneRef,shipmentRef,threeRef,fourRef,twoRef,
+				stepChanges,stepLoad
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 <template>
  <div>
-	 <GlobalTable  ref="globalTable" :tableData="tableData"  @loadTable="loadtableData" 
-	 :stripe="true" height="calc(100vh - 220px)"
+	 <GlobalTable  ref="globalTable" :tableData="tableData"  :size="20" @loadTable="loadtableData" 
+	 :stripe="true" :height="undefined"
 	 :defaultSort="defaultSort" @selectionChange = "selectRow"    >
 		  <template #field>
 		 <el-table-column  type="selection" width="38" />
@@ -14,13 +14,13 @@
 		 			 <template #default="scope">
 		 			 <div class="sku-name ">{{scope.row.name}}</div>
 					 <el-space>
-					<el-link type="primary" link class="font-base"> {{scope.row.sku}}  </el-link>
-					 <span class="font-extraSmall">ASIN:{{scope.row.asin}}</span>
+					<span class="font-bold font-base">{{scope.row.sku}}  </span>
+					 <span class="font-extraSmall flex-center">ASIN:<el-link class="font-extraSmall"   @click.stop="openUrl(scope.row.pointName,scope.row.asin)" type="primary"  > {{scope.row.asin}}</el-link></span>
 					 <span v-if="scope.row.parentAsin" class="font-extraSmall">  ParentASIN:{{scope.row.parentAsin}}</span>
 					 </el-space>
 					 <div>
 					 <el-space class="font-extraSmall" v-if="scope.row.positiveFeedbackRating>0">
-						 <el-rate
+						 <el-rate  
 							v-model="scope.row.positiveFeedbackRating"
 							disabled
 							score-template="{value} 星"
@@ -30,10 +30,10 @@
 					 </div>
 					 <div>
 					<el-space :size="8" class=" icon-text-center">
-							<el-tag size="small" type="danger" v-if="scope.row.optstatusname">{{scope.row.optstatusname}}</el-tag>
-							<!-- <el-tag size="small" type="warning" effect="dark">黄</el-tag> -->
-							<!-- <el-tag size="small" type="info">圣诞节</el-tag>
-							<el-tag size="small" type="info">会员促销</el-tag> -->
+							<el-tag size="small" effect="dark" :type="scope.row.optstatuscolor" v-if="scope.row.optstatusname">{{scope.row.optstatusname}}</el-tag>
+							<el-tag v-if="scope.row.tagNameList" effect="plain" :type="item.color"  v-for="item in scope.row.tagNameList" size="small" >
+								{{item.name}}
+							</el-tag>
 							<el-tag size="small" v-if="scope.row.flownnumber" type="danger">{{scope.row.flownnumber}}人跟卖</el-tag>
 					</el-space>
 					</div>
@@ -127,9 +127,9 @@
 						 <div class="flex-v-bet" >
 						  <div>
 						  <div class="font-extraSmall">可售库存 </div>
-						 <el-popover title="库存详情"  v-model:visible="scope.row.itemshow" placement="bottom" trigger="click" :width="500">
-														 <el-row :gutter="16">
-														<el-col :span="8">
+						 <el-popover title="库存详情"  placement="bottom" trigger="click" :width="500">
+								   <el-row :gutter="16">
+											 <el-col :span="8">
 															<ul class="list-style-type li-be" v-if="FBAInvData">
 																<li ><span>可用库存</span><el-tag type="success">{{FBAInvData.afnFulfillableQuantity}}</el-tag></li>
 																 <li><span>预留</span><el-tag>{{FBAInvData.afnReservedQuantity}}</el-tag></li>
@@ -171,18 +171,36 @@
 															{{NullTransform(scope.row.afnFulfillableQuantity)}}  
 														</span>
 												 	</template>
-												 </el-popover>
+						</el-popover>
+						<el-popover v-if="scope.row.mregion=='EU'" title="EU库存详情"  placement="bottom" trigger="click" :width="226">
+							<el-table :data="FBAEUlist">
+								<el-table-column>
+									<el-table-column prop="country" label="国家" width="100" >
+										<template #default="scope">
+											<span v-if="scope.row.country=='GB'">UK</span>
+											<span v-else>{{scope.row.country}}</span>
+										</template>
+									</el-table-column>
+									<el-table-column prop="quantity" label="库存数量" width="100" />
+								</el-table-column>
+							</el-table>
+							<template #reference>
+								<span class="font-extraSmall pointer" @click="loadEUInventory(scope.row)">
+									<span v-if="scope.row.country=='DE' || scope.row.country=='PL'">
+										(DE+PL+CZ:{{NullTransform(scope.row.czinv)}})  
+									</span>
+									<span v-else>({{scope.row.country}}:{{NullTransform(scope.row.countryinv)}})</span>
+								</span>
+							</template>
+						</el-popover>
 						  </div>
 						  <div class="m-t-16">
 						  <div class="font-extraSmall">可售天数</div>
-							<span v-if="scope.row.dayfulfilla">
+							<span >
 								{{formatInteger(scope.row.dayfulfilla)}}
 							</span>
-							<span v-else-if="scope.row.dayinbound">
-								+{{formatInteger(scope.row.dayinbound)}}
-							</span>
-							<span v-else>
-								--
+							<span v-if="scope.row.dayinbound">
+							   +{{formatInteger(scope.row.dayinbound)}}
 							</span>
 							&nbsp;<el-link :underline="false" type="info" @click="handlarrivalChart(scope.row)">
 								<el-tooltip content="预计到货报表" placement="top" :hide-after="0" :show-after="200">
@@ -313,7 +331,7 @@
 					<el-link :underline="false" type="danger" title="销量图表"  @click="handlesaleChart(scope.row)"> 
 				   <chart-histogram  theme="outline" size="18" :strokeWidth="3"/>
 				   </el-link>
-				   <slide class="ic-cen" title="趋势分析"   theme="outline" size="18" fill="#FF6700" :strokeWidth="3"/>
+				   <slide class="ic-cen pointer" title="趋势分析"  @click="handleAnalysis"  theme="outline" size="18" fill="#FF6700" :strokeWidth="3"/>
 			   	<el-dropdown>
 			   	    <el-link type="danger" class="font-Small font-400"  :underline="false">
 			   	     <el-icon class="ic-cen"><MoreFilled /></el-icon>
@@ -323,7 +341,7 @@
 			   	         <el-dropdown-item @click="matching(scope.row)">配对</el-dropdown-item>
 			   			<el-dropdown-item  @click="refreshProduct(scope.row)">同步商品</el-dropdown-item>
 						<el-dropdown-item  @click="EditStatus(scope.row)">编辑状态</el-dropdown-item>
-						<el-dropdown-item  @click="editMark">编辑标签</el-dropdown-item>
+						<el-dropdown-item  @click="editTags(scope.row)">编辑标签</el-dropdown-item>
 			   	      </el-dropdown-menu>
 			   	    </template>
 			   	  </el-dropdown>
@@ -336,12 +354,12 @@
  <el-dialog v-model="markVisable" title="编辑标签" width="600px">
 	  <el-space>
 	  <span>标签</span>
-	  <el-cascader :options="markoptions"  :popper-append-to-body="false" :props="markprops" clearable />
+	  <el-cascader v-model="tagsValue" placeholder="请选择标签" :options="tagsList"  @change="changeTags" :popper-append-to-body="false" :props="markprops" clearable />
 	 </el-space>
 	  <template #footer>
 	  	<span class="dialog-footer">
 	  		<el-button @click="markVisable = false">取消</el-button>
-	  		<el-button type="primary" @click="">提交</el-button>
+	  		<el-button type="primary" @click.stop="submitTags">提交</el-button>
 	  	</span>
 	  </template>
  </el-dialog>
@@ -362,14 +380,15 @@
   </template>
 <script>
 	import {ref,reactive,onMounted,watch,h} from 'vue'
+	import {useRouter } from 'vue-router'
 	import {Help,Plus,MenuUnfold,ChartHistogram,Slide,ChartLine} from '@icon-park/vue-next';
 	import {ElMessage,ElDivider} from 'element-plus';
 	import {Search,ArrowDown,Edit,MoreFilled,CaretTop} from '@element-plus/icons-vue';
 	import listingApi from '@/api/amazon/listing/listingApi';
 	import '@/assets/css/packbox_table.css'
-	import Salechart from"./salechart.vue"
+	import Salechart from "@/views/amazon/listing/common/salechart.vue"
 	import Matching from"./matching.vue";
-	import ArrivalDialog from"./arrival_dialog.vue";
+	import ArrivalDialog from"@/views/amazon/listing/common/arrival_dialog.vue";
 	import PorfitDetails from './profit_details.vue'
 	import OtherCost from"./other_cost.vue";
 	import productinfoApi from '@/api/amazon/product/productinfoApi.js'
@@ -382,7 +401,8 @@
 	import inventoryApi from "@/api/erp/inventory/inventoryApi.js";
 	import inventoryRptApi from "@/api/amazon/inventory/inventoryRptApi.js";
 	import productRefreshApi from '@/api/amazon/product/productRefreshApi.js';
-	import productinoptApi from '@/api/amazon/product/productinoptApi.js'
+	import productinoptApi from '@/api/amazon/product/productinoptApi.js';
+	import {getAllTags} from '@/api/sys/admin/tag.js';
 	export default {
 		name:'Table',
 		components: {
@@ -393,7 +413,7 @@
 		},
 		emits:["checkRow"],
 		setup(props,context) {
-			let defaultSort=ref({"prop": 'averageSalesDay', "order": 'descending' });
+			let defaultSort=ref({"prop": 'sku', "order": 'ascending' });
 			let modifypriceRef =ref()
 			let remarksRef =ref()
 			let statusRef = ref()
@@ -405,50 +425,9 @@
 			let arrivalchartRef =ref()
 			let stripe = ref(false)
 			let priceList=ref([]);
-			let markoptions = [
-			{
-			    value: 1,
-			    label: '颜色',
-			    children: [
-			      {
-			        value: 2,
-			        label: '红',
-			      },
-				  {
-				    value: 3,
-				    label: '黄',
-				  },
-				  ]
-		},
-		{
-			    value: 2,
-			    label: '节日',
-			    children: [
-			      {
-			        value: 2,
-			        label: '圣诞节',
-			      },
-				  {
-				    value: 3,
-				    label: '万圣节',
-				  },
-				  ]
-		},
-		{
-			    value: 3,
-			    label: '策略',
-			    children: [
-			      {
-			        value: 2,
-			        label: '促销',
-			      },
-				  {
-				    value: 3,
-				    label: '提价',
-				  },
-				  ]
-		},
-		]
+			let router=useRouter()
+			let FBAEUlist=ref([]);
+			let tagsList = ref([]);
 		    let matchingRef =ref()
 			let salechartRef=ref()
 			let star = ref(3.5)
@@ -457,6 +436,9 @@
 			let fulfillVis=ref(false);
 			let localInvData=ref([]);
 			let FBAInvData=ref({});
+			let tagsValue=ref();
+			let checkTags=ref("");
+			let nowTagProRow=ref({});
 		onMounted(()=>{
 			
 		})
@@ -480,10 +462,7 @@
 			 context.emit("checkRow",selection)
 		 }
 		 function handlesaleChart(row){
-			 salechartRef.value.loadChart(row.groupid,row.marketplaceid,row.amazonAuthId,row.sku,row.msku);
-		 }
-		 function editMark(){
-			 markVisable.value =true
+			 salechartRef.value.show(row.groupid,row.marketplaceid,row.amazonAuthId,row.sku,row.msku);
 		 }
 		 function matching(row){
 			 var msku=row.sku;
@@ -497,6 +476,7 @@
 		function loadData(params){
 			var data={};
 			data.groupid=params.groupid;
+			data.taglist=params.taglist;
 			data.marketplace=params.marketplaceid;
 			data.search=params.search;
 			data.searchtype=params.searchtype;
@@ -514,8 +494,10 @@
 			data.isbadreview=params.isbadreview;
 			data.name=params.name;
 			data.paralist=params.paralist;
-			data.sort=params.sort;
-			data.order=params.order;
+			if(params.sort){
+				data.sort=params.sort;
+				data.order=params.order;
+			}
 			globalTable.value.loadTable(data);
 		}
 		 function loadtableData(data){
@@ -539,10 +521,10 @@
 			porfitRef.value.loadData(row.id,row.landedAmount,type);
 		}
 		 function handlarrivalChart(row){
-			arrivalchartRef.value.loadChart(row.groupid,row.marketplaceid,row.amazonAuthId,row.sku,row.msku);
+			arrivalchartRef.value.show(row.groupid,row.marketplaceid,row.amazonAuthId,row.sku,row.msku);
 		 }
-		 function showCostModal(){
-			 otherCostRef.value.costVisable = true
+		 function showCostModal(row){
+			 otherCostRef.value.loadData(row);
 		 }
 		 function loadInventory(rows){
 			 var msku=rows.sku;
@@ -559,6 +541,13 @@
 				 	 FBAInvData.value=res.data[0];
 				 })
 			 }
+		 }
+		 function loadEUInventory(rows){
+			 inventoryRptApi.findEUFBA({"sku":rows.sku,"authid":rows.amazonAuthId}).then((res)=>{
+			 	if(res.data && res.data.length>0){
+					FBAEUlist.value=res.data;
+				}
+			 })
 		 }
 		 function refreshInventory(rows){
 			 //刷新fba库存
@@ -584,12 +573,12 @@
 			  productRefreshApi.refreshItemBySKU({"groupid":row.groupid,"marketplaceid":row.marketplaceid,"sku":row.sku}).then((res)=>{
 				 if(res.data){
 					 ElMessage({
-					      message: '同步成功！',
+					      message: row.sku+'同步成功！',
 					      type: 'success'
 					 })
 				 }else{
 					 ElMessage({
-					      message: '同步失败！',
+					      message: row.sku+'同步失败！',
 					      type: 'error'
 					 })
 				 }
@@ -598,20 +587,82 @@
 		 function showPrice(pid){
 			 productinoptApi.findPriceById({"pid":pid}).then((res)=>{
 				 if(res.data){
-					 console.log(res.data);
-					priceList.value=res.data; 
+					 priceList.value=res.data;  
 				 }
 			 });
 		 }
-		 
+		 function openUrl(point,asin){
+			 window.open("https://"+point+"/dp/"+asin+"?th=1&psc=1", '_blank');
+		 }
+		 function handleAnalysis(){
+			 router.push({
+				 path:'/amazon/listing/analysis',
+				 query:{
+					   title:'趋势分析',
+					   path:'/amazon/listing/analysis',
+				 }
+			 })
+		 }
+		 function editTags(rows){
+			 nowTagProRow.value=rows;
+			 getAllTags().then(res => {
+				  tagsList.value=res.data;
+				  //在通过id去找 选了哪些
+				  var arrs=[];
+				  productinoptApi.findProductTags({"pid":rows.id}).then((ress)=>{
+					  if(ress.data && ress.data!=""){
+						  var strs=ress.data.toString();
+						  var list=strs.split(",");
+						  list.forEach(function(item){
+							  arrs.push(item);
+						  });
+						   tagsValue.value=arrs;
+					  }else{
+						   tagsValue.value=[];
+					  }
+				  });
+				 
+			 });
+			 markVisable.value =true;
+		 }
+		 function submitTags(){
+			 var pid=nowTagProRow.value.id;
+			 var ids=checkTags.value;
+			 productinoptApi.saveProductTags({"pid":pid,"ids":ids}).then((res)=>{
+				 if(res.data=="ok"){
+					 ElMessage({
+					      message: '操作成功！',
+					      type: 'success'
+					 })
+				 }else{
+					 ElMessage({
+					      message: '操作失败！',
+					      type: 'error'
+					 })
+				 }
+			 });
+		 }
+		 function changeTags(tags){
+			 
+			 if(tags){
+				 var items="";
+				  tags.forEach(function(item){
+					  items+=(item[1]+",");
+				  });
+				  checkTags.value=items;
+			 }else{
+				 checkTags.value="";
+			 }
+		 }
 			return {
 			//value
-			tableData,star,activeName,markprops,markoptions,markVisable,globalTable,defaultSort,stripe,fulfillVis,
-			localInvData,FBAInvData,priceList,
+			tableData,star,activeName,markprops,tagsList,markVisable,globalTable,defaultSort,stripe,fulfillVis,
+			localInvData,FBAInvData,priceList,FBAEUlist,tagsValue,checkTags,nowTagProRow,
 			//function
-			rollbackPrice,rollbackremark,selectRow,handlesaleChart,editMark,matching,loadtableData,formatPercent,formatFloat,
+			rollbackPrice,rollbackremark,selectRow,handlesaleChart,editTags,matching,loadtableData,formatPercent,formatFloat,
 			formatInteger,stringText,modifyPrice,editRemarks,viewProfitDetails,handlarrivalChart,NullTransform,EditStatus,loadData,
-			showCostModal,loadInventory,refreshInventory,refreshProduct,showPrice,
+			showCostModal,loadInventory,refreshInventory,refreshProduct,showPrice,openUrl,handleAnalysis,loadEUInventory,submitTags,
+			changeTags,
 			//ref
 			salechartRef,matchingRef,modifypriceRef,remarksRef,
 			porfitRef,arrivalchartRef,statusRef,otherCostRef,

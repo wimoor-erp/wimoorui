@@ -45,7 +45,7 @@
 	import {Search,ArrowDown,} from '@element-plus/icons-vue';
 	import DataDeatils from"./components/data_deatils"
 	import Group from '@/components/header/group.vue';
-	import {ref,reactive,defineProps,toRefs,onMounted}from"vue"
+	import {ref,reactive,toRefs,onMounted}from"vue"
 	let state=reactive({
 		skuList:[
 			{sku:'A2032KQJYA',asin:'B07F1VH6YK',active:true,},

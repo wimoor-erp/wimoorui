@@ -25,25 +25,26 @@
 			</el-radio-group>
 			<div>
 			
-				<div class="rt-btn-group" v-show="tablabel=='shelf'" >
+				<div class="rt-btn-group" v-if="tablabel=='shelf'" >
 				   <el-space wrap>
 				   <el-checkbox v-model="allchildren" @change="allchildrenChange" :disabled="allchildrendisabled" label="含子库位"  />
 				   <el-button  @click='subShelfs'>批量下架</el-button>
+				   <el-button  v-if="allchildrendisabled==false" @click='addMaterialShelf' class="el-button">上架</el-button>
 					<el-input v-model="skuSearch" placeholder="搜素SKU...">
 						<template #suffix>
 							<el-icon style="font-size:16px;" class="el-input__icon">
-								<search />
+								<search @click="allchildrenChange"/>	 
 							</el-icon>
 						</template>
 					</el-input>
 					</el-space>
 				</div>
-				<div class="rt-btn-group" v-show="tablabel=='unshelf'" >
-					<el-button @click='addShelf'>批量上架</el-button>
+				<div class="rt-btn-group" v-if="tablabel=='unshelf'" >
+					<el-button v-if="allchildrendisabled==false" @click='addShelf'>批量上架</el-button>
 					<el-input v-model="skuSearch" placeholder="搜素SKU...">
 						<template #suffix>
 							<el-icon style="font-size:16px;" class="el-input__icon">
-								<search />
+								<search @click="getunshelfList(1,10)"/>
 							</el-icon>
 						</template>
 					</el-input>
@@ -51,7 +52,7 @@
 			</div>
 		</div>
 		<el-row v-show="tablabel=='shelf'">
-			<el-table :data="tableData.records" @sort-change="shelfSort"  @selection-change='selectCheckboxShelf' :row-key="getRowKeys" border
+			<el-table :data="tableData.records"   height="calc(100vh - 230px)"  @sort-change="shelfSort"  @selection-change='selectCheckboxShelf' :row-key="getRowKeys" border
 				class="sys-table">
 				<el-table-column type="selection" :reserve-selection="false" width="38" />
 				<el-table-column prop="image" label="图片" width="60">
@@ -71,7 +72,7 @@
 				<el-table-column prop="operate" label="操作" width="120"  >
 					<template #default="scope">
 						<el-popover v-model:visible="scope.row.visible" placement="top" trigger="click" :width="160">
-							<el-input v-model="scope.row.amount" @input="scope.row.amount=number(scope.row.amount)"
+							<el-input v-model.number="scope.row.amount" 
 								class='inp-box' placeholder="下架数量" />
 							<div style="text-align: right; margin: 0">
 								<el-button size="small" type="text" @click="scope.row.visible = false">取消</el-button>
@@ -97,7 +98,7 @@
 				</el-pagination>
 		</el-row>
 		<el-row v-show="tablabel=='unshelf'">
-			<el-table :data="unshelftableData.records"  @sort-change="unshelfSort" @selection-change='selectCheckboxunShelf' :row-key="getRowKeys" border
+			<el-table :data="unshelftableData.records"  v-loading="loading"  height="calc(100vh - 230px)"    @sort-change="unshelfSort" @selection-change='selectCheckboxunShelf' :row-key="getRowKeys" border
 				class="sys-table">
 				<el-table-column type="selection" :reserve-selection="false" width="38" />
 				<el-table-column prop="image" label="图片" width="60">
@@ -112,10 +113,10 @@
 						</div>
 					</template>
 				</el-table-column>
-				<el-table-column prop="warehousequantity" label="仓库" sortable="custom">
+				<el-table-column prop="warehousequantity" label="仓库地址" sortable="custom">
 					<template #default="scope">
 						<div>{{scope.row.warehousename}}</div>
-						<div class="font-extraSmall">库存:{{scope.row.warehousequantity}}
+						<div class="font-extraSmall">总库存:{{scope.row.warehousequantity}}
 						</div>
 					</template>
 				</el-table-column>
@@ -123,7 +124,7 @@
 				<el-table-column prop="operate" label="操作" width="120" >
 					<template #default="scope">
 						<el-popover v-model:visible="scope.row.visible" placement="top" trigger="click" :width="160">
-							<el-input v-model="scope.row.amount" @input="scope.row.amount=number(scope.row.amount)"
+							<el-input v-model.number="scope.row.amount"  
 								class='inp-box' placeholder="上架数量" />
 							<div style="text-align: right; margin: 0">
 								<el-button size="small" type="text" @click="scope.row.visible = false">取消</el-button>
@@ -131,7 +132,8 @@
 									@click="addOffTheShelf(scope.row,scope.$index)">确认</el-button>
 							</div>
 							<template #reference>
-								<el-button class='el-button--blue'>上架</el-button>
+								<el-button v-if="allchildrendisabled" disabled >上架</el-button>
+								<el-button else class='el-button--blue'>上架</el-button>
 							</template>
 						</el-popover>
 					</template>
@@ -208,6 +210,7 @@
 			</span>
 		</template>
 	</el-dialog>
+	<MaterialDialog ref="materialDailogRef" @getdata="submitOtherInvShelf" :hasInput="true"></MaterialDialog>
 </template>
 
 <script>
@@ -219,13 +222,14 @@
 	import {ElMessage,ElDivider} from 'element-plus';
 	import {Search} from '@element-plus/icons-vue';
 	import {formatFloat,parseTime} from '@/utils/index';
- 
+    import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog.vue"
 	export default {
 		name: 'ShelfProduct',
 		components: {
 			Help,
 			Search,
-			Plus 
+			Plus ,
+			MaterialDialog,
 		},
 		setup(props, {
 			attrs,
@@ -234,6 +238,7 @@
 		}) {
 			let tablabel = ref("shelf")
 			let GroundingVisible = ref(false)
+		    let materialDailogRef = ref(MaterialDialog)
 			let offShelfVisible = ref(false)
 			let diglogunshelftableData=ref()
 			let dialogSearch = ref("")
@@ -247,13 +252,11 @@
 			let pagesize=ref(10)
 			let shelfPage=ref();
 			let unshelfPage=ref();
-			
+			let loading=ref(false);
 			let currentPage=ref(1)
 			let totalunshelf = ref(100);
 			let totalshelf = ref(100);
-			let shelfdata = reactive({
-				data: {},usesize:0
-			})
+			let shelfdata = reactive({ data: {},usesize:0 })
 			let unshelftableData = reactive({ records: [],total:0,page:1,pageSize:10,sort:"orderitem",order:"desc"});
 			let tableData = reactive({ records: [],total:0 ,page:1,pageSize:10,sort:"",order:""});
 			let offShelftableData = ref();
@@ -293,14 +296,15 @@
 					allchildren.value=true;
 				}
 				if(shelfdata.data.treepath){
-					shelfApi.getShelfInfo({'shelfid':shelfdata.data.id}).then((res)=>{
-						console.log(res);
+					 var param={'shelfid':shelfdata.data.id};
+					 param.addressnum="";
+					 param.shelftreepath="";
+					shelfApi.getShelfInfo(param).then((res)=>{
 						shelfdata.usesize=res.data.usesize;
 					});
 				}else{
 					shelfdata.usesize=0;
 				}
-				
 				getshelfList();
 				getunshelfList();
 			}
@@ -311,8 +315,7 @@
 				}
 				param.pagesize=pagesize;
 				param.currentpage= currentpage;
-		        param.search=shelfdata.data.search;
-				console.log("param",param.search)
+		        param.search=skuSearch.value;
 				if(allchildren.value){
 				   param.allchildren=  "true";
 				}else{
@@ -320,10 +323,10 @@
 				}
 				if(shelfdata.data.treepath){
 					param.shelfid=shelfdata.data.id;
-					param.warehouseid=shelfdata.data.warehouseid;
+					param.addressid=shelfdata.data.addressid;
 				}else{
 					param.shelfid="";
-					param.warehouseid=shelfdata.data.id;
+					param.addressid=shelfdata.data.id;
 				}
 			    tableData.page	=currentpage;
 				tableData.pageSize	=pagesize;	
@@ -336,13 +339,29 @@
 						tableData.records.forEach((items) => {
 							items.visible = false
 						})
+					}else{
+						tableData.records = [];
+						tableData.total=0;
 					}
 				})
 			}
 			function allchildrenChange(value){
 				getshelfList();
 			}
-
+            function submitOtherInvShelf(selecteds){
+				var shelfid=shelfdata.data.id;
+				var addressid = shelfdata.data.addressid;
+				var invoptList=[];
+				selecteds.forEach(item=>{
+					var inv={};
+					inv.materialid=item.id;
+					inv.shelfid=shelfid;
+					inv.quantity=item.optquantity;
+					invoptList.push(inv);
+				});
+				diglogunshelftableData.value=invoptList;
+				submitShelf();
+			}
 			//弹窗搜索
 			//方法
 			//获取暂存库存列表
@@ -350,33 +369,37 @@
 				if (!shelfdata.data.search) {
 					shelfdata.data.search = "";
 				}
-				var warehouseid = shelfdata.data.warehouseid;
+				var addressid = shelfdata.data.addressid;
 				var shelfid = "";
 				if (!shelfdata.data.treepath) {
-					warehouseid = shelfdata.data.id;
+					addressid = shelfdata.data.id;
 				} else {
 					shelfid = shelfdata.data.id;
 				}
 				unshelftableData.page	=currentpage;
 				unshelftableData.pageSize	=pagesize;	 
+				loading.value=true;
 				shelfproductApi.getShelfList({
-					"warehouseid": warehouseid,
+					"addressid": addressid,
 					"shelfid": shelfid,
 					"pagesize": pagesize,
 					"currentpage": currentpage,
-					"search":shelfdata.data.search,
+					"search": skuSearch.value,
 					"sort":unshelftableData.sort,
 					"order":unshelftableData.order
 				}).then(function(response) {
+					loading.value=false;
 					if (response.data.records) {
 						unshelftableData.records = response.data.records;
 						unshelftableData.total=response.data.total;
+					}else{
+						unshelftableData.records = [];
+						unshelftableData.total=0;
 					}
 				})
 			}
            watch(skuSearch, (val) => {
 				shelfdata.data.search = val
-				
 				getunshelfList();
 				getshelfList();
 			})
@@ -454,8 +477,9 @@
 						ElMessage({
 							message: '上架成功！',
 							type: 'success',
-						})
-						//unshelftableData.list[index].visible = false
+						});
+						 row.visible=false;
+						 unshelftableData.records[index].visible = false
 						loadProduct(shelfdata.data);
 					}
 				})
@@ -483,10 +507,15 @@
 							message: '下架成功！',
 							type: 'success',
 						})
-						//tableData.list[index].visible = false
+						row.visible=false;
+						tableData.records[index].visible = false
 						loadProduct(shelfdata.data);
 					}
 				})
+			}
+			function addMaterialShelf(){
+				var params={"addressid":shelfdata.data.addressid};
+				materialDailogRef.value.show(params);
 			}
 			//批量下架产品
 			function submitOffTheShelfs() {
@@ -499,7 +528,6 @@
 					obj.opt = 0;
 					arr.push(obj);
 				})
-				console.log("arr",arr)
 				shelfproductApi.subShelfInventory(arr).then(function(response) {
 					if (response.code == "201") {
 						ElMessage({
@@ -569,6 +597,7 @@
 			}
 			return {
 				addOffTheShelf,
+				addMaterialShelf,
 				pagesize,
 				currentPage,
 			    unShelfPaginationSize ,
@@ -591,6 +620,7 @@
 				tablabel,
 				loadProduct,
 				GroundingVisible,
+				materialDailogRef,
 				offShelfVisible,
 				tableData,
 				search,
@@ -606,14 +636,14 @@
 				allchildren,
 				allchildrenChange,
 				allchildrendisabled,
+				submitOtherInvShelf,
 				shelfSort,
 				unshelfSort,
 				spacer,
+				loading,
 			}
 		},
-
 		//提交上架产品
-
 	}
 </script>
 
@@ -626,7 +656,9 @@
 		margin-right:8px;
 	}
 	.shelf-header {
-		padding: 16px;
+		padding-top: 16px;
+		padding-left: 16px;
+		padding-right: 16px;
 		border-bottom: 1px solid var(--el-border-color-light);
 	}
 

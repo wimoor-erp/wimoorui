@@ -64,7 +64,7 @@
 		  </el-form>
 		</div>
 		<!-- 表单 -->
-		<GlobalTable ref="globalTable" :tableData="tableData"  
+		<GlobalTable ref="globalTable"  height="calc(100vh - 220px)" :tableData="tableData"  
 		 @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;"
 		 @selectionChange = "handleSelectionChange">
 		  <template #field>
@@ -116,7 +116,7 @@
 		  </template>
 		</GlobalTable>
 	</div>
-	<el-dialog v-model="dialog.visible" title="添加用户" destroy-on-close='true' width="600px"  >
+	<el-dialog v-model="dialog.visible" title="添加用户"   destroy-on-close='true' width="600px"  >
 		<el-form ref="dataFormRef" :inline="true" :model="formData" :rules="rules" class="form-width-fill" label-width="auto" >
 
 			<el-form-item label="登录账号"  prop="account" >
@@ -478,8 +478,8 @@
 		opacity: 1;
 		transition: opacity .4s;
 	}
-
+ 
 	.con-header .el-row {
-		margin-bottom: 16px;
+		margin-bottom: 0px;
 	}
 </style>

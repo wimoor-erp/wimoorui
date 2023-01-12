@@ -4,7 +4,7 @@
 		<template #header>
 			<div class="card-header">
 				<el-space>
-					<el-tag class="ml-2" type="info">货件{{index+1}}</el-tag>
+					<el-tag class="ml-2" type="info" @click.stop="showExceptionDialog(item.shipmentId)">货件{{index+1}}</el-tag>
 					<span>{{item.name}}</span>
 					<el-popover v-if="planData.auditstatus==1" v-model:visible="item.nameVis" placement="top" trigger="click" :width="240">
 						<el-input v-model="item.name"  
@@ -155,125 +155,9 @@
 		</el-table>
 	</el-card>
 	 </div>
-	<el-dialog v-model="splitVisible" title="货件拆分" destroy-on-close='true' width="80%" @close='closeDialog'>
-			<div class="sh-con-tw">
-				<div class="sh-ri">
-					<el-table :data="splittableData" border>
-						<el-table-column label="图片" width="68">
-							<template #default="scope">
-								<el-image :src="scope.row.image" class="product-img">
-								</el-image>
-							</template>
-						</el-table-column>
-						<el-table-column label="名称/SKU" :show-overflow-tooltip="true">
-								<template #default="scope">
-									<div >{{scope.row.pname}}</div>
-									<div class="sku">{{scope.row.sellersku}}</div>
-								</template>
-						</el-table-column>
-						<el-table-column label="发货数量" width="90" prop="copshipnum">
-							<template #default="scope">
-							<div class="table-edit-flex">
-							<span>{{scope.row.copshipnum}}</span>
-							<el-popover  v-model:visible="scope.row.itemshow" placement="top" width="180px" trigger="click" title="发货数量" >
-							<template  #reference>	
-							<el-icon ><Edit/></el-icon>
-							</template>
-							<el-input-number   v-model="scope.row.copshipnum" placeholder="发货数量"  />
-							<el-button  class="m-t-8" type="primary" @click="scope.row.itemshow=false" >确定</el-button>
-							</el-popover>
-							</div>
-							</template>
-						</el-table-column>
-						<el-table-column label="材积重" width="90" prop="volume">
-							<template #default="scope">
-									<div >{{scope.row.dimweight}}<span class="font-extraSmall"> kg</span></div>
-							</template>
-						</el-table-column>
-						<el-table-column label="体积" width="90" prop="volume">
-							<template #default="scope">
-									<div >{{scope.row.volume}}<span class="font-extraSmall"> m³</span></div>
-							</template>
-						</el-table-column>
-						<el-table-column label="重量" width="90" prop="weight">
-							<template #default="scope">
-									<div v-if="scope.row.weight">{{scope.row.weight}}<span class="font-extraSmall"> kg</span></div>
-									<div v-else>0kg</div>
-							</template>
-						</el-table-column>
-						<el-table-column label="分组"   >
-							<template #default="scope">
-							<el-radio-group v-model="scope.row.checkGroup" @change="groupSwitch(scope.row)" >
-								 <el-radio 
-								v-for="item in scope.row.groups"
-								:key="item.value"
-								:label="item.value"
-								:value="item.value"
-								 >{{item.label}}
-								</el-radio>
-							  </el-radio-group>
-							</template>
-						</el-table-column>
-					</el-table>
-				</div>
-				<div class="sh-le">
-					   <h4 class="ma-bo-16">拆分结果</h4>
-					    <div  v-for="item in splitResult">
-						<el-divider></el-divider>	
-						<el-space>
-							<h5>{{item.name}}</h5>
-							<el-tag size="small" type="primary">组{{item.group}}</el-tag>
-							<el-tag v-if="false" size="small" type="danger">重现提交</el-tag>
-						</el-space>
-						<div>
-						 <el-space :size="64">
-							 <div>
-								 <span class="font-extraSmall">发货重量</span>
-								 <p>{{formatFloat(item.weight)}}kg</p>
-							 </div>
-							 <div>
-								 <span class="font-extraSmall">体积</span>
-								 <p>{{formatFloat(item.volume)}}m³</p>
-							 </div>
-							 <div>
-							 	  <span class="font-extraSmall">材积重</span>
-							 	  <p>{{formatFloat(item.dimweight)}}m³</p>
-							 </div>
-						 </el-space>
-						 	 </div>
-							 <div>
-						 <el-space :size="64">
-							 <div>
-							 	  <span class="font-extraSmall">SKU数量</span>
-							 	  <p>{{item.skunum}}</p>
-							 </div>
-							 <div>
-							 	 <span class="font-extraSmall">发货数量</span>
-							 	  <p>{{item.shipnum}}</p>
-							 </div>
-							 <div>
-								 <span class="font-extraSmall">状态</span>
-								 <div>
-									 <el-tag v-if="item.splitstr==0" size="small" type="info">待提交</el-tag>
-									 <el-tag v-if="item.splitstr==1" size="small" type="info">提交中</el-tag>
-									 <el-tag v-if="item.splitstr==2" size="small" type="info">已提交</el-tag>
-									 <el-tag v-if="item.splitstr==3" @click="submitPlan(item)" size="small" type="info">(提交失败)点击重新提交</el-tag>
-								</div>
-							 </div>
-							 
-						 </el-space>
-						 </div>
-					</div>
-				</div>
-			</div>
-		<template #footer>
-			<span class="dialog-footer">
-				<el-button @click="splitVisible = false">取消</el-button>
-				<el-button type="primary" @click="saveSplit" >提交</el-button>
-			</span>
-		</template>
-	</el-dialog>
-	 <GoodsDeatiles ref="goodsDeatilsRef" :productInfoData="productInfoData"/>
+	
+	 <GoodsDeatiles ref="goodsDeatilsRef"  />
+	 <SplitDialog ref="splitDialogRef" />
 </template>
 <script>
 	import { ElDivider } from 'element-plus'
@@ -284,12 +168,13 @@
 	import shipmentplanApi from '@/api/erp/ship/shipmentplanApi.js';
 	import transportationApi from '@/api/erp/ship/transportationApi';
 	import productinfoApi from '@/api/amazon/product/productinfoApi.js';
-	import GoodsDeatiles from "./goods_deatils.vue"
-	import {ElMessage } from 'element-plus'
+	import GoodsDeatiles from "@/views/amazon/listing/common/goods_deatils.vue"
+	import SplitDialog from "./split_dialog.vue"
+	import {ElMessage,ElMessageBox } from 'element-plus'
 	import {formatFloat} from '@/utils/index';
 	export default {
 		name: 'index',
-		components: {CopyDocument,Crop,Plus,Edit,Warning,GoodsDeatiles},
+		components: {CopyDocument,Crop,Plus,Edit,Warning,GoodsDeatiles,SplitDialog},
 		setup() {
 			let router = useRouter()
 			let spacer = h(ElDivider, {direction: 'vertical'})
@@ -298,75 +183,20 @@
 			let companylist=ref([]);
 			let channellist=ref([]);
 			let goodsDeatilsRef =ref()
-			let splitName=ref("");
-			let nowshipment=ref({});
+			let splitDialogRef=ref();
 			let productInfoData=ref({});
 			let splitVisible=ref(false);
-			let splittableData =ref([]);
+			let expclicks=0;
+			let localshipmentid="";
 			function splitHandel(items){
-				nowshipment.value=items;
-				items.itemlist.forEach(function(item){
-					item.itemshow=false;
-					item.copshipnum=item.quantity;
-					item.checkGroup='1';
-					item.groups=[{label:'组1',value:'1'},
-									{label:'组2',value:'2'},
-									{label:'组3',value:'3'},
-									{label:'组4',value:'4'},
-									{label:'组5',value:'5'},
-									{label:'组6',value:'6'},
-								];
-				});
-				splittableData.value=items.itemlist;
-				splitVisible.value =true;
+				var nowshipment=items;
+				splitDialogRef.value.show(items.itemlist,planData.value,nowshipment);
 			}
 			function rollbackShipnum(row){
 				  row.copshipnum = row.quantity
 			}
-			function groupSwitch(row){
-			}
-			//计算属性
-			let splitResult = computed(()=>{
-					var nowDate=new Date();
-					let arr=[]
-					let checkGroups = splittableData.value.map((item)=>{
-						return item.checkGroup
-					})
-					checkGroups = Array.from(new Set(checkGroups))
-					checkGroups.forEach((checkGroup,index)=>{
-						let sameGroupArr = splittableData.value.filter((item)=>item.checkGroup === checkGroup)
-						 arr[index] = sameGroupArr
-					})
-					
-					let newArr=[]
-					arr.forEach((group,index)=>{
-						let obj={}
-						obj.shipnum = 0;
-						obj.weight = 0;
-						obj.dimweight = 0;
-						obj.volume = 0;
-						obj.skunum = 0;
-						obj.splitstr=0;
-						var tablist=[];
-						group.forEach((item)=>{
-							var tab={};
-							obj.name="PLN"+"("+(nowDate.getMonth()+1)+"/"+(nowDate.getDate())+"/"+nowDate.getFullYear()+" "+nowDate.getHours()+":"+nowDate.getMinutes()+")-"+item.checkGroup;
-							tab.sku=item.sellersku;
-							tab.quantity=item.copshipnum;
-							tab.mid=item.materialid;
-							obj.shipnum += item.copshipnum;
-							obj.weight += item.weight;
-							obj.volume += item.volume;
-							obj.dimweight += item.dimweight;
-							obj.skunum++
-							obj.group = item.checkGroup;
-							tablist.push(tab);
-						})
-						obj.skulist=tablist;
-						newArr.push(obj)
-					})
-						return newArr
-			})
+		
+			
 			function submitShipmentName(id,name){
 				//ajax修改名字
 				updateShipmentRemark(id,'',name);
@@ -424,22 +254,13 @@
 			}
 			function showProductModal(sku){
 				//根据 groupid marketplaceid sku去查product
-				goodsDeatilsRef.value.productVisible=true;
 				var groupid=planData.value.amazongroupid;
 				var marketplaceid=planData.value.marketplaceid;
 				var data={};
 				data.groupid=groupid;
 				data.marketplace=marketplaceid;
 				data.sku=sku;
-				productinfoApi.productList(data).then((res)=>{
-					console.log(res.data.records[0]);
-					if(res.data.records && res.data.total>0){
-						productInfoData.value=res.data.records[0];
-						productInfoData.value.sku=sku;
-					}
-				});
-				
-				
+			    goodsDeatilsRef.value.show(data);
 			}
 			function copyPlan(shipmentid){
 				router.push({
@@ -466,52 +287,8 @@
 					 }
 				});
 			}
-			function submitPlan(item){
-				item.splitstr=1;
-					var params={};var tranPara={};var itemlist=[];
-					params.name=item.name;
-					params.number='';
-					params.shipfromaddressid=planData.value.addressid;
-					params.arecasesrequired=planData.value.areCasesRequired;
-					params.amazongroupid=planData.value.amazongroupid;
-					params.marketplaceid=planData.value.marketplaceid;
-					params.warehouseid=planData.value.warehouseid;
-					params.plansubid=null;
-					params.remark=planData.value.remark;
-					params.issplit=false;
-					tranPara.company=nowshipment.value.companyid;
-					tranPara.channel=nowshipment.value.channelid;
-					item.skulist.forEach(function(spt){
-							 var row={};
-							 row.quantity=spt.quantity;
-							 row.QuantityShipped=spt.quantity;
-							 row.materialid=spt.mid;
-							 row.sellersku=spt.sku;
-							 itemlist.push(row);
-					});
-					params.planitemlist=itemlist;
-					params.transinfo=tranPara;
-					shipmentplanApi.saveInboundPlan(params).then((res)=>{
-						if(res.data){
-							ElMessage({
-							   message: '提交成功！',
-							   type: 'success'
-							 })
-							item.splitstr=2;
-						}
-					}).catch(e=>{
-						item.splitstr=3;
-					})
-				
-			}
-			function saveSplit(){
-				// console.log(splitResult.value);
-				// console.log(nowshipment.value);
-				// console.log(planData.value);
-				splitResult.value.forEach(function(item){
-					submitPlan(item);
-				});
-			}
+			
+			
 			function saveTrans(companyid,channelid,shipmentid){
 				if(channelid!=null && channelid!=undefined && channelid!=''){
 					shipmentplanApi.saveTrans({"company":companyid,"channel":channelid,"shipmentid":shipmentid}).then((res)=>{
@@ -544,26 +321,67 @@
 					 })
 				})
 			}
+			function showExceptionDialog(shipid){
+				localshipmentid=shipid;
+				if(localshipmentid==shipid){
+					expclicks++;
+				}else{
+					expclicks=1;
+				}
+				console.log(expclicks);
+				if(expclicks>=3){
+					ElMessageBox.confirm(
+					   '处理后产品待出库会增加，货件号:'+shipid+'，确定操作吗？',
+					   '处理未扣待出库货件',
+					   {
+					     confirmButtonText: '确定',
+					     cancelButtonText: '取消',
+					     type: 'warning',
+					   }
+					 )
+					   .then(() => {
+					     shipmentplanApi.handlerExpShipment({"shipmentid":shipid}).then((res)=>{
+									  if(res.data){
+										  ElMessage({
+										    type: 'success',
+										    message: "操作成功!",
+										  });
+										  expclicks=0;
+									  }else{
+										  ElMessage({
+										    type: 'error',
+										    message: "操作失败",
+										  })
+									  }
+								  });
+					   })
+					   .catch(() => {
+					     ElMessage({
+					       type: 'info',
+					       message: '取消删除',
+					     })
+					   })
+				}
+			}
+			
 			return {
-				spacer,splitName,percentformat,goodsDeatilsRef,
-				splitHandel,splittableData,splitVisible,saveSplit,nowshipment,productInfoData,
-				groupSwitch,rollbackShipnum,splitResult,planData,itemlist,submitShipmentName,submitShipmentRemark,
+				spacer,percentformat,goodsDeatilsRef,splitDialogRef,
+				splitHandel,productInfoData,
+				expclicks,
+				localshipmentid,
+				rollbackShipnum,planData,itemlist
+				,submitShipmentName,submitShipmentRemark,
 				companylist,channellist,companyChange,showProductModal,
 				copyPlan,updateShipmentRemark,saveTrans,initData,
-				submitPlan,formatFloat,toTraceShipment,reApprove
+				formatFloat,toTraceShipment,reApprove,showExceptionDialog
 			}
 		}
 	}
 </script>
 
 <style>
-
 .subtext{
 	margin-top:8px;
-}
-.edit-icon{opacity: 0;cursor: pointer;}
-.el-card:hover .edit-icon{
-	opacity:1
 }
 .remark{margin-bottom:16px;}
 .card-header{

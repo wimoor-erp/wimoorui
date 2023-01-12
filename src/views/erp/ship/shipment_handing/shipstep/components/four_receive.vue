@@ -33,14 +33,11 @@
 	export default{
 		name:"four_picking",
 		setup(){
-			
 			let productData=reactive({list:[]})
 			return{
 				productData
 			}
-		}
-		
-		
+		  }
 		}
 </script>
 

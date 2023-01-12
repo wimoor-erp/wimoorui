@@ -7,12 +7,18 @@ function userinfo(data){
 }
 
 function getInfo() {
-  return request({
-    url: '/api/admin/api/v1/users/info',
-    method: 'get'
-  })
+  return request({ url: '/admin/api/v1/users/info',method: 'get'})
+}
+function updatePassword(data) {
+  return request.post('/admin/api/v1/users/updatePassword' ,data)
+}
+function getSmsCode(data) {
+   return request.get( '/admin/api/v1/sms/getSmsCode' ,{params:data});
+}
+function checkSmsCode(data) {
+   return request.get( '/admin/api/v1/sms/checkSmsCode' ,{params:data});
 }
 export default{
 	unbindAccount,userinfo,
-	getInfo,
+	getInfo,updatePassword,getSmsCode,checkSmsCode,
 }

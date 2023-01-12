@@ -52,7 +52,7 @@
             :icon="Edit"
             link
             @click.stop="handleUpdate(scope.row)"
-           >更新</el-button>
+           >编辑</el-button>
           <el-button
             type="danger"
             link

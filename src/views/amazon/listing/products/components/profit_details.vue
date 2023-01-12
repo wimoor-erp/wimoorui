@@ -70,7 +70,8 @@
 						  </el-table-column>
 						  <el-table-column label="金额" width="80" prop="cost" >
 						  <template #default = "scope">
-								<div>{{profitData.costDetailMap.currency}}{{scope.row.cost}}</div>
+								<div><span v-if="scope.row.cost">{{profitData.costDetailMap.currency}}</span>
+								{{scope.row.cost}}</div>
 						  </template>
 						  </el-table-column>
 						  <el-table-column label="实际成本金额" width="100" prop="realcost" >
@@ -83,11 +84,11 @@
 								         placement="top"
 								  		 raw-content
 								       >
-									<span>{{profitData.costDetailMap.currency}}{{scope.row.realcost}}</span>
+									<span><span v-if="scope.row.realcost">{{profitData.costDetailMap.currency}}</span>{{scope.row.realcost}}</span>
 									</el-tooltip>
 							  </div>
 							  <div v-else>
-								  <span>{{profitData.costDetailMap.currency}}{{scope.row.realcost}}</span>
+								  <span><span v-if="scope.row.realcost">{{profitData.costDetailMap.currency}}</span>{{scope.row.realcost}}</span>
 							  </div>
 							</template>
 						  </el-table-column>
@@ -164,7 +165,6 @@
 				data.productpricetype=type;
 				state.loading=true;
 				calculateApi.showProfitDetial(data).then((res)=>{
-					console.log(res.data);
 					state.profitData=res.data;
 					state.loading=false;
 					state.profitCfg=res.data.profitcfgid;
@@ -239,7 +239,9 @@
 							row15_2={"name":"销售GST税率","enname":"Selling GST Tax","cost":datas.selling_GST,"realcost":null};
 							row15_3={"name":"企业所得税率","enname":"Corporate Income Tax","cost":datas.corporateInFee,"realcost":null};
 						}
-						arrs.push(row1);arrs.push(row2);arrs.push(row3);arrs.push(row4);arrs.push(row5);
+						arrs.push(row1);arrs.push(row2);arrs.push(row3);
+						arrs.push(row4);
+						arrs.push(row5);
 						if(row5_1 && row5_1.name){
 							arrs.push(row5_1);
 						}

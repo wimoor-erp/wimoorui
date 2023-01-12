@@ -88,7 +88,6 @@ export default defineComponent({
 	   let newArr=ref([])
 	   //监视
 	   watch(keywords,(val)=>{
-		   console.log(keywords.value+'hah')
 		   let arr=[]
 		    allMenu.list.forEach((a)=>{
 			  a.subMenu.forEach((s)=>{

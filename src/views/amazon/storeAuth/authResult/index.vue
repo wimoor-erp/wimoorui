@@ -28,7 +28,6 @@
 			function showResult(){
 				authApi.authSeller({"state":route.query.state,"selling_partner_id":route.query.selling_partner_id,
 				"mws_auth_token":route.query.mws_auth_token,"spapi_oauth_code":route.query.spapi_oauth_code}).then((res)=>{
-					console.log(res.data)
 					if(res.data&&res.data.id){
 						resmsg.value="授权成功，请回到授权列表页面刷新。";
 					}else{

@@ -1,7 +1,6 @@
 
 
 import request from "@/utils/request";
- import axios from 'axios';
 function getPlanList(data){
 	return request.post('/amazon/api/v1/shipForm/getPlanList',data);
 }
@@ -12,7 +11,7 @@ function guidance(data){
 	return request.get('/amazon/api/v1/shipForm/guidance',{params:data});
 }
 function saveInboundPlan(data){
-	return request.post('/erp/api/v1/shipForm/saveInboundPlan',data);
+	return request.post('/amazon/api/v1/shipInboundPlan/saveInboundPlan',data);
 }
 function findPlanSubDetail(data){
 	return request.get('/amazon/api/v1/shipForm/findPlanSubDetail',{params:data});
@@ -34,6 +33,9 @@ function saveTrans(data){
 }
 function createShipment(data){
 	return request.get('/erp/api/v1/shipForm/createShipment',{params:data});
+}
+function handlerExpShipment(data){
+	return request.get('/erp/api/v1/shipForm/handlerExpShipment',{params:data});
 }
 function cancelShipment(data){
 	return request.get('/amazon/api/v1/shipForm/cancelShipment',{params:data});
@@ -71,5 +73,6 @@ function uploadExcel(FormData){
  
 export default{
 	getPlanList,getProductInfoList,guidance,saveInboundPlan,findPlanSubDetail,getPlanInfo,updatePlanRemark,uploadExcel,
-	updateShipmentRemark,getItemlistByShipmentId,saveTrans,createShipment,cancelShipment,updatePlan,downExcelLabelBySku,downExcelTemp
+	updateShipmentRemark,getItemlistByShipmentId,saveTrans,createShipment,cancelShipment,updatePlan,downExcelLabelBySku,
+	downExcelTemp,handlerExpShipment
 }

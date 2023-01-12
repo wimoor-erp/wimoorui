@@ -1,9 +1,9 @@
 	<template>
-		<el-dialog v-model="remarksVisable" title="产品公告" destroy-on-close='true' width="800px"  >
+		<el-dialog v-model="dialog.visible" title="产品公告" destroy-on-close='true' width="800px"  >
 				<el-row :gutter="32">
 					<el-col :span="12" class="border-right">
 						<el-input v-model="remarks" placeholder="输入公告" :rows="8"  type="textarea"  />
-						<el-button class="m-t-8" type="primary" >提交</el-button>
+						<el-button class="m-t-8" type="primary" @click="submitForm" >提交</el-button>
 					</el-col>
 					<el-col :span="12">
 						<el-scrollbar class="remark-history">
@@ -24,36 +24,58 @@
 				</el-row>
 		  <template #footer>
 		  	<span class="dialog-footer">
-		  		<el-button @click="remarksVisable = false"> 关闭</el-button>
+		  		<el-button @click="dialog.visible = false"> 关闭</el-button>
 		  	</span>
 		  </template>
 		</el-dialog>
 	</template>
 	
-	<script>
-		import {ref,reactive,onMounted} from "vue"
-		export default{
-			setup(){
-				let remarksVisable =ref(false)
-				let activities = [
-				  {
-				    content: '万圣（22年：美国3000，英国700，欧洲200',
-				    timestamp: '2018-04-15 | 操作人：张三',
-				  },
-				  {
-				    content: '23年：US，UK，EU300美国平时月均80',
-				    timestamp: '2018-04-13 | 操作人：张三',
-				  },
-				  {
-				    content: '英国已建立跟卖',
-				    timestamp: '2018-04-11 | 操作人：张三',
-				  },
-				]
-				return{
-					remarksVisable,activities,
-				}
-			}	
+	<script setup>
+		import {ref,reactive,onMounted,toRefs} from "vue";
+		import markApi from '@/api/erp/material/markApi';
+		import {dateFormat} from "@/utils/index";
+		import { ElMessage, ElMessageBox } from 'element-plus';
+		const emit = defineEmits(['confirm']);
+		const state=reactive({
+			  dialog:{visible:false},
+			  remarks:"",
+			  materialid:"",
+			  activities: [],
+		})
+		const {
+		   dialog,remarks,activities
+		} = toRefs(state);
+		function submitForm(){
+			var formdata={'materialid':state.materialid,"mark":state.remarks};
+			markApi.saveNotice(formdata).then(res=>{
+				ElMessage({ message: "保存成功", type: 'success', });
+				state.dialog.visible=false;
+				emit("confirm",formdata);
+			});
 		}
+				function show(materialid){
+					 state.dialog.visible=true;
+					 state.activities= [];
+					 state.materialid=materialid;
+					 markApi.showNotice({'materialid':materialid}).then(res=>{
+						 if(res.data){
+							 state.remarks=res.data.mark;
+							 if(res.data.hisList){
+								 res.data.hisList.forEach(item=>{
+									 var row={content:item.mark,timestamp:""};
+									 row.timestamp=dateFormat(item.opttime)+" | 操作人："+item.operator;
+									 state.activities.push(row);
+								 })
+							 }
+						 }else{
+							 state.remarks="";
+						 }
+						 
+					 })
+				}
+			   defineExpose({
+			      show
+			   })
 	</script>
 	
 	<style>

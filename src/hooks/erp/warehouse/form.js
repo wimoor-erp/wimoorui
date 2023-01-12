@@ -106,7 +106,6 @@ watch(()=>[formdata.quantity,
 								matchNumlength=matchNum.length;
 							}
 						} 
-						console.log(formdata);
 						for(var i=0;i<parseInt(formdata.quantity);i++){ 
 							var item={};
 							item.warehouseid=formdata.warehouseid;//仓库ID
@@ -168,7 +167,7 @@ const submitForm=async () => {
 					  if(item.length&&item.height&&item.width){
 						  item.capacity=parseFloat(item.length)*parseFloat(item.height)*parseFloat(item.width);
 					  }
-					  item.warehouseid=formdata.warehouseid;  
+					  item.addressid=formdata.addressid;  
 				  }
 				  if(isRepeat){
 				  		ElMessage.error('编码不能重复.')

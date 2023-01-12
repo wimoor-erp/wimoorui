@@ -46,7 +46,7 @@
 								 </el-space>
 							</el-form-item>
 							<el-form-item label="物流渠道" prop="channel">
-								<el-select v-model="form.channel" placeholder="请选择">
+								<el-select v-model="form.channel" @change="setFormData"  placeholder="请选择">
 									<el-option
 									     v-for="item in channellist.list"
 									     :key="item.id"
@@ -58,13 +58,6 @@
 							<el-form-item label="跟踪编号">
 							      <el-input v-model="form.ordernumber" />
 							    </el-form-item>
-								<el-form-item label="预计到货日期">
-								    <el-date-picker
-								            v-model="form.arrdate"
-								            type="date"
-								            placeholder="选择日期"
-								          />
-							    </el-form-item>
 								<el-form-item label="货件发货日期">
 								    <el-date-picker
 								            v-model="form.shipdate"
@@ -72,6 +65,14 @@
 								            placeholder="选择日期"
 								          />
 								</el-form-item>
+								<el-form-item label="预计到货日期">
+								    <el-date-picker
+								            v-model="form.arrdate"
+								            type="date"
+								            placeholder="选择日期"
+								          />
+							    </el-form-item>
+					
 								<el-form-item label="实际结算">
 									<div class="mt-4">
 									    <el-input
@@ -106,16 +107,6 @@
 								           <template #append>￥</template>
 								        </el-input>
 								</el-form-item>
-								<el-form-item label="配送商" prop="carrier">
-									<el-select v-model="form.carrier" placeholder="请选择">
-										<el-option
-										     v-for="item in carrlist.list"
-										     :key="item"
-										     :label="item"
-										     :value="item"
-										   />
-									</el-select>
-								</el-form-item>
 								<el-form-item label="货件出港日期">
 								    <el-date-picker
 								            v-model="form.outtime"
@@ -134,7 +125,7 @@
 									 <el-input v-model="form.remark" type="textarea" />
 								</el-form-item>
 								<el-form-item>
-								      <el-button type="primary" @click="saveSelfTrans('save')">保存</el-button>
+								      <el-button type="primary"  @click="saveSelfTrans('save')">保存</el-button>
 								      <el-button @click="openHistory">修改记录</el-button>
 									   <!-- <el-button @click="openCosUpload">上传/下载报关资料</el-button> -->
 								    </el-form-item>
@@ -145,11 +136,23 @@
 			<el-col :span="12">
 				<div class="shi-right">
                     <h4>提交货件跟踪信息</h4>
+					<el-select style="margin-top: 5px;" v-model="form.carrier" placeholder="请选择">
+						<el-option
+							 v-for="item in carrlist.list"
+							 :key="item"
+							 :label="item"
+							 :value="item"
+						   />
+					</el-select>
+					<el-button style="margin-top: 5px;margin-left: 10px;" :loading="saveTransLoading" type="primary" @click="saveTransTrace">
+						提交
+					</el-button>
 					<el-table :data="boxinfolist.list" border  show-summary="true" >
 						<el-table-column prop="boxnum" label="箱子编号" width="100"   />
 						<el-table-column prop="" label="追踪编号" width="260">
 							<template #default="scope">
-								<el-input v-model="scope.row.tracking_id"></el-input>
+								<el-input v-if="scope.$index==0" @input="trackingChange(scope.row)" v-model="scope.row.tracking_id"></el-input>
+								<el-input v-else v-model="scope.row.tracking_id"></el-input>
 							</template>
 						</el-table-column>
 						<el-table-column prop="package_status" label="包裹状态" width="100"   />
@@ -164,7 +167,6 @@
 							</template>
 						</el-table-column>
 					</el-table>
-					 <el-alert title="配送商,跟踪编号等追踪信息暂停提交亚马逊,请到后台手动提交" type="warning" />
 				</div>
 			</el-col>
 		</el-row>
@@ -179,11 +181,11 @@
 			</el-col>
 		</el-row>
 		<el-row class="mar-bot">
-				  <ShipmentOpt ref="optRef"  />
+				  <ShipmentOpt ref="optRef"  @change="handleOptChange"/>
 				<div class="rt-btn-group">
 					<el-button @click="openMaterialCon">耗材出库</el-button>
 					<el-button type="primary" @click="stepclick(3)" plain>下一步</el-button>
-					<el-button type="primary" @click="saveSelfTrans('confirm')">确认出库</el-button>
+					<el-button type="primary" :loading="submitloading" @click="saveSelfTrans('confirm')">确认出库</el-button>
 				</div>
 		</el-row>
 		
@@ -306,10 +308,14 @@
 		</el-dialog>
 		
 		<el-dialog v-model="materialDialogVisible" title="耗材出库" width="50%" center>
+			  <template #header>
+			      耗材出库-{{shipdata.warehouse}} 
+			    </template>
+			 
 			<el-table :data="materiallist.list" border >
 				<el-table-column prop="image" label="图片" width="100" >
 					<template  #default="scope">
-						<el-image :src="scope.row.image"></el-image>
+						<el-image :src="scope.row.image"  style="width: 40px;height: 40px;"></el-image>
 					</template>
 				</el-table-column>
 				<el-table-column prop="sku" label="SKU" width="100"   />
@@ -318,6 +324,10 @@
 				<el-table-column prop="needamount" label="扣减数量" width="100"  >
 					<template  #default="scope">
 						<el-input type="number"  v-model="scope.row.needamount"></el-input>
+					    <div v-if="scope.row.out">
+							<span class="font-extraSmall">已出库：</span>
+							<span class="text-success">{{scope.row.out}}</span>
+						</div>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -373,7 +383,7 @@
 				CompareList,
 				View
 			},
-			emits: ["stepdata"],
+			emits: ["stepdata","change"],
 			setup(props, context) {
 				let router = useRouter()
 				let shipdata = ref({})
@@ -382,8 +392,10 @@
 				let historyDialogVisible = ref(false)
 				let cosDialogVisible = ref(false)
 				let materialDialogVisible = ref(false)
+				let submitloading=ref(false);
 				let optRef = ref();
 				let compareVisible = ref(false);
+				let saveTransLoading=ref(false);
 				let comareRef = ref(CompareList);
 				const shipmentid = router.currentRoute.value.query.shipmentid;
 				//上传后的文件列表
@@ -406,7 +418,7 @@
 					company: '',
 					channel: '',
 					wtype: '0',
-					wunit: '0',
+					wunit: 'kg',
 					rweight: 0,
 					singleprice: 0,
 					otherfee: 0,
@@ -439,9 +451,14 @@
 					list: []
 				})
 	            let pricemessage=ref("");
-				onMounted(() => {
-					getTransTypeAll();
-				})
+				var param={sumBoxWeight:0,sumBoxVolume:0};
+				function trackingChange(row){
+					boxinfolist.list.forEach(item=>{
+						if(!item['tracking_id']){
+							item.tracking_id=row.tracking_id;
+						}
+					})
+				}
 				async function getTransTypeAll() {
 					let res = await transportationApi.getTransTypeAll();
 					if (res.data) {
@@ -451,7 +468,9 @@
 						}
 					}
 				}
-	
+	            function handleOptChange(){
+					context.emit("change");
+				}
 				function changeTransType(val, type) {
 					if (val.id) {
 						getCompanyTranstypeList(val.id, type);
@@ -482,18 +501,7 @@
 				}
 	            
 				function changeCompany(val, type) {
-					if (val) {
-						transportationApi.getChannel({
-							"company": val,
-							"marketplaceid": shipdata.value.marketplaceid,
-							"transtype": form.transtype
-						}).then((res) => {
-							channellist.list = res.data;
-							if (type != 'init') {
-								form.channel = res.data[0].id;
-							}
-						})
-					}
+					getChannel(type) 
 				}
 	
 				function getCompanyTranstypeList(val, type) {
@@ -501,7 +509,6 @@
 						"marketplaceid": shipdata.value.marketplaceid,
 						"transtype": val
 					}).then(res => {
-						console.log(res);
 						if (res.data && res.data.length > 0) {
 							companylist.list = res.data;
 							if (type != 'init') {
@@ -516,7 +523,64 @@
 						}
 					})
 				}
-	
+	            function setFormData(type){
+					var channel=null;
+					 channellist.list.forEach(item=>{
+						 if(item.id==form.channel){  channel=item;  }
+					 })
+					  console.log(channel);
+					if(type=="init"){
+						if(channel.pretime>0&&!form.arrdate){
+							form.arrdate=new Date(new Date().getTime() + 3600 * 1000 * 24 * (channel.pretime));
+						}
+						if(!form.shipdate){
+							form.shipdate=new Date();
+						}
+						if(!form.singleprice){
+							form.singleprice=channel.price;
+						}
+						if(!form.singleprice){
+							form.singleprice=channel.price;
+						}
+						if(!form.rweight){
+							if(channel.priceunits=="weight"){
+								form.rweight=param.sumBoxWeight>param.sumBoxVolume?param.sumBoxWeight:param.sumBoxVolume;
+								if(!form.wtype){
+									form.wtype="0";
+								}
+							}else{
+								if(!form.wtype){
+									form.wtype="1";
+								}
+							}
+						}
+						calculatefee();
+					}else{
+						if(channel.pretime>0){
+							form.arrdate=new Date(new Date().getTime() + 3600 * 1000 * 24 * (channel.pretime));
+						}else{
+							form.arrdate=new Date(new Date().getTime() + 3600 * 1000 * 24 * 30);
+						}
+						if(!form.shipdate){
+							form.shipdate=new Date();
+						}
+					     form.singleprice=channel.price;
+						if(channel.priceunits=="weight"){
+							form.rweight=param.sumBoxWeight>param.sumBoxVolume?param.sumBoxWeight:param.sumBoxVolume;
+							if(!form.wtype){
+								form.wtype="0";
+							}
+						}else{
+							if(!form.wtype){
+								form.wtype="1";
+							}
+						}
+					   calculatefee(); 
+					}
+				
+					
+					 
+				}
 				function getChannel(type) {
 					transportationApi.getChannel({
 						"marketplaceid": shipdata.value.marketplaceid,
@@ -525,27 +589,19 @@
 					}).then(res => {
 						if (res.data) {
 							channellist.list = res.data;
+							var defaultchannel=null;
 							if (type != 'init') {
 								form.channel = res.data[0].id;
 							}
+						   setFormData(type);
 						}
 					})
 				}
-	
-				function loadCarrier(carr) {
-					shipmenthandlingApi.getCarrier({
-						"country": shipdata.value.countryCode,
-						"transtyle": shipdata.value.transtyle
-					}).then(res => {
-						carrlist.list = res.data;
-					})
-				}
+	 
 	
 				function calculatefee() {
-					if (form.rweight > 0 && form.singleprice > 0) {
-						shipfee.value = form.singleprice * form.rweight;
-						totalfee.value = (form.singleprice * form.rweight) + parseFloat(form.otherfee);
-					}
+						shipfee.value = formatFloat(form.singleprice * form.rweight);
+						totalfee.value = formatFloat((form.singleprice * form.rweight) + parseFloat(form.otherfee));
 				}
 	
 				function selectTrans() {
@@ -576,8 +632,14 @@
 						var data = res.data;
 						if (data.cart && data.cart.length > 0) {
 							boxinfolist.list = data.cart;
+							data.cart.forEach(item=>{
+								param.sumBoxWeight=param.sumBoxWeight+item.weight;
+								param.sumBoxVolume=param.sumBoxVolume+item.volume;
+							})
+						 param.sumBoxWeight=formatFloat(param.sumBoxWeight);
+						 param.sumBoxVolume=formatFloat(param.sumBoxVolume);
 						}
-						if (data.shipment.status5date) {
+						if (data.shipment.status5date&&!form.shipdate) {
 							form.shipdate = data.shipment.status5date;
 						}
 						if (data.transinfo) {
@@ -608,12 +670,20 @@
 							if (data.transinfo.remark) {
 								form.remark = data.transinfo.remark;
 							}
-							calculatefee();
 						}
 						if (data.transchannel) {
 							form.transtype = data.transchannel.transtype;
 							form.company = data.transchannel.company;
 							form.channel = data.transchannel.id;
+							if(!form.singleprice){
+								form.singleprice=data.transchannel.price;
+							}
+							if(data.transchannel.pretime>0&&!form.arrdate){
+								form.arrdate=new Date(new Date().getTime() + 3600 * 1000 * 24 * (data.transchannel.pretime));
+							}
+							if(!form.shipdate){
+								form.shipdate=new Date();
+							}
 							changeTransType(form.transtype, 'init');
 						} else {
 							changeTransType(form.transtype);
@@ -625,7 +695,16 @@
 						}
 					})
 				}
-	
+	            function getDateValue(value){
+					if(value){
+						if (('' + value).length === 10) {
+						   value = parseInt(value) * 1000;
+						} else if(('' +value).indexOf("-")>0||('' +value).indexOf("/")>0){
+						   value= new Date(value);;
+						}
+					}
+					return value;
+				}
 				function saveSelfTrans(ftype) {
 					var data = {};
 					data.shipmentid = shipmentid;
@@ -637,16 +716,50 @@
 					data.ordernum = form.ordernumber;
 					data.remark = form.remark;
 					data.operate = ftype;
-					data.carrier = form.carrier;
+					//data.carrier = form.carrier;
 					data.rweight = form.rweight;
 					data.singleprice = form.singleprice;
 					data.otherfee = form.otherfee;
 					data.arrive = form.arrdate;
+					data.arrive=getDateValue(data.arrive);
 					data.shipdate = form.shipdate;
+					data.shipdate=getDateValue(data.shipdate);
 					data.outarrivaldate = form.outtime;
+					data.outarrivaldate=getDateValue(data.outarrivaldate);
 					data.inarrivaldate = form.intime;
+					data.inarrivaldate=getDateValue(data.inarrivaldate);
 					if ("SP" == shipdata.value.transtyle) {
+						// var boxinfos = [];
+						// boxinfolist.list.forEach(function(item, index) {
+						// 	var trackinginfo = {};
+						// 	trackinginfo.boxnum = item.boxnum;
+						// 	trackinginfo.value = item.tracking_id;
+						// 	boxinfos.push(trackinginfo);
+						// })
+						// data.boxinfo = boxinfos;
+					} else {
+						data.proNumber = form.pronumber;
+					}
+					if(ftype=="confirm"){
+					    submitloading.value=true;
+					}
+					shipmenthandlingApi.saveSelfTrans(data).then(res => {
+						ElMessage({
+							message: '操作成功！',
+							type: 'success',
+						});
+						 submitloading.value=false;
+						 context.emit("change");
+					}).catch(e=>{
+						  submitloading.value=false;
+					})
+				}
+				//保存物流跟踪
+				function saveTransTrace(){
+					var data={};
+					//if ("SP" == shipdata.value.transtyle) {
 						var boxinfos = [];
+						saveTransLoading.value=true;
 						boxinfolist.list.forEach(function(item, index) {
 							var trackinginfo = {};
 							trackinginfo.boxnum = item.boxnum;
@@ -654,15 +767,21 @@
 							boxinfos.push(trackinginfo);
 						})
 						data.boxinfo = boxinfos;
-					} else {
+					//} else {
 						data.proNumber = form.pronumber;
-					}
-					shipmenthandlingApi.saveSelfTrans(data).then(res => {
+					//}
+					data.carrier = form.carrier;
+					data.shipmentid = shipmentid;
+					shipmenthandlingApi.saveTransTrace(data).then(res => {
+						saveTransLoading.value=false;
 						ElMessage({
 							message: '操作成功！',
 							type: 'success',
 						})
+					}).catch(e=>{
+						saveTransLoading.value=false;
 					})
+					
 				}
 	
 				function openHistory() {
@@ -706,21 +825,21 @@
 				}
 	
 				function submitMaterialCon() {
-					var warehousename = shipdata.warehouse;
+					var warehouseid = shipdata.value.warehouseid;
 					var skulist = [];
 					materiallist.list.forEach(function(item) {
 						var row = {}
 						row.sku = item.sku;
-						row.qty = item.needamount;
+						row.amount = item.needamount;
 						skulist.push(row);
 					});
 					shipmenthandlingApi.saveInventoryConsumable({
 						"shipmentid": shipmentid,
-						"warehousename": warehousename,
-						"skulist": JSON.stringify(skulist)
+						"warehouseid": warehouseid,
+						"skulist":  skulist
 					}).then(res => {
 						if (res.data && res.data.isok == "true") {
-							materialDialogVisible.value = true;
+							materialDialogVisible.value = false;
 							ElMessage({
 								message: '操作成功！',
 								type: 'success',
@@ -811,9 +930,14 @@
 				function loadOptData(datas) {
 					optRef.value.shipDatas = datas;
 					shipdata.value = datas;
-					loadCarrier();
+					getTransTypeAll();
+					shipmenthandlingApi.getCarrier({
+						"country":datas.countryCode,
+						"transtyle":datas.transtyle
+					}).then(res=>{
+						 carrlist.list=res.data;
+					})
 					getShipAmazonInfo();
-	
 				}
 	
 				function stepclick(step) {
@@ -828,7 +952,6 @@
 					shipdata,
 					companylist,
 					channellist,
-					loadCarrier,
 					carrlist,
 					shipfee,
 					totalfee,
@@ -870,7 +993,13 @@
 					infoVisiable,
 	                pricemessage,
 					formatFloat,
-					getValue
+					getValue,
+					trackingChange,
+					submitloading,
+					saveTransLoading,
+					handleOptChange,
+					saveTransTrace,
+					setFormData,
 				}
 			}
 		}

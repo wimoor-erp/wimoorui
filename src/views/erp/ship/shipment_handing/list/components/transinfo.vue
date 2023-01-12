@@ -243,11 +243,9 @@
 									 data.data.shipment.sumprice=sumprice;
 									 shipment.value=data.data.shipment;
 									 shipment.value.sumprice=sumprice;
-									 console.log(shipment.value);
 									}
 						    transportationApi.shipTransDetialShipment({"companyid": companyid,"shipmentid":shipmentid}).then(res=>{
 							 shipment.value= params=Object.assign(shipment.value, res.data.data.shipment);
-							 console.log(res.data);
 						 })
 				   }
 		      }

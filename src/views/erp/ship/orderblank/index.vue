@@ -98,12 +98,11 @@ export default {
 			orderblankApi.getQuotainfo(shipmentid).then((res)=>{
 				shipFormData.list = res.data
 				skuData.list = res.data.itemList
-				console.log(res.data)
 			})
 		}
 		let showQRCode=()=>{
 					  orderblankApi.getQRCode(shipmentid).then(res => {
-									 const blob = new Blob([res.data]);
+									 const blob = new Blob([res]);
 								     let url = window.URL.createObjectURL(blob);
 									 shipQRcodeUrl.value=url;
 		   });

@@ -1,6 +1,4 @@
 import request from "@/utils/request";
-import axios from 'axios';
- 
 function getAddressByid(data){
 	return request.get('/amazon/api/v1/shipaddress/getAddressByid',{params:data});
 }

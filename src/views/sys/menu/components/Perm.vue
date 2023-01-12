@@ -165,7 +165,6 @@ export default {
   props:["menu"],
   setup(props,context){
 	    const   proxy  = getCurrentInstance();
-		console.log(proxy)
 		const queryFormRef = ref(ElForm);
 		const dataFormRef = ref(ElForm);
 
@@ -292,7 +291,6 @@ export default {
 		  dataFormRef.value.validate((isValid) => {
 			if (isValid) {
 			  // 接口权限和按钮权限必填其一
-			  console.log(state.urlPerm.requestPath, state.formData.btnPerm);
 			  if (!(state.urlPerm.requestPath || state.formData.btnPerm)) {
 				ElMessage.warning('请至少填写一种权限');
 				return false;

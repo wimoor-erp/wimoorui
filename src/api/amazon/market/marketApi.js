@@ -12,7 +12,11 @@ function getMarketAll(){
  function getBySku(data){
 	 return request.get("/amazon/api/v1/amzmarketplace/getBySku",{params:data})
  }
+ function getByMSku(data){
+ 	 return request.get("/amazon/api/v1/amzmarketplace/getByMSku",{params:data})
+ }
+ 
 export default{
-	getMarketByGroup,getMarketList,getMarketAll,getBySku,
+	getMarketByGroup,getMarketList,getMarketAll,getBySku,getByMSku,
 }
  

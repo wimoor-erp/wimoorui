@@ -19,11 +19,13 @@
 		name:"datepick",
 		components:{MenuUnfold,Search,ArrowDown,SettingTwo,Help,Copy,MoreOne,},
 		emits:["changedate"],
-		 props:["days"],
+		 props:["days","shortIndex"],
 		setup(props,context){
 			let beforedays=0;
 			if(props.days){
-				 beforedays=props.days;
+				 beforedays=props.days-1;
+			}else{
+				 beforedays=-1;
 			}
 			let shortcuts = [
 			  {
@@ -31,7 +33,7 @@
 			    value: () => {
 			      const end = new Date()
 			      const start = new Date()
-				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays))
+				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays+1))
 			      start.setTime(start.getTime() - 3600 * 1000 * 24 * (7+beforedays))
 			      return [start, end]
 			    },
@@ -41,7 +43,7 @@
 			    value: () => {
 			      const end = new Date()
 			      const start = new Date()
-				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays))
+				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays+1))
 			      start.setTime(start.getTime() - 3600 * 1000 * 24 *(30+beforedays))
 			      return [start, end]
 			    },
@@ -51,7 +53,7 @@
 			    value: () => {
 			      const end = new Date()
 			      const start = new Date()
-				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays))
+				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays+1))
 			      start.setTime(start.getTime() - 3600 * 1000 * 24 * (60+beforedays))
 			      return [start, end]
 			    },
@@ -61,7 +63,7 @@
 			    value: () => {
 			      const end = new Date()
 			      const start = new Date()
-				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays))
+				  end.setTime(end.getTime() - 3600 * 1000 * 24 * (beforedays+1))
 			      start.setTime(start.getTime() - 3600 * 1000 * 24 * (90+beforedays))
 			      return [start, end]
 			    },
@@ -70,7 +72,11 @@
 			let datas={}
 			let dateValue=ref()
 			onMounted(()=>{
+				if(props.shortIndex){
+					 dateValue.value = shortcuts[props.shortIndex].value();
+				}else{
 				 dateValue.value = shortcuts[0].value();
+				}
 				 dateChange(dateValue.value)
 			})
 		 

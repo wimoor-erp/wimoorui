@@ -12,7 +12,9 @@ function deleteByLogic(data){
 function authSeller(data){
 	return request.get('/amazon/api/v1/amzauthority/authSeller',{params:data });
 }
-	
+function getRegionByGroup(data){
+	return request.get('/amazon/api/v1/amzauthority/getRegionByGroup',{params:data });
+}	
 export default{
-	getAuthUrl,getBindSeller,deleteByLogic,authSeller
+	getAuthUrl,getBindSeller,deleteByLogic,authSeller,getRegionByGroup
 }

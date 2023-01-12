@@ -30,7 +30,7 @@
 <script>
 import { useRoute,useRouter } from 'vue-router'
 import { defineComponent,ref,reactive,watch,onMounted,inject } from 'vue'
-	import {ArrowDown,} from '@element-plus/icons-vue'
+import {ArrowDown,} from '@element-plus/icons-vue'
 export default defineComponent({
 	components:{ArrowDown},
      setup(){
@@ -58,7 +58,14 @@ export default defineComponent({
 			 	  replace=route.query.replace;
 			 }
             if(newarr.indexOf(to.path)>-1){
-                editableTabsValue.value =to.path
+                editableTabsValue.value =to.path;
+				let tab=route.query;
+				tab.title=route.query.title;
+				tab.name=route.query.path;
+				tab.closable=true;
+				tab.meta=route.meta;
+				var tabquery=editableTabs.value[newarr.indexOf(to.path)] ;
+				editableTabs.value[newarr.indexOf(to.path)]=Object.assign(tabquery, tab);
             }else{
                 addTab()
             }
@@ -159,11 +166,13 @@ export default defineComponent({
                          }
                      }
                  });
-				 showTab(activeName);
-             }
-
-             editableTabsValue.value = activeName
-             editableTabs.value =tabs.filter((tab) => tab.name !== targetName)
+				editableTabsValue.value = activeName
+				showTab(activeName);
+				editableTabs.value =tabs.filter((tab) => tab.name !== targetName)
+             }else{
+				editableTabsValue.value = activeName;
+				editableTabs.value =tabs.filter((tab) => tab.name !== targetName)
+			 }
          }
          return{
              pushShow,

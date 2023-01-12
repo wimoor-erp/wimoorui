@@ -1,5 +1,5 @@
 <template>
-		<el-space>
+	<div class="flex-auto">
 			<el-select v-model="statusid"    placeholder="产品销售状态" @change="statusChange">
 				 <template #prefix>
 					<el-button size="small" @click.stop="editSaleStatus" type="info"  text  bg>
@@ -9,8 +9,8 @@
 			      <el-option  v-for="item in statusList"    :label="item.name" :value="item.id"   >
 			      </el-option>
 			</el-select>
+			</div>
 		   <SaleStatusDialog ref="SaleStatusRef"/>
-		</el-space>
 </template>
 
 <script>
@@ -62,5 +62,7 @@
 </script>
 
 <style>
-	 
+	 .flex-auto{
+		 flex: auto;
+	 }
 </style>

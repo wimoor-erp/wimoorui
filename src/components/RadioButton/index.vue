@@ -1,22 +1,57 @@
 <!-- RadioButton -->
-<template>
-	<el-button v-for="item in options" @click="handleClick(item.label)" :class="{'active':item.value}" link>{{item.label}}</el-button>
+<template> 
+ 	<el-button v-for="item in list"  @click="handleClick(item)" 
+	:class="{'active':item.isActive}" link>   {{getLabel(item)}} </el-button>
 </template>
-
+ 
 <script setup>
-	import {ref,reactive,defineProps} from 'vue'
+	import {ref,reactive,watch,onMounted,computed,toRefs} from 'vue'
 	let props = defineProps({
-	  options:[]
-	});
-   function handleClick(val){
-	   props.options.forEach((item)=>{
-		  item.value = false 
-		  if(item.label==val){
-			  item.value = true
-		  }
-	   })
+							  defaultValue:"",
+							  list:[],
+							  keyName:"",
+							  labelName:"",
+							});
+	const emit = defineEmits(['change']);
+	const { list } = toRefs(props);
+	function selectValue(value){
+		props.list.forEach((item)=>{
+			     var val="";
+				  if(props["keyName"]){
+				  		  val= item[props["keyName"]]
+				  }else{
+				  		  val= item["id"] ;
+				  }
+				  if(val==value){
+					  item.isActive = true 
+				  }else{
+					  item.isActive=false
+				  }
+		});
+		
+	}
+	function getLabel(row){
+		var key="name"
+		if(props["labelName"]){
+			 key=props["labelName"];
+		}
+		return row[key] ;
+	}
+   function handleClick(row){
+	   var val="";
+	   var key="id"
+	   if(props["keyName"]){
+		   key=props["keyName"];
+	   }
+	   val= row[key] ;
+	   selectValue(val);
+	   emit("change", val);
+	   return val;
    }
-    
+   function setValue(value){
+	  selectValue(value);
+   }
+  defineExpose({ setValue })
 </script>
 
 <style scoped="scoped">

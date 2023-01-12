@@ -31,11 +31,12 @@ const routes = [
 ]
 
 const router = createRouter({
+  mode:'hash',
   history: createWebHistory(process.env.BASE_URL),
   routes
 }) 
 const loadflog={hasload:false}
-const whitePath = ["/ssologin", "/authresult",'/login',"/register"]
+const whitePath = ["/ssologin", "/authresult",'/login',"/register","/resetPassword"]
 
 router.beforeEach(async(to,from,next)=>{
   //跳转前 获取到当前页面的路由
@@ -93,7 +94,11 @@ function addRoute(router,data,routerData){
 		 }
 		 item.meta=v.meta;
 		 if(needroute){
-			 item.meta={ keepAlive: true };
+			 if(item.meta){
+				 item.meta.keepAlive=true;
+			 }else{
+				 item.meta={ keepAlive: true, };
+			 }
 			 router.addRoute('index',item);
 			 router.options.routes.push(item);
 		 }

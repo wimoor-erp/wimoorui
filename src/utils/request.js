@@ -2,16 +2,27 @@ import axios from 'axios'
 import router from "@/router";
 import { ElMessage } from 'element-plus';
 const request = axios.create({
-    timeout: 50000,
+    timeout: 600000,
 	headers:{'Content-Type':'application/json;charset=utf-8'}
 })
 
 // 请求白名单，如果请求在白名单里面，将不会被拦截校验权限
-const whiteUrls = ["/user/add", '/user/getUserList','/api/auth/login','/api/auth/ssologinisrun',"/user/update","/user/deleteUser","/amazon/api/v1/amzauthority/authSeller"]
-
+const whiteUrls = [
+"/user/add", 
+'/user/getUserList',
+'/api/auth/login',
+'/api/auth/ssologinisrun',
+"/user/update",
+"/user/deleteUser",
+"/admin/api/v1/sms/getSmsCode",
+"/admin/api/v1/sms/checkSmsCode",
+"/admin/api/v1/users/updatePassword",
+"/amazon/api/v1/amzauthority/authSeller"
+]
 // request 拦截器
 // 可以自请求发送前对请求做一些处理
 // 比如统一加token，对请求参数统一加密 
+
  request.interceptors.request.use(config => {
      // 取出sessionStorage里面缓存的用户信息
      let jsessionid = localStorage.getItem("jsessionid");

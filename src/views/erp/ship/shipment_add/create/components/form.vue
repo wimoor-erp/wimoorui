@@ -6,17 +6,17 @@
 					<el-row>
 						<el-col :span="12">
 							<el-form-item label="计划名称">
-								<span>{{planname}}</span>
+								<span>{{formData.name}}</span>
 							</el-form-item>
 						</el-col>
 						<el-col :span="12">
 							<el-form-item label="计划编码">
-								<span>{{number}}</span>
+								<span>{{formData.number}}</span>
 							</el-form-item>
 						</el-col>
 						<el-col :span="12">
 							<el-form-item label="发货店铺" prop="groupid">
-								<el-select v-model="groupid"     placeholder="发货店铺" @change="groupChange">
+								<el-select v-model="formData.groupid"     placeholder="发货店铺" @change="groupChange">
 									  <el-option  v-for="item in groupList"   :key="item.id"  :label="item.name" :value="item.id"   >
 									  </el-option>
 								</el-select>
@@ -24,7 +24,7 @@
 						</el-col>
 						<el-col :span="12">
 							<el-form-item label="发货仓库" prop="warehouseid">
-								<el-select v-model="warehouseid"     placeholder="全部仓库" @change="warehouseChange">
+								<el-select v-model="formData.warehouseid"     placeholder="全部仓库" @change="warehouseChange">
 								      <el-option  v-for="item in warehouseList"   :key="item.id"  :label="item.name" :value="item.id"   >
 								      </el-option>
 								</el-select>
@@ -32,7 +32,7 @@
 						</el-col>
 						<el-col :span="12">
 							<el-form-item label="收货国家" prop="marketplaceid">
-								<el-select   v-model="marketplaceid"    placeholder="全部国家" @change="marketChange">
+								<el-select   v-model="formData.marketplaceid"    placeholder="全部国家" @change="marketChange">
 								      <el-option  v-for="item in marketList"   :key="item.marketplaceid"  :label="item.name" :value="item.marketplaceid"   >
 								      </el-option>
 								</el-select>
@@ -40,7 +40,7 @@
 						</el-col>
 						<el-col :span="12">
 							<el-form-item label="物流承运商" prop="tran">
-								<el-select v-model="tran"  :popper-append-to-body="false" placeholder="请选择" @change="tranChange">
+								<el-select v-model="formData.transinfo.company"  :popper-append-to-body="false" placeholder="请选择" @change="tranChange">
 								<el-option
 								      v-for="item in tranlist"
 								      :key="item.id"
@@ -53,7 +53,7 @@
 						</el-col>
 						<el-col :span="12">
 							<el-form-item label="包装类型">
-								<el-radio-group v-model="arecase">
+								<el-radio-group v-model="formData.arecase">
 									<el-radio label="0"  >混装发货</el-radio>
 									<el-radio label="1" >原厂包装发货</el-radio>
 								</el-radio-group>
@@ -61,7 +61,7 @@
 						</el-col>
 						<el-col :span="12">
 							<el-form-item label="物流渠道" prop="region">
-								<el-select v-model="channel" :popper-append-to-body="false" placeholder="请选择" @change="channelChange">
+								<el-select v-model="formData.transinfo.channel" :popper-append-to-body="false" placeholder="请选择" @change="channelChange">
 								<el-option
 								      v-for="item in channellist"
 								      :key="item.id"
@@ -74,9 +74,9 @@
 						</el-col>
                         <el-col :span="24">
 							<el-form-item label="发货地址" prop="region">
-								<el-radio-group v-model="radio1" size="large" @change="radioChange">
+								<el-radio-group v-model="formData.shipfromaddressid" size="large" @change="radioChange">
 									<el-row >
-										<el-col class="addr-card" :span="8" v-for="(item,index) in addressData.list"  v-show="index<addrIndex" >
+										<el-col class="addr-card" :span="8" v-for="(item,index) in addressData"  v-show="index<addrIndex" >
 								      <el-radio-button  :label="item.id">
 										  <div class="addr-info">
 											  <div class="addr-header">
@@ -91,7 +91,7 @@
 												  <span>{{item.countrycode}},{{item.postalcode}}</span>
 											  </div>
 											  <div class="addr-footer">
-												  <el-link v-if="item.id==radio1" @click="addAddress(item)" type="primary">修改</el-link>
+												  <el-link v-if="item.id==formData.shipfromaddressid" @click="addAddress(item)" type="primary">修改</el-link>
 												  <el-link v-else ></el-link>
 											  </div>
 										  </div>
@@ -112,7 +112,7 @@
 						<el-col :span="24">
 							<el-form-item label="备注">
 								<el-radio-group >
-									 <el-input v-model="remark" type="textarea" />
+									 <el-input v-model="formData.remark" type="textarea" />
 								</el-radio-group>
 							</el-form-item>
 						</el-col>
@@ -130,17 +130,17 @@
 			<div>
 				<el-button @click="addProduct" type="primary" plain>添加商品</el-button>
 				<el-button @click="showProductModal">导入</el-button>
-				<el-button @click="printProductlabel">打印当前产品标签</el-button>
+				<el-button @click="printProductlabel(state)">打印当前产品标签</el-button>
 			</div>
 			</div>
 			<div class="fro-body">
-			  <el-table :data="productlist.list" border style="width: 100%;margin-bottom:16px;" row-key="id">
+			  <el-table :data="productlist" border style="width: 100%;margin-bottom:16px;" row-key="id">
 			  	<el-table-column prop="image" label="图片" width="60">
 			  		<template #default="scope">
 			  			<el-image :src="scope.row.image" width="40" height="40"></el-image>
 			  		</template>
 			  	</el-table-column>
-			  	<el-table-column prop="name" label="名称/SKU" width="450" show-overflow-tooltip>
+			  	<el-table-column prop="name" label="名称/SKU"   show-overflow-tooltip>
 			  		<template #default="scope">
 			  			<div class='name'>{{scope.row.name}}</div>
 			  			<div class='sku'>{{scope.row.sku}} </div>
@@ -173,7 +173,7 @@
 			  			<el-input v-model.number="scope.row.quantity"  @input="formatQuantity(scope.row)" ></el-input>
 			  		</template>
 			  	</el-table-column>
-				<el-table-column prop="guidance" label="亚马逊校验"  >
+				<el-table-column prop="guidance" label="亚马逊校验" width="130" >
 					<template #default="scope">
 						<el-tag v-if="scope.row.guidance=='success'" type="success">亚马逊校验成功</el-tag>
 						<el-tag v-else-if="scope.row.guidance=='warn'" type="error">亚马逊未正常校验</el-tag>
@@ -182,13 +182,13 @@
 						<el-tag v-if="scope.row.fulfillable-scope.row.quantity<0" type="warning">发货数量大于库存数</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column prop="asin"  label="操作" width="140"  >
+				<el-table-column prop="asin"  label="操作" width="60"  >
 				    <template #default="scope">
-						<el-button class='el-button--blue' @click="removeBind(scope.row)">删除</el-button>
+						<el-button class='el-button--blue' @click="removeBind(scope.$index)">删除</el-button>
 				    </template>
 				</el-table-column>
 			  </el-table>
-			  <el-button type="primary" @click="submitPlan" >提交</el-button>
+			  <el-button type="primary" @click="submitPlan" :loading="submitloading" >提交</el-button>
 			   <el-button @click="cancelPlan" >取消</el-button>
 			</div>
 		</el-col>
@@ -204,12 +204,12 @@
 			 		class="upload-demo" 
 			 		action   
 			 		:http-request="uploadFile" 
-			 		ref="upload"
+			 		ref="uploadRef"
 			 		:limit="1" 
 			 		:on-remove="handleRemove"  
 			 		:file-list="fileList" 
 			 		:on-exceed="handleExceed" 
-			 		:before-upload="beforeUpload" 
+			 		:before-upload="checkFile" 
 			 		:show-file-list="true" 
 			 		:headers="headers" 
 			 		accept=".xls,.xlsx"
@@ -229,7 +229,7 @@
 	  <template #footer>
 	    <span class="dialog-footer">
 	      <el-button @click="downloadVisible = false">关闭</el-button>
-	      <el-button type="primary" @click="submitProductList()"
+	      <el-button type="primary" @click="submitProductList(state)"
 	        >上传</el-button
 	      >
 	    </span>
@@ -237,19 +237,358 @@
 	</el-dialog>
 </template>
 
-<script>
+<script setup>
+import {h, ref ,watch,reactive,onMounted,inject,toRefs} from 'vue'
+import { useRoute,useRouter } from 'vue-router'
+import groupApi from '@/api/amazon/group/groupApi';
+import marketApi from '@/api/amazon/market/marketApi'
+import warehouseApi from '@/api/erp/warehouse/warehouseApi'
+import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
+import shipaddressApi from '@/api/erp/ship/shipaddressApi.js';
+import serialnumberApi from '@/api/erp/common/serialnumberApi.js';
+import shipmentplanApi from '@/api/erp/ship/shipmentplanApi.js';	
+import transportationApi from '@/api/erp/ship/transportationApi';
+import materialApi from '@/api/erp/material/materialApi.js';
 import Editdialog from"@/views/amazon/address/components/editdialog.vue"
-import MateiralDialog from "@/views/erp/baseinfo/material/mateiralDialog";	
-import shipmentCreate from '@/hooks/erp/shipment/shipment_create.js';
-	export default {
-		name: 'Fromlist',
-		components: {
-             Editdialog,MateiralDialog
-		},
-		setup() {
-			return shipmentCreate();
-		}
-	}
+import MateiralDialog from "./mateiralDialog";	
+import {CheckInputIntLGZero,CheckInputInt} from '@/utils/index';
+import {ElMessage } from 'element-plus'
+import {loadInventory,validSkuList,handleLoadPlanData,submitProductList} from "@/hooks/erp/shipment/data_helper";
+import {checkFile,printProductlabel,handleExceed,
+         downloadtemplate,handleRemove} from "@/hooks/erp/shipment/file_helper";
+let uploadRef=ref();
+let editRef=ref();
+let prodiaRef=ref();
+let state=reactive({
+			totalproducts:0 ,
+			addrIndex:3,
+			formData:{name:"",groupid:"",warehouseid:"",marketplaceid:"",
+			           channel:"",remark:"",arecase:"0",transinfo:{company:"",number:""},
+					   shipfromaddressid:""},
+			showall:true,
+			submitloading:false,
+			groupList:[],
+			marketList:[],
+			warehouseList:[],
+			tranlist:[],
+			channellist:[],
+			addressData:[],
+			productlist:[],
+			downloadVisible:false,
+			fileList:[],
+			logofile:undefined,
+			queryData:{id:"",warehouseid:"",marketplaceid:"",issplit:"",groupid:"",shipmentid:""},
+		})
+		
+		let{totalproducts ,
+			addrIndex,
+			formData,
+			showall,
+			submitloading,
+			groupList,
+			marketList,
+			warehouseList,
+			tranlist,
+			channellist,
+			addressData,
+			productlist,
+			downloadVisible,
+			fileList,
+			logofile,
+			queryData,
+			  }=toRefs(state)
+
+let router = useRouter();
+//请求头
+let headers=ref({"Content-Type": "multipart/form-data" }) 
+function initQueryData(){
+	state.queryData.planid=router.currentRoute.value.query.planid;
+	state.queryData.warehouseid=router.currentRoute.value.query.warehouse;
+	state.queryData.marketplaceid=router.currentRoute.value.query.marketplaceid;
+	state.queryData.issplit=router.currentRoute.value.query.issplit;
+	state.queryData.groupid=router.currentRoute.value.query.group;
+	state.queryData.shipmentid=router.currentRoute.value.query.shipmentid;
+	state.queryData.batchnumber=router.currentRoute.value.query.batchnumber;	
+}
+	
+onMounted(()=>{
+	initQueryData();
+	loadShipName()
+	loadNumber()
+	getGroupData("init")
+	getWarehouseData()
+	getTranList()
+})
+ watch(() =>router.currentRoute.value.query,(newValue,oldValue)=> {
+		         if(newValue&&newValue['path']&&newValue["path"].indexOf("/invoice/addshipment")>=0){
+					 initQueryData()
+					 loadPlanData();
+				    }
+		         },{ immediate: true });
+				 
+ 	        function loadShipName(){
+ 				var nowDate=new Date();
+ 				state.formData.name="PLN"+"("+(nowDate.getMonth()+1)+"/"+(nowDate.getDate())+"/"+nowDate.getFullYear()+" "+nowDate.getHours()+":"+nowDate.getMinutes()+")-1"
+ 			}
+			
+ 			function addAddress(param){
+ 				editRef.value.showModel(param);
+ 			}
+			
+           function manageAlladdr(){
+ 				router.push({
+ 					path:'/amazon/address',
+ 					query:{
+ 						title:'发货地址',
+ 						path:'/amazon/address',
+ 					}
+ 				}) 
+ 			}
+ 			function showAlladdr(){
+ 				addrIndex.value = Infinity 
+ 				showall.value =false
+ 			}
+ 			function radioChange(val){
+ 				state.formData.shipfromaddressid= val
+ 			}
+ 			//获取店铺列表
+ 			function getGroupData(type){
+ 				groupApi.getAmazonGroup().then((res)=>{
+ 					state.groupList=res.data;
+ 					if(res.data&&res.data.length>0){
+ 							if(!state.formData.groupid || state.formData.groupid==""){
+ 								if(type=='init'&&state.queryData.groupid){
+ 									 state.formData.groupid=state.queryData.groupid;
+ 								}else{
+ 								   state.formData.groupid=res.data[0].id;
+ 								}
+ 							}
+ 							getMarketData(state.formData.groupid,type);
+ 							loadAddress();
+ 							loadPlanData();
+ 					}
+ 				})
+ 			}
+ 			//获取国家列表
+ 			function getMarketData(id,type){
+ 				marketApi.getMarketByGroup({'groupid':id}).then((res)=>{
+ 					state.marketList=res.data;
+ 					if(res.data&&res.data.length>0&&type!='init'){
+ 						state.formData.marketplaceid = res.data[0].marketplaceid;
+ 					}else if(res.data&&res.data.length>0&&state.formData.marketplaceid==""){
+ 						state.formData.marketplaceid = res.data[0].marketplaceid;
+ 					}
+ 				})
+ 			}
+			
+ 			function groupChange(val,type){
+ 				getMarketData(val,type);
+ 				loadAddress();
+ 				cancelPlan();
+ 			}
+ 			
+ 			function marketChange(val){
+ 				 state.formData.marketplaceid=val;
+ 				 var skulist="";
+ 				 state.productlist.list.forEach(function(items){
+ 				 	 skulist+=(items.sku+",");
+ 				 }); 
+ 				 validSkuList(state,skulist);
+ 			}
+ 			//获取仓库列表
+ 			function getWarehouseData(){
+ 				warehouseApi.getWarehouseUseable().then((res)=>{
+ 					state.warehouseList=res.data;
+ 					if(res.data&&res.data.length>0){
+ 						state.warehouseList.forEach(function(item){
+ 							if(item.isdefault==true){
+ 								state.formData.warehouseid = item.id;
+ 							}
+ 						});
+ 						getReadyUseWarehouse();
+ 					}
+ 				})
+ 				
+ 			}
+ 			
+ 			function warehouseChange(val){
+ 				state.formData.warehouseid=val;
+ 			}
+ 			function tranChange(val){
+ 				state.formData.transinfo.company=val;
+ 				getchannelList();
+ 			}
+ 			function getchannelList(){
+ 				transportationApi.getChannel({"company":state.formData.transinfo.company,"marketplaceid":state.formData.marketplaceid,"transtype":""}).then((res)=>{
+ 					res.data.push({"id":"","channame":"无"});
+ 					state.channellist = res.data
+ 				})
+ 			}
+ 			function channelChange(val){
+ 				state.formData.transinfo.channel=val;
+ 			}
+ 			function getTranList(){
+ 				transportationApi.getTranlist().then((res)=>{
+ 					res.data.push({"id":"","name":"无"})
+ 					state.tranlist = res.data;
+ 				})
+ 				
+ 			}
+ 			function loadAddress(){
+ 				state.addressData=[];
+ 				if(state.formData.groupid){
+ 					shipaddressApi.getAddressByid({"addressid":'',"groupid":state.formData.groupid}).then((res)=>{
+ 						if(res.data && res.data.length>0){
+ 							res.data.forEach(function(item){
+ 								if(item.isdefault==true){
+ 									item.checked=true;
+ 								}else{
+ 									item.checked=false;
+ 								}
+ 							});
+ 							state.addressData=res.data;
+ 							state.formData.shipfromaddressid=res.data[0].id;
+ 							if(state.addressData.length>3){
+ 								state.showall = true
+ 							}else{
+ 								state.showall = false
+ 							}
+ 						}
+ 					})
+ 				}
+ 				
+ 			}
+ 			function loadNumber(){
+ 				serialnumberApi.getSerialNumber({"ftype":'SF',"isfind":"true"}).then((res)=>{
+ 					state.formData.number=res.data;
+ 				})
+ 			}
+ 			
+ 			function getReadyUseWarehouse(){
+ 				   if(state.queryData.warehouseid){
+ 					   warehouseApi.getSelfWarehouseById({"id":state.queryData.warehouseid}).then((res)=>{
+ 							if(res.data){
+ 							   state.formData.warehouseid=res.data;
+ 							   state.queryData.warehouseid=res.data;
+ 							}
+ 					   });
+ 				   }
+ 			      
+ 			}
+ 			
+ 			function addProduct(){
+ 				prodiaRef.value.dialogVisible=true;
+ 				var data={};
+ 				data.search='';
+ 				data.warehouseid=state.formData.warehouseid;
+ 				data.ftype='shipment';
+ 				data.marketplaceid=state.formData.marketplaceid;
+ 				data.groupid=state.formData.groupid;
+ 				prodiaRef.value.ftype='shipment';
+ 				prodiaRef.value.params=data;
+ 				prodiaRef.value.loadData();
+ 			}
+ 			 function getdata(data){
+ 				 if(data.length>0){
+ 					 var skulist="";var oldskulist="";
+ 					 if(state.productlist.length>0){
+ 						 state.productlist.forEach(function(items){
+ 						 	 oldskulist+=(items.sku+",");
+ 						 }); 
+ 					 }
+ 					 data.forEach(function(item){
+ 						 var haslength=oldskulist.indexOf(item.sku+",");
+ 						 if(haslength<0||oldskulist==""){
+ 							   skulist+=(item.sku+",");
+ 							   if(item.msku==undefined || item.msku==null || item.msku==''){
+ 							   	 item.msku=item.sku;
+ 							   }
+ 							   state.productlist.push(item);
+ 						 }
+ 						
+ 					 });
+ 					 state.totalproducts=state.productlist.length;
+					 loadInventory(state.productlist,state.formData.warehouseid);
+ 					 if(skulist!=""){
+ 						 validSkuList(state,skulist);
+ 					 }
+ 				 }
+ 				  
+ 			 }
+ 			 
+ 			 function removeBind(index){
+ 				 state.productlist.splice(index,1);
+ 				 state.totalproducts=productlist.length;
+ 			 }
+ 			 function submitPlan(){
+ 				 var itemlist=[];
+ 				  
+ 				 if(state.formData.arecase=="1"){
+ 					 state.formData.arecasesrequired=true;
+ 				 }else{
+ 					  state.formData.arecasesrequired=false;
+ 				 }
+ 				 state.formData.amazongroupid=state.formData.groupid;
+ 			     state.formData.planmarketplaceid=state.queryData.marketplaceid;
+ 				 state.formData.planid=state.queryData.planid;
+				 state.formData.batchnumber=state.queryData.batchnumber;
+ 				 state.formData.issplit=state.queryData.issplit;
+ 				 state.productlist.forEach(function(item){
+ 					 var row=item;
+ 					 row.QuantityShipped=item.quantity;
+ 					 row.materialid=item.id;
+ 					 row.sellersku=item.sku;
+ 					 itemlist.push(row);
+ 				 });
+ 				 state.formData.planitemlist=itemlist;
+ 				 submitloading.value=true;
+ 				 shipmentplanApi.saveInboundPlan(state.formData).then((res)=>{
+ 					 ElMessage({
+ 					    message: '已提交成功！',
+ 					    type: 'success'
+ 					  });
+ 					  state.submitloading=false;
+ 					  closeTab();
+ 						router.push({
+ 							path: '/shipmentdetails',
+ 							query: {
+ 								id: res.data,
+ 								title: "货件详情",
+ 								path: '/shipmentdetails',
+ 							}
+ 						})
+ 				 }).catch(error=>{
+					  state.submitloading=false;
+				 })
+ 			 }
+ 			 const emitter = inject("emitter"); // Inject `emitter`
+ 			 function closeTab(){
+ 			 	emitter.emit("removeTab", 100);
+ 			 };
+ 			 function cancelPlan(){
+ 				 state.productlist=[];
+ 				  state.totalproducts=0;
+ 			 }
+ 			 function loadPlanData(){
+				 handleLoadPlanData(state,data=>{
+					  groupChange(data.groupid,'init');
+				 })
+ 			 }
+ 		
+ 			 function showProductModal(){
+ 				 state.downloadVisible=true;
+ 			 }
+ 	
+ 			 //上传文件的事件
+ 			 function uploadFile(item){
+ 			 	//上传文件的需要formdata类型;所以要转
+ 			 	state.logofile=item.file;
+ 			 }
+ 		
+ 	
+ 			 function formatQuantity(row){
+ 				 row.quantity=CheckInputInt(row.quantity);
+ 			 }
 </script>
 
 <style >

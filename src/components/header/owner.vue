@@ -1,11 +1,8 @@
 <template>
-		<el-space>
 			<el-select v-model="ownerid"     placeholder="产品负责人" @change="ownerChange">
 			      <el-option  v-for="item in ownerList"    :label="item.name" :value="item.id"   >
 			      </el-option>
 			</el-select>
-			
-		</el-space>
 </template>
 
 <script>
@@ -15,6 +12,7 @@
 		name:"owner",
 		components:{ },
 		emits:["owner"],
+		props:["defaultValue","notAll"],
 		setup(props,context){
 			let ownerList =ref([])
 			let ownerid=ref()
@@ -26,15 +24,24 @@
 			function getOwnerData(){
 				productinfoApi.getOwnerList().then((res)=>{
 					if(res.data&&res.data.length>0){
-						res.data.push({"id":"","name":"全部负责人"})
+						if(props.notAll!="isNotAll"){
+							res.data.push({"id":"","name":"全部负责人"})
+						}
 						ownerList.value=res.data;
 						ownerList.value.forEach((item,index)=>{
 							if(!item){
 								ownerList.value.splice(index,1)
 							}
 						})
-						ownerid.value ="";
-						context.emit("owner",ownerid.value);
+						if(props.notAll!="isNotAll"){
+							ownerid.value ="";
+						}
+						if(props.defaultValue){
+							ownerid.value =props.defaultValue;
+						}
+						if(ownerid.value&&ownerid.value!=""){
+							context.emit("owner",ownerid.value);
+						}
 					}
 				})
 			}

@@ -20,12 +20,14 @@ import request from "@/utils/request";
  function findPriceById(data){
  	 return request.get("/amazon/api/v1/report/product/productInOpt/findPriceById",{params:data})
  }
- 
- 
- 
- 
+ function saveProductTags(data){
+	 return request.get("/amazon/api/v1/report/product/productInOpt/saveProductTags",{params:data})
+ }
+ function findProductTags(data){
+ 	 return request.get("/amazon/api/v1/report/product/productInOpt/findProductTags",{params:data})
+ }
  
  export default{
  	updateOptMsku,updateOptProfitId,getProRemarkHis,updateRemark,updateOptStatus,getOptStatusById,
-	findPriceById
+	findPriceById,saveProductTags,findProductTags,
  }

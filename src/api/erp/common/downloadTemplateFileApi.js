@@ -8,7 +8,7 @@ function downExcelTemp(data){
 									method:'get'}).then(res => {
 						downloadhandler.downloadSuccess(res,data.ftype+".xlsx");
 				}).catch(e=>{
-					    downloadhandler.downloadFail();
+					    downloadhandler.downloadFail(e);
 				});
 }
 export default{

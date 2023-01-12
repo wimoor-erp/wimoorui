@@ -1,9 +1,10 @@
 <template>
 	<div class="main-sty">
 		<div class="con-header">
+					
 			<el-row>
+				<Group @change="getGroup" isproduct="ok" />
 				<el-space>
-					<Group @change="getGroup" isproduct="ok" />
 					<Status @status="getStatus" />
 					<Owner @owner="getOwner" />
 					<el-select v-model="disabletype" @change='disabletypeChange' placeholder="全部显示状态"
@@ -41,17 +42,10 @@
 						</template>
 						 <el-form :model="form"  label-width="auto"  label-position="left">
 							<el-form-item label="产品标签">
-							     <el-cascader :options="options"  :teleported="false"   :props="props" clearable />
+							     <Tags @change="changeTag"  />
 							   </el-form-item>
 						    <el-form-item label="产品分类">
-								 <el-select v-model="category" :teleported="false" placeholder="请选择">
-									 <el-option
-									   v-for="item in categoryList"
-									   :key="item.id"
-									   :label="item.name"
-									   :value="item.id"
-									 />
-								 </el-select>
+								 <Category @change="getCategory" />
 							 </el-form-item>
 							<el-form-item label="销量">
 							     <el-select  v-model="salerangecheck"  :teleported="false" placeholder="请选择" >
@@ -164,11 +158,12 @@
 				</el-space>
 				<div class='rt-btn-group'>
 					<el-space>
-					<el-dropdown :hide-on-click="false" @command="handleCommand">
+					<el-dropdown :hide-on-click="false"   @command="handleCommand">
 					    <el-button class='ic-btn'  title='排序'>
 					       <sort-one theme="outline" size="16"  :strokeWidth="3"/>
 					    </el-button>
 					    <template #dropdown>
+							  <el-scrollbar height="calc(100vh - 220px)">
 					      <el-dropdown-menu >
 							<el-dropdown-item disabled>排序依据</el-dropdown-item>
 					        <el-dropdown-item v-for="(item,index) in rankData"  @click="rankChange(item.value)"
@@ -178,6 +173,7 @@
 					        <el-dropdown-item v-for="item in soltData" @click="soltChange(item.value)" 
 							:class="{r_active:currentSolt==item.value}">{{item.name}}</el-dropdown-item>
 					      </el-dropdown-menu>
+						    </el-scrollbar>
 					    </template>
 					  </el-dropdown>
 					  <el-button class='ic-btn' title="日均销量公式" @click="EditSaleFormula">
@@ -216,18 +212,21 @@
 	import Table from"./components/table"
 	import BatchModifypriceDialog from"./components/batchmodifypriceDialog.vue"
 	import SaleFormula from"./components/sale_formula"
-	import Group from '@/components/header/group.vue';
+	import Group from './components/group.vue';
 	import Owner from '@/components/header/owner.vue';
+	import Tags from '@/components/header/tags.vue';
+	import Category from '@/components/header/category.vue';
 	import Status from './components/prostatus.vue';
 	import RefreshProDialog from './components/refreshProduct.vue';
-	import materialApi from '@/api/erp/material/materialApi.js';
+	import productRefreshApi from '@/api/amazon/product/productRefreshApi.js';
+
 	export default {
 		name:'Index',
 		components: {
 			Help,ArrowDown,SortOne,
 			Search,MenuUnfold,Check,
 			Plus, SettingTwo,Table,
-			BatchModifypriceDialog,Group,Owner,Status,
+			BatchModifypriceDialog,Group,Owner,Status,Tags,Category,
 			Operation,
 			SaleFormula,
 			RefreshProDialog,
@@ -235,15 +234,15 @@
 		emits:["getdata"],
 		setup(prop,context){
 			onMounted(()=>{
-			   loadCategory();
+
 			})
 			let refreshRef=ref();
 			let priceDialogRef =ref()
 			let radio2 = ref('ASIN')
 			let salerangecheck =ref("")
 			let trantype=ref()
-			let currentRank =ref('averageSalesDay')
-			let currentSolt =ref("descending")
+			let currentRank =ref('sku')
+			let currentSolt =ref("asc")
 			let isload=ref(true)
 			let searchtype=ref("sku")
 			let disabletype=ref("false")
@@ -255,13 +254,12 @@
 			let SaleFormulaRef =ref()
 			let moreSearchVisible=ref(false);
 			let dataSearchVisible=ref(false);
-			let category=ref("");
-			let categoryList=ref([]);
-			let isbadreview=ref(false);
+			let isbadreview=ref(false); 
 			let mark=ref(3);
 			let dataValue=ref();
 			let columntext=ref("");
 			let columnval=ref("");
+			let tags=ref();
 			let saleslist=reactive([{"value":"","label":"不限"},{"value":"AMAZON","label":"亚马逊配送"},{"value":"DEFAULT","label":"卖家自配送"}])
 			let columnList=reactive([{"value":"v.advacos","label":"ACOS"},{"value":"v.advctr","label":"CTR"},
 			{"value":"v.acoas","label":"ACOAS"},{"value":"v.advspc","label":"CR"},
@@ -271,10 +269,16 @@
 	    let props = { multiple: true }
 		let soltData=reactive([{name:'从高到低',value:'desc'},{name:'从低到高',value:"asc"}])
 		var queryParam={};
-		let rankData =reactive([{
+		let rankData =reactive([
+			{
+				name:'SKU',
+				value:'sku',
+			},
+		{
 			name:'日均销量',
 			value:'averageSalesDay',
 		},
+		
 		{
 			name:'库存',
 			value:'afn_fulfillable_quantity',
@@ -333,56 +337,12 @@
 			{label:'销量大幅下降',value:"-25"},{label:'销量小幅上升',value:"3"},
 			{label:'销量大幅下降',value:"25"}
 		]
-		let options =[
-			{
-			    value: 1,
-			    label: '颜色',
-			    children: [
-			      {
-			        value: 2,
-			        label: '红',
-			      },
-				  {
-				    value: 3,
-				    label: '黄',
-				  },
-				  ]
-		},
-		{
-			    value: 2,
-			    label: '节日',
-			    children: [
-			      {
-			        value: 2,
-			        label: '圣诞节',
-			      },
-				  {
-				    value: 3,
-				    label: '万圣节',
-				  },
-				  ]
-		},
-		{
-			    value: 3,
-			    label: '策略',
-			    children: [
-			      {
-			        value: 2,
-			        label: '促销',
-			      },
-				  {
-				    value: 3,
-				    label: '提价',
-				  },
-				  ]
-		},
-		]
+		let options =ref([]);
 		let selection = ref([])
 		function checkRows(rows){
 			selection.value =  rows;
 		}
 		function modifyPrice(){
-			console.log(selection.value);
 			if(selection.value.length>0){
 				priceDialogRef.value.priceVisable =true
 			}else{
@@ -398,14 +358,13 @@
 			currentRank.value= val;
 			queryParam.sort=val;
 			queryParam.order=currentSolt.value;
-			console.log(queryParam);
 			refreshTable();
 		}
+ 
 		function soltChange(val){
 			currentSolt.value =val;
 			queryParam.sort=currentRank.value;
 			queryParam.order=val;
-			console.log(queryParam);
 			refreshTable();
 		}
 		function getGroup(obj){
@@ -460,11 +419,17 @@
 		function searchConfirm(){
 			refreshTable();
 		}
+		function getCategory(category){
+			queryParam.category=category;
+			moreSearchVisible.value=true;
+		}
+		function changeTag(tags){
+			queryParam.taglist=tags;
+		}
 		function submitSearch(){
 			queryParam.changeRate=salerangecheck.value;
 			queryParam.isfba=isfba.value;
 		    queryParam.remark=remark.value;
-			queryParam.category=category.value;
 			queryParam.isbadreview=isbadreview.value;
 			queryParam.name=proname.value;
 			refreshTable();
@@ -479,15 +444,7 @@
 		function EditSaleFormula(){
 			SaleFormulaRef.value.saleFormulaVisable = true
 		}
-		function loadCategory(){
-			materialApi.getCategory().then((res)=>{
-				if(res.data && res.data.length>0){
-					res.data.push({"id":"","name":"全部产品分类"});
-					categoryList.value=res.data;
-					category.value="";
-				}
-			});
-		}
+	 
 		function submitDataForm(){
 			queryParam.paralist=columnval.value;
 			searchConfirm();
@@ -542,7 +499,13 @@
 			columnval.value="";
 		}
 		function showRefreshDialog(){
-			refreshRef.value.refreshProVisable=true;
+			if(selection.value&&selection.value.length>0){
+				selection.value.forEach(function(item){
+					 tableRef.value.refreshProduct(item);
+				});
+			}else{
+				refreshRef.value.refreshProVisable=true;
+			}
 		}
 		function refreshFBAInv(){
 			//批量刷新fba库存 要锁定一个店铺 一个站点。。
@@ -586,9 +549,10 @@
 				currentSolt,soltData,soltChange,getGroup,getOwner,getStatus,searchtype,
 				searchTypeChange,isfba,saleslist,tableRef,refreshTable,changeKeywords,searchKeywords,
 				searchConfirm,remark,submitSearch,resetSearch,moreSearchVisible,dataSearchVisible,
-				SaleFormulaRef,EditSaleFormula,disabletype,disabletypeChange,loadCategory,categoryList,category,
+				SaleFormulaRef,EditSaleFormula,disabletype,disabletypeChange,
 				isbadreview,proname,columnList,dataColumn,mark,dataValue,submitDataForm,resetDataForm,
 				addColumn,clearColumn,columntext,columnval,showRefreshDialog,refreshRef,refreshFBAInv,
+				changeTag,getCategory,
 			}
 		},
 	}

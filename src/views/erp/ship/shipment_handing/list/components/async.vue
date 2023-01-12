@@ -4,7 +4,16 @@
 				<el-space >
 				  <Group ref="groups" @change="getData" defaultValue="only"/>
 				  <Datepicker ref="datepickers" @changedate="changedate" />
-				  <el-input  v-model="searchKeywords" @change="searchConfirm" placeholder="请输入货件编码"   ></el-input>
+				  <el-input  v-model="searchKeywords" @change="searchConfirm" 
+				  placeholder="请输入货件编码"   >
+				  <template #append>
+				    <el-button >
+				       <el-icon style="font-size: 16px;align-itmes:center">
+				        <search @click="searchConfirm" />
+				     </el-icon>
+				    </el-button>
+				  </template>
+				  </el-input>
 				</el-space>
 			</el-row>
 			<el-row>
@@ -14,7 +23,11 @@
 				</el-space>
 			</el-row>
 	<el-row>
-	  <GlobalTable ref="globalTable" :tableData="tableData" @selectionChange="sltChange"  @loadTable="loadtableData" border style="width: 100%;margin-bottom:16px;">
+	  <GlobalTable ref="globalTable" :tableData="tableData" 
+	  @selectionChange="sltChange"  
+	  @loadTable="loadtableData" 
+	  height="calc(100vh - 220px)"
+	  border style="width: 100%;margin-bottom:16px;">
 	    <template #field>
 		   <el-table-column   :selectable='selectEnable' type="selection" width="38" />
 		   
@@ -45,7 +58,8 @@
 	       <el-table-column prop="operate" label="操作"  width="100"   >
 	        <template #default="scope">
 	          <el-space>
-	            <el-button v-if="scope.row.syncinv==1" type="primary" plain @click="shipmentfollow(scope.row)">同步库存</el-button>
+				<el-button v-if="scope.row.syncinv==-1" type="success" plain @click="shipmentfollow(scope.row)">同步货件</el-button>
+	            <el-button v-else-if="scope.row.syncinv==1" type="primary" plain @click="shipmentfollow(scope.row)">同步库存</el-button>
 				<span v-else-if="scope.row.syncinv==4"   >同步中...</span>
 				<span v-else  >已同步库存</span>
 	          </el-space>
@@ -55,7 +69,7 @@
 	  </GlobalTable>
     </el-row>
 	  </div>
-	  <AsyncDailog ref="asyncDailog"></AsyncDailog>
+	  <AsyncDailog ref="asyncDailog"  @change="searchConfirm"></AsyncDailog>
 </template>
 
 
@@ -65,7 +79,7 @@
 	import { useRoute,useRouter } from 'vue-router'
 	import {format,dateFormat} from '@/utils/index';
 	import GlobalTable from "@/components/Table/GlobalTable/index";
-	import {Refresh,CircleClose,WarningFilled} from '@element-plus/icons-vue'
+	import {Refresh,CircleClose,WarningFilled,Search} from '@element-plus/icons-vue'
 	import Group from '@/components/header/group.vue';
 	import Datepicker from '@/components/header/datepicker.vue';
 	import shipmentApi from '@/api/amazon/inbound/shipmentApi.js';
@@ -75,7 +89,9 @@
 	export default{
 		name:'Table',
 		components:{
-			GlobalTable,Refresh,ElMessage,CircleClose,WarningFilled,Group,Datepicker,AsyncDailog,Warehouse
+			GlobalTable,Refresh,ElMessage,
+			CircleClose,WarningFilled,Group,Datepicker,AsyncDailog,
+			Warehouse,Search
 		},
 		setup(props){
 			let router = useRouter()
@@ -155,7 +171,7 @@
 						 params.marketplaceid=item.marketplaceid;
 						 params.warehouseid=warehouseid;
 						 item.syncinv=4;
-						 shipmenthandlingApi.saveShipmentItemAndPlanBath(params).then(res=>{
+						 await shipmenthandlingApi.saveShipmentItemAndPlanBath(params).then(res=>{
 							 item.syncinv=2;
 						 }).catch(e=>{
 							 item.syncinv=1;

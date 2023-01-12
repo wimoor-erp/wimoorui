@@ -58,7 +58,7 @@
             type="primary"
              link
             @click.stop="handleUpdate(scope.row)"
-           >更新</el-button>
+           >编辑</el-button>
           <el-button
             type="danger"
             link
@@ -170,7 +170,6 @@ export default {
 			function handleQuery() {
 			  context.emit('dictClick', null);
 			  state.loading = true;
-			  console.log(state.queryParams)
 			  listPageDictTypes(state.queryParams).then(res=> {
 				state.dictList = res.data;
 				state.total = res.total;

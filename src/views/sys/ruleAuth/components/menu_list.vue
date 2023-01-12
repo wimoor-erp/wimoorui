@@ -44,11 +44,16 @@ import { onMounted, reactive, ref, toRefs, watch } from 'vue';
 		   
 		   function loadData(row){
 			   state.queryParams=row;
-			   state.loading=true;
 			   state.title="-"+row.name;
+			   menuTree.value.setCheckedKeys([]);
+			   state.loading=true;
 			   getRoleMenus(state.queryParams.id).then(res=>{
 				   state.formData.menuIds=res.data;
-				   menuTree.value.setCheckedKeys(res.data);
+				   if(res.data){
+					   res.data.forEach(item=>{
+						     menuTree.value.setChecked(item,true,false);
+					   })
+				   }
 				   state.loading=false;
 			  })
 		   }

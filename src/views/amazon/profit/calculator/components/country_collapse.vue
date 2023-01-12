@@ -17,16 +17,16 @@
 										   > 
 										   <el-form label-width="100px">
 											   <el-form-item label="佣金比率">
-												   <el-input placeholder="默认按照所选品类匹配"> <template #append>%</template></el-input>
+												   <el-input @input="rateInput()"  v-model="tableData.referralrate" placeholder="默认按照所选品类匹配"> <template #append>%</template></el-input>
 											   </el-form-item>
 											   <el-form-item  label="进口税率">
-												   <el-input ><template #append>%</template></el-input>
+												   <el-input @input="rateInput()"  v-model="tableData.taxrate"><template #append>%</template></el-input>
 											   </el-form-item>
 											   <el-form-item  label="进口GST税率">
-												   <el-input ><template #append>%</template></el-input>
+												   <el-input @input="rateInput()"  v-model="tableData.gstrate"><template #append>%</template></el-input>
 											   </el-form-item>
 											   <el-form-item label="销售GST税率">
-												   <el-input ><template #append>%</template></el-input>
+												   <el-input @input="rateInput()"  v-model="tableData.sellingGSTRate"><template #append>%</template></el-input>
 											   </el-form-item>
 										   </el-form>
 										     <template #reference>
@@ -39,7 +39,16 @@
 										     </template>
 										   </el-popover>
 										
-									</el-space>								
+									</el-space>	
+									<el-space :size="2"  v-if="country.market=='IN'">
+										 <el-divider direction="vertical" />
+										 <el-select v-model="tableData.shipmentType" size="small" class="w-8"  @change="changeWeight">
+										 	<el-option   value="local"  label="local"></el-option>
+											<el-option   value="regional"  label="regional"></el-option>
+											<el-option   value="national"  label="national"></el-option>
+										 </el-select>
+										
+									</el-space>		
 								</template>	
 								<table style="width:100%;text-align:center;" class="el-table table  table-striped table-bordered" v-if="tableData.country&&tableData.country[country.market]">
 									<tbody>
@@ -47,7 +56,7 @@
 									<tr><td>{{tableData.country[country.market].margin}}</td>
 									    <td><el-input 
 										v-if="tableData.country&&tableData.country[country.market]"
-										@input="marketPriceInput()" 
+										@input="marketPriceInput(country.market)" 
 										style="width:60px;" size="small"
 										v-model="tableData.country[country.market].sellingPrice"/>	
 										</td>
@@ -81,7 +90,7 @@
 </template>
 
 <script setup>
-	import {ref,reactive,defineProps,toRefs,onMounted, defineEmits}from"vue"
+	import {ref,reactive,toRefs,onMounted, defineEmits}from"vue"
 	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
     const emit = defineEmits(['dataChange']);
 	let props = defineProps({
@@ -96,8 +105,18 @@
 	function handleChange(){
 		
 	}
-	function marketPriceInput(){
+	function marketPriceInput(market){
+		if(props.tableData&&props.tableData.country[market]){
+		    props.tableData.country[market].sellingPrice=CheckInputFloat(props.tableData.country[market].sellingPrice)
+		}
+		var price=props.tableData.country[market].sellingPrice;
+		if(price.substring(price.length-1,price.length)=="."){
+			return ;
+		}
 		emit('dataChange',props.tableData);
+	}
+	function rateInput(){
+		emit('rateChange',props.tableData);
 	}
 	onMounted(()=>{
 		 

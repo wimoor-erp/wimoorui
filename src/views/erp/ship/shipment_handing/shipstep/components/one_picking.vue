@@ -99,7 +99,7 @@
 				 <el-button @click="validateShipment" >验证货件是否正确</el-button>	 
 		  </el-space>
 		  <div class="rt-btn-group">
-		  	 <el-button :disabled="piceDisable"  type="primary" @click="qtyconfirm">确认配货数</el-button>
+		  	 <el-button :disabled="piceDisable" :loading="confirmloading" type="primary" @click="qtyconfirm">确认配货数</el-button>
 			  <el-button type="primary"  @click="stepclick(1)" plain>下一步</el-button>
 		  </div>
 		  </el-row>
@@ -128,6 +128,7 @@
 			let boxcontents=ref("FEED")
 			let optRef=ref();
 			let piceDisable=ref(false);
+			let confirmloading=ref(false);
 			let boxconName=ref("系统提交装箱");
 			function openShipmentInfo(ftype){
 					if(ftype=="mobile"){
@@ -231,6 +232,7 @@
 			}
 			function qtyconfirm(){
 				var lists=[];
+				confirmloading.value=true;
 				productData.list.forEach(function(item,index){
 					var map={};
 					map.sellersku=item.sellersku;
@@ -243,7 +245,10 @@
 					"intendedBoxContentsSource":boxcontents.value,
 					"itemList":lists
 				}).then(res=>{
-					console.log(res)
+					confirmloading.value=false;
+					context.emit("stepdata",1);
+				}).catch(error=>{
+					confirmloading.value=false;
 				})
 			}
 			
@@ -278,7 +283,7 @@
 			}
 			return{
 				productData,openShipmentInfo,shipInfo,downloadLabel,changeboxcontents,boxcontents,qtyconfirm,
-				validateShipment,loadOptData,optRef,stepclick,piceDisable,boxconName
+				validateShipment,loadOptData,optRef,stepclick,piceDisable,boxconName,confirmloading
 			}
 		}
 	}

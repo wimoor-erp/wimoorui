@@ -47,14 +47,83 @@ export default [
  	component:()=>import("@/views/erp/baseinfo/material/editinfo/index")  
  },
  {
- 	path:"localproduct/editinfo/assemble",
- 	name:'assemble',
- 	component:()=>import("@/views/erp/baseinfo/material/editinfo/assemble_edit")  
- },
- {
  	path:"material/details",
  	name:'details',
  	component:()=>import("@/views/erp/baseinfo/material/details/index")  
  },
-
+ {
+ 	path:"e/w/o",
+ 	name:'outbound_add',
+ 	component:()=>import("@/views/erp/warehouse/outbound/components/create")  
+ },
+ {
+ 	path:"e/w/o/d",
+ 	name:'outbound_add_info',
+ 	component:()=>import("@/views/erp/warehouse/outbound/components/details")  
+ },
+ {
+ 	path:"e/w/i",
+ 	name:'inbound_add',
+ 	component:()=>import("@/views/erp/warehouse/inbound/components/create")  
+ },
+ {
+ 	path:"e/w/i/d",
+ 	name:'inbound_add_info',
+ 	component:()=>import("@/views/erp/warehouse/inbound/components/details")  
+ },
+ {
+ 	path:"e/w/s",
+ 	name:'stocktake_add',
+ 	component:()=>import("@/views/erp/warehouse/stocktake/components/create")  
+ },
+ {
+ 	path:"e/w/s/d",
+ 	name:'stocktake_details',
+ 	component:()=>import("@/views/erp/warehouse/stocktake/components/details")  
+ },
+ {
+ 	path:"e/p/o",
+ 	name:'purchase_order_add',
+ 	component:()=>import("@/views/erp/purchase/orders/components/create")  
+ },
+ {
+ 	path:"e/w/o/s",
+ 	name:'overseas_stock_add',
+ 	component:()=>import("@/views/erp/warehouse/overseas/stock/components/create")  
+ },
+ {
+ 	path:"e/w/o/d",
+ 	name:'overseas_stock_details',
+ 	component:()=>import("@/views/erp/warehouse/overseas/stock/components/details")  
+ },
+ {
+ 	path:"e/w/t",
+ 	name:'transfer_order',
+ 	component:()=>import("@/views/erp/warehouse/transfer/components/create")  
+ },
+ {
+ 	path:"e/w/t/d",
+ 	name:'transfer_order_details',
+ 	component:()=>import("@/views/erp/warehouse/transfer/components/details")  
+ },
+ {
+ 	path:"e/w/e/c",
+ 	name:'exchange_create',
+ 	component:()=>import("@/views/erp/warehouse/exchange/components/create")  
+ },
+ {
+ 	path:"e/w/e/d",
+ 	name:'exchange_details',
+ 	component:()=>import("@/views/erp/warehouse/exchange/components/details")  
+ },
+ {
+ 	path:"e/p/p/c",
+ 	name:'process_create',
+ 	component:()=>import("@/views/erp/purchase/process/components/create")  
+ },
+ {
+ 	path:"e/p/p/d",
+ 	name:'process_details',
+ 	component:()=>import("@/views/erp/purchase/process/components/details")  
+ },
 ]

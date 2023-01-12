@@ -129,7 +129,6 @@
 			}
 			function getWarehouseid(data){
 				warehouseid.value = data
-				console.log(data)
 				loadtableData()
 			}
 			function getdate(date){

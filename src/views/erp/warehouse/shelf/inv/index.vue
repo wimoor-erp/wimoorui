@@ -17,7 +17,7 @@
 
 <script>
 import { ref ,watch,reactive,onMounted} from 'vue'
-import ShelfTree from "../components/shelf_tree";
+import ShelfTree from "@/views/erp/warehouse/shelf/base/shelf_tree.vue";
 import ShelfProduct from "./components/shelf_product";
 export default{
 	name: 'index',

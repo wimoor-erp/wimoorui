@@ -6,13 +6,18 @@
 		  <div class='pag-radius-bor'>
 		<div class='ch-da-toggle'>
 			<el-space :size="16" spacer="|">
-                <div v-for='(h,index) in summarysaleData' :key='index' class="data-group">
-			   <div >
-               <div style='font-size:12px;color:#666'>{{h.label}}</div>
-               <div class='pag-data-num' style='margin:0'>{{h.data}}</div>
-			   </div>
-			   <el-checkbox v-model="h.checked"  label="" size="large"></el-checkbox>
-            </div>
+					    <div v-for='(h,index) in summarysaleData' :key='index' class="data-group">
+							   <div >
+				               <div style='font-size:12px;color:#666'>
+							    {{h.label}} 
+							   <el-icon :class="h.sclass"><TrendCharts /></el-icon></div>
+				               <div class='pag-data-num' @mouseenter="chartLineLabelShowHide(h.label)" @mouseleave="chartLineLabelShowHide('#')" style='margin:0'>{{h.data}}</div>
+							   </div>
+							   <el-checkbox  v-model="h.checked"  @change="lineCheckChange"  label="" size="large"></el-checkbox>
+				            </div>
+					 
+			  
+			       
 			</el-space>
 		 </div>
 			  <div id='salechart' style='height:304px;width:100%'>
@@ -25,42 +30,96 @@
 import * as echarts from 'echarts'
 import { ref,reactive,onMounted,watch } from 'vue'
 import summaryDataApi from '@/api/amazon/summary/summaryDataApi'
+import { TrendCharts} from '@element-plus/icons-vue';
 export default{
 	 name: 'Salechart',
-	 components:{},
+	 components:{TrendCharts},
 	 props:["parameter"],
 	 setup(prop,context){
-      let summarysaleData =ref([
-	  {
-		  label:'销量',
-		  data:'0',
-		  checked:true,
-	  },
-	  {
-		  label:'订单量',
-		  data:'0',
-	  },
-	  {
-		  label:'退货量',
-		  data:'0',
-	  },
-	  ]);
-	  let chartTitle=ref("2022-02-11 ~ 2022-02-17");
+      let summarysaleData =ref([ {    label:'销量',
+									  data:'0',
+									  checked:true,
+									  sclass:"orange",
+								  },{ label:'订单量',
+									  data:'0',
+									  checked:false,
+									  sclass:"warning",
+								  },{
+									  label:'退货量',
+									  data:'0',
+									  checked:false,
+									  sclass:"green",
+								  },
+								]);
+	  let chartTitle=ref("");
+	  let checkboxGroup=ref(['销量']);
+	  function lineCheckChange(){
+		  	  var myChart=echarts.getInstanceByDom(document.getElementById('salechart'));
+		      var option=myChart.getOption();
+		      summarysaleData.value.forEach((item)=>{
+				  if(item.checked){
+					   option.legend[0].selected[item.label]=true;
+				  }else{
+					   option.legend[0].selected[item.label]=false;
+				  }
+			  })
+		  	myChart.setOption(option);
+	  }
+	  function chartLineLabelShowHide(label){
+	  	   var myChart=echarts.getInstanceByDom(document.getElementById('salechart'));
+	      var option=myChart.getOption();
+		
+	       option.series.forEach((series,index)=>{
+			   	      	  if(option.legend[0].selected[label]&&label==series.name){
+			   	      		  series.itemStyle={
+			   	      	    			normal : {
+			   	      	    				label : {
+			   	      	    					show : true,
+			   	      	    					textStyle : {
+			   	      	    						color : '#333',
+			   	      	    					},
+			   	      	    					formatter:function(params){return params.value}
+			   	      	    				},
+			   	      	    				lineStyle:{
+			    						width:5
+			    					},
+			   	      	    		
+			   	      	    		}};
+			   	      	  }else{
+			   	      		  series.itemStyle={
+			   	    	    			normal : {
+			   	    	    				label : {
+			   	    	    					show : false,
+			   	    	    					textStyle : {
+			   	    	    						color : '#333',
+			   	    	    					},
+			   	    	    					formatter:function(params){  return params.value}
+			   	    	    				},
+			   	    	    				lineStyle:{
+			   	      						width:2
+			   	      					},
+			   	    	    		
+			   	    	    		}};
+			   	      	  }
+			    
+		   })
+	  	myChart.setOption(option);
+	  }
 	  function generalChart(series,label,titles){
-	  	  var myChart = echarts.init(document.getElementById('salechart'));
-	   
+		  var myChart = echarts.init(document.getElementById('salechart'));
 	  	  var option = {
 	           tooltip : {
 	  			trigger : 'axis',
-	  		},
+	  		     },
 	            legend: {
 	  				data:titles,
 	  				right:0,
 	  				top:16,
 	  				icon: "circle",
 	  				itemWidth:6,
-	  				itemHeight:6
-	  				
+	  				itemHeight:6,
+	  				show:false,
+					selected:{'销量':true,"订单量":false,"退货量":false}
 	            },
 	            xAxis: {
 	  				boundaryGap:false,
@@ -128,22 +187,22 @@ export default{
 					             type: 'line',
 					   				data:ordernumber,
 					   				lineStyle:{
-					   					color:'#ffff00',
+					   					color:'#E6A23C',
 					   				},
 					   				itemStyle:{
-					   					color:'#ffff00',
+					   					color:'#E6A23C',
 					   				}
 					         };
 			      var serieReturn={
 									 smooth: 0.5,
-									 name: '退货数量',
+									 name: '退货量',
 									 type: 'line',
 										data:returnOrder,
 										lineStyle:{
-											color:'#ffaaff',
+											color:'#67C23A',
 										},
 										itemStyle:{
-											color:'#ffaaff',
+											color:'#67C23A',
 										}
 								 };
 				series.push(serieQuantity); 
@@ -174,7 +233,7 @@ export default{
 	 })
            //返回数据
 		 return{
-          summarysaleData,chartTitle
+          summarysaleData,chartTitle,checkboxGroup,lineCheckChange,chartLineLabelShowHide
 		 }
 		 
 	 },
@@ -187,4 +246,21 @@ export default{
 .ch-da-toggle .el-space{display:flex}
 .ch-da-toggle .el-space__item{width:100%}
 .ch-da-toggle span{color:var(--el-border-color-base)}
+.mcheckbox{display: flex;}
+.mcheckbox .data-group {
+    
+    justify-content: space-between;
+}
+.mcheckbox .el-checkbox__label{
+	float:left;
+}
+.orange{
+	color:#FF6700;
+}
+.warning{
+	color:#E6A23C;
+}
+.green{
+	color:#67C23A;
+}
 </style>

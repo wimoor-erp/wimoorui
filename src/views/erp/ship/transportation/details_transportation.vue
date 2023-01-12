@@ -196,8 +196,6 @@
 						   }
 						   form.uploadpath=res.data.uploadpath;
 						   transportationApi.loadApiCompany().then((res)=>{
-							   console.log(form);
-							   console.log(res);
 							   res.data.forEach((item)=>{
 								   if(item.id==form.api){
 								   	    form.api=item.name;
@@ -207,7 +205,6 @@
 						   });
 						   form.accessToken=res.data.accessToken;
 						   form.id=res.data.id;
-						   console.log(res.data.detaillist);
 						   tranTableData.list=res.data.detaillist;
 						   tranTable=res.data.detaillist;
 						}

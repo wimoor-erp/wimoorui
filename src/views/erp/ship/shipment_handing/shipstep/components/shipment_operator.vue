@@ -1,5 +1,6 @@
 <template>
 <div>
+	<el-button v-if="shipDatas.status!='6'"  @click="deleteShipment" >删除货件</el-button>
 	<el-button @click="copyshipment" >复制货件</el-button>
 	<el-button v-if="shipDatas.status=='5' || shipDatas.status=='-1' || shipDatas.status=='0'" disabled >本地完成</el-button>
 	<el-button v-else  @click="amazondoneShipmentFunc">本地完成</el-button>
@@ -9,7 +10,8 @@
 	  title="操作提示"
 	  width="30%"
 	>
-	  <span>{{canceltitle}}</span>
+	<div v-loading="statusLoading"> <span>{{canceltitle}}</span></div>
+	 
 	  <template #footer>
 	    <span class="dialog-footer">
 		  <el-button @click="confirmDelete('local')" :style="{ display: visibleBtn }">仅删除本地</el-button>
@@ -28,6 +30,7 @@
 	import {TakeOff,TransactionOrder,Local} from '@icon-park/vue-next';
 	import { ref,reactive,onMounted } from 'vue';
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
+	import shipmentApi from '@/api/amazon/inbound/shipmentApi.js';
 	import { useRoute,useRouter } from 'vue-router'
 	import { ElMessageBox ,ElMessage } from 'element-plus'
 	export default{
@@ -35,20 +38,20 @@
 		components:{
 			TakeOff,TransactionOrder,Local,
 		},
-		setup(){
-			onMounted(()=>{
-				
-			})
+		emits: ["change"],
+		setup(props,context){
 			let router = useRouter()
 			const shipmentid = router.currentRoute.value.query.shipmentid;
 			let canceltitle=ref("亚马逊后台货件状态为,请确认是否同步删除亚马逊货件？")
 			let shipstatus=ref("")
 			let dialogVisible = ref(false)
 			let visibleBtn=ref("none")
+			let statusLoading=ref(false);
 			let shipDatas=ref({})
 			function deleteShipment(){
 					//先弹窗打开modal 获取最新的货件状态
 					dialogVisible.value=true;
+					statusLoading.value=true;
 					var status=shipDatas.value.shipmentstatus;
 					shipmenthandlingApi.requestInboundShipment({
 						"shipmentid":shipmentid
@@ -56,11 +59,16 @@
 						if(res.data!="fail"){
 							status=res.data;
 						}
-						if(status!="CANCELLED"&&status!="CANCELLED"&&status!="CANCELLED"){
+						statusLoading.value=false;
+						if(status!="CANCELLED"){
 							visibleBtn.value="";
+							canceltitle.value="亚马逊后台货件状态为"+status+",请确认是否同步删除亚马逊货件？";
+						}else{
+							canceltitle.value="亚马逊后台货件状态为"+status+",请确认是否删除本地货件？";
 						}
-						canceltitle.value="亚马逊后台货件状态为"+status+",请确认是否同步删除亚马逊货件？";
+						
 						shipstatus.value=status;
+						context.emit("change");
 					})
 					
 					
@@ -80,7 +88,9 @@
 					ElMessage({
 					    message: '操作成功！',
 					    type: 'success',
-					  })
+					  });
+					  dialogVisible.value=false;
+					  context.emit("change");
 				})
 			}
 			function copyshipment(){
@@ -102,13 +112,16 @@
 					  type: 'warning',
 					  callback:(action)=>{
 						 if(action=="confirm"){
-							 shipmenthandlingApi.amazondoneShipment({
-								"shipmentid":shipmentid
-							 }).then(res=>{
-								ElMessage({
-								    message: '操作成功！',
-								    type: 'success',
-								  })
+							  shipmentApi.refreshShipmentRec({'shipmentid':shipmentid}).then(res=>{
+									 shipmenthandlingApi.amazondoneShipment({
+									 	  "shipmentid":shipmentid
+									  }).then(res=>{
+											ElMessage({
+											message: '操作成功！',
+											type: 'success',
+										  });
+										  context.emit("change");
+								 })
 							 })
 						 }
 					  }
@@ -117,7 +130,7 @@
 				
 			}	
 			return{
-				deleteShipment,confirmDelete,
+				deleteShipment,confirmDelete,statusLoading,
 				amazondoneShipmentFunc,canceltitle,shipstatus,
 				dialogVisible,visibleBtn,shipDatas,copyshipment
 				

@@ -8,6 +8,7 @@ export default [
   {
   	path:"invoice/addshipment",
   	name:'addshipment',
+	meta:{ keepAlive:true},
   	component:()=>import("@/views/erp/ship/shipment_add/create/index")  
   },
   {

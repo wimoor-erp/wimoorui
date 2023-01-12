@@ -32,7 +32,7 @@
 				<h4>箱子信息</h4>
 				<el-space v-if="!boxDetail.arecasesrequired"  class="font-small">
 					<span>需要</span>
-					 <el-input-number :controls="false"  :max="30" v-model.number="inputboxNum" :disabled="boxed" />
+					 <el-input :controls="false" v-model="inputboxNum" @input="inputBoxNumChange" @focus="inputBoxNumChange" :disabled="boxed" />
 					<span>个箱子装箱</span>
 					<el-button type='primary' @click="subimtBoxNum" :disabled="boxed">确认</el-button>
 				</el-space>
@@ -68,9 +68,33 @@
 						<td>{{item.QuantityShipped}}</td>
 						<!-- 箱子增减 -->
 						<td  v-for="(sub,i) in inputboxNum" :key="i">
-						     <el-input-number value-on-clear="" :disabled="boxDisable"  :title="cellTitle('sku:'+item.SellerSKU,i)"  :controls="false"   v-model="item['boxNum'+i]" :min="0" @change="packNumchange(item)"/>
+							   <el-popover
+								  placement="top"
+								  trigger="hover"
+								  :visible="item['popover'+i]" 
+								>
+								 <template #default>
+								    箱号 : {{i+1}} <br/>SKU:{{ item.SellerSKU}} 
+								 </template>
+								 <template #reference> 
+								 <el-input
+								  value-on-clear=""
+								 :disabled="boxDisable"  
+								 :controls="false"   
+								  v-model="item['boxNum'+i]" 
+								  @blur="item['popover'+i]=false"
+								  @focus="item['popover'+i]=true"
+								 :id="'c-'+parseInt(i)+'-'+parseInt(index)+''"
+								 :title="'箱号 :'+(i+1)+' SKU:'+ item.SellerSKU+''"
+								 :min="0" 
+								 @input="packNumchange(item,i)"
+								 />
+								 </template>
+							  </el-popover>
 						</td>
-						<td>{{rowBoxsumNum(item)}}</td>
+						<td><span v-if="item.sum!=item.QuantityShipped" class="text-danger">{{item.sum}}</span>
+						    <span v-else class="text-success">{{item.sum}}</span>
+						</td>
 					</tr>
 				</tbody>
 				<!-- 合计 -->
@@ -92,7 +116,20 @@
 						<div class="text-right">箱子+货物重量(kg)</div>
 						</td>
 						<td v-for="(sub,i) in inputboxNum">
-							 <el-input-number :disabled="boxDisable" :title="cellTitle('重量',i)" :controls="false"  v-model="boxWeightData[i]" :min="0" @change="boxweightChange"/>
+							<el-tooltip
+							   class="box-item"
+							   effect="light"
+							   placement="top"
+							 >
+							 <template #content>箱号: {{i+1}} </template>
+							  <el-input-number 
+							  :disabled="boxDisable"
+							  :controls="false"  
+							   v-model="boxWeightData[i]" 
+							  :min="0" 
+							  @change="boxweightChange"/>
+							 </el-tooltip>
+							 
 						</td>
 						<td >{{boxweightSum}}</td>
 					</tr>
@@ -115,7 +152,16 @@
 						</td>
 						<td  v-for="(sub,i) in inputboxNum">
 							<div class="text-center">
-							<el-checkbox :disabled="boxDisable" :title="cellTitle('尺寸',i)"  @change='checkboxChange(i,index)' v-model="item.boxcheck[i]"></el-checkbox>
+								<el-tooltip
+								   class="box-item"
+								   effect="light"
+								   placement="bottom"
+								 >
+								 <template #content>箱号 : {{i+1}}  </template>
+								    <el-checkbox :disabled="boxDisable"  @change='checkboxChange(i,index)' v-model="item.boxcheck[i]"></el-checkbox>
+								 </el-tooltip>
+								 
+							
 							</div>
 						</td>
 						<td >
@@ -144,7 +190,7 @@
 			<!-- 原厂发货table -->
 			<!-- 原厂发货table -->
 			<!-- 原厂发货table -->
-			<el-table :data="tableData.list" v-if="boxDetail.arecasesrequired" border style="width: 100%;">
+			<el-table :data="tableData.list" v-if="boxDetail.arecasesrequired" border style="width: 100%;margin-bottom:10px;">
 				<el-table-column width="60" label="图片" >
 					<template #default="scope">
 						<el-image :src="scope.row.image" style="width: 40px;height: 40px;"  ></el-image>
@@ -177,13 +223,13 @@
 			<!-- 原厂发货table -->
 			<!-- 原厂发货table -->
 			<!-- 原厂发货table -->
-			<el-row class="mar-bot">
+			<el-row class="mar-bot ">
 			<el-space >
 				  <el-button 
 					  @click="downloadBoxInfo">下载装箱详情
 				  </el-button>
 				 <el-button-group>
-				 <el-select v-model="boxmarksType" class="m-2" placeholder="选择打印箱子标签类型">
+				 <el-select v-model="boxmarksType" class="m-2 myshipdrop"  placeholder="选择打印箱子标签类型">
 				    <el-option
 				      v-for="item in boxMarks"
 				      :key="item.value"
@@ -191,8 +237,8 @@
 				      :value="item.value"
 				   />
 				   </el-select>
-				   <el-dropdown trigger="click">
-				     <el-button>
+				   <el-dropdown trigger="click" >
+				     <el-button >
 				                打印箱子标签<el-icon class="el-icon--right"><arrow-down /></el-icon>
 				     </el-button>
 				     <template #dropdown>
@@ -206,8 +252,8 @@
 				 </el-button-group>
 			</el-space>
 			<div class="rt-btn-group">
-				<el-button :disabled="boxDisable"  @click="submitBox('save')" >保存装箱信息</el-button>
-				<el-button :disabled="boxDisable" type="primary" @click="submitBox('submit')">提交</el-button>
+				<el-button :disabled="boxDisable" :loading="submitloading"  @click="submitBox('save')" >保存装箱信息</el-button>
+				<el-button :disabled="boxDisable" :loading="submitloading" type="primary" @click="submitBox('submit')">提交</el-button>
 			</div>
 			</el-row>
 			<el-row :gutter="16" class="mar-bot">
@@ -266,13 +312,12 @@
 	      </span>
 	    </template>
 	  </el-dialog>
-	  
 </div>
 	  
 </template>
 
-<script>
-	import {h, ref ,watch,reactive,onMounted,computed} from 'vue'
+<script setup>
+	import {h, ref ,watch,reactive,onMounted,computed,nextTick} from 'vue'
 	import {Search,ArrowDown,Close} from '@element-plus/icons-vue'
 	import { ElDivider,ElMessageBox ,ElMessage } from 'element-plus'
 	import '@/assets/css/packbox_table.css'
@@ -282,112 +327,62 @@
 	import { useRoute,useRouter } from 'vue-router'
 	import ShipmentOpt from"./shipment_operator.vue"
 	import FeedStatus from "@/components/feedstatus/index.vue"
-	import {formatFloat} from '@/utils/index';
-	export default {
-		name: 'TwoBox',
-		components: {
-	    ArrowDown,Close,
-		ShipmentOpt,
-		FeedStatus
-		},
-		emits:["stepdata"],
-		setup(props,context){
-			let spacer = h(ElDivider, { direction: 'vertical' })
-			let radio1 = ref("3")
-			let boxed =ref(false)
-			let shipdata=ref({})
-			let router = useRouter()
-			let country=ref("")
-			let boxDetail=ref({})
-			let feedStatus=ref(FeedStatus)
-			let totalBoxNum=ref(0)
-			let feedid=ref("");
-			let optRef=ref();
-			let centerDialogVisible=ref(false)
-			let infoData=ref({});
-			const shipmentid=router.currentRoute.value.query.shipmentid;
-			let carrierData = reactive({list:[
-				 
-			]})
-			let boxDisable=ref(false);
-			let inputboxNum = ref(0)
-			let form = reactive({
-				carrier: '', 
-				tranType:"SP",
-			})
-			let boxmarksType=ref("PackageLabel_A4_2")
-			let boxMarks=[
-				{
-					label:'每张美国信函标签页有两个标签(UPS服务;仅US,CA可使用)',
-					value:'PackageLabel_Letter_2'
-				},
-				{
-				    label:'每张美国信函标签纸有四个标签(仅US,CA可使用)',
-				     value:'PackageLabel_Letter_4'	
-				},
-				{
-				    label:'每张美国信函标签纸有六个标签(仅US,CA可使用)',
-				     value:'PackageLabel_Letter_6'	
-				},
-				{
-				    label:'每张美国信函标签纸有六个标签(CarrierLeft专用)',
-				     value:'PackageLabel_Letter_6_CarrierLeft'	
-				},
-				{
-				    label:'每张A4标签纸两个标签',
-				     value:'PackageLabel_A4_2'	
-				},
-				{
-				    label:'每张A4标签纸四个标签',
-				     value:'PackageLabel_A4_4'	
-				},
-				{
-				    label:'每张美国信纸一个标签,仅用于非亚马逊合作货件',
-				     value:'PackageLabel_Plain_Paper'	
-				},
-				{
-				    label:'每张美国信纸一个标签,仅用于非亚马逊合作货件(CarrierBottom)',
-				     value:'PackageLabel_Plain_Paper_CarrierBottom'	
-				},
-				{
-				    label:'用于热敏打印机,UPS发货专用',
-				     value:'PackageLabel_Thermal'	
-				},
-				{
-				    label:'用于热敏打印机,ATS发货专用',
-				     value:'PackageLabel_Thermal_Unified'	
-				},
-				{
-				    label:'用于热敏打印机,支持非亚马逊合作发货',
-				     value:'PackageLabel_Thermal_NonPCP'	
-				},
-				{
-				    label:'用于热敏打印机,DHL发货专用',
-				     value:'PackageLabel_Thermal_No_Carrier_Rotation'	
-				},
-			]
-			let boxWeightData = ref([])
-			let panNum=ref(1)
-			let tableData = reactive({list:[
-					
-			]}) 
-			let newtableData=reactive({list:[
-				{
-					name:'箱子+货物重量',
-				},
-				{
-					name:'包装箱尺寸(cm)'
-				}
-			]}) 
-			let boxListData = reactive({list:[
-				{boxlength:'',boxwidth:'',boxheight:'',boxcheck:[]},
-			]})
-			onMounted(()=>{
-					getBoxDetial();
-			})
+	import {formatFloat,CheckInputIntLGZero} from '@/utils/index';
+	import {pointKeyChnage} from '@/utils/jquery/key/point-key';
+	import boxMarks from '@/model/erp/ship/boxMarks.json';
+   
+    const emit = defineEmits(['stepdata',"carrData","change"]);
+	let spacer = h(ElDivider, { direction: 'vertical' })
+	let radio1 = ref("3")
+	let boxed =ref(false)
+	let shipdata=ref({})
+	let router = useRouter()
+	let country=ref("")
+	let boxDetail=ref({})
+	let feedStatus=ref(FeedStatus)
+	let totalBoxNum=ref(0)
+	let feedid=ref("");
+	let optRef=ref();
+	let centerDialogVisible=ref(false)
+	let submitloading=ref(false);
+	let infoData=ref({});
+	const shipmentid=router.currentRoute.value.query.shipmentid;
+	let carrierData = reactive({list:[
+		 
+	]})
+	let boxDisable=ref(false);
+	let inputboxNum = ref("")
+	let form = reactive({
+		carrier: 'OTHER', 
+		tranType:"SP",
+	})
+	let boxmarksType=ref("PackageLabel_Plain_Paper")
+	let boxWeightData = ref([])
+	let panNum=ref(1)
+	let tableData = reactive({list:[
 			
+	]}) 
+	let newtableData=reactive({list:[
+		{
+			name:'箱子+货物重量',
+		},
+		{
+			name:'包装箱尺寸(cm)'
+		}
+	]}) 
+	let boxListData = reactive({list:[
+		{boxlength:'',boxwidth:'',boxheight:'',boxcheck:[]},
+	]})
 			 function cellTitle(sku,index){
 				 return sku+"    箱号:"+(index+1)+"";
+			 }
+			 function inputBoxNumChange(){
+				 inputboxNum.value=CheckInputIntLGZero(inputboxNum.value);
+				 if(inputboxNum.value){
+				    inputboxNum.value=parseInt(inputboxNum.value)
+				 }
+				 addBoxSize("init");
+				pointKeyChnage(".sd-table");
 			 }
 			//确认装箱数量
 			function subimtBoxNum(){
@@ -428,21 +423,19 @@
 				let sumitem=0;
 				if(index!=undefined){
 					tableData.list.forEach((item)=>{
-							if(item['boxNum'+index]!=undefined){
-								sumitem+=item['boxNum'+index];
+							if(item['boxNum'+index]!=undefined&&item['boxNum'+index]!=""){
+								sumitem+=parseInt(item['boxNum'+index]);
 							}
 						});
 				}else{
 					tableData.list.forEach((item)=>{
 						for(var i=0;i<inputboxNum.value ;i++){
-							if(item['boxNum'+i]!=undefined){
-								sumitem+=item['boxNum'+i];
+							if(item['boxNum'+i]!=undefined&&item['boxNum'+i]!=""){
+								sumitem+=parseInt(item['boxNum'+i]);
 							}
 							}
 						});
 				}
-				
-			   
 				return sumitem; 
 			}
 			//箱数立方尺寸求和
@@ -473,8 +466,8 @@
 					size=size+obj.size;
 					boxnum=boxnum+obj.boxnum;
 				})
-				obj.boxnum = boxnum
-				obj.size = size
+				obj.boxnum = formatFloat(boxnum);
+				obj.size =formatFloat(size) ;
 				return obj
 			})  
 			
@@ -517,44 +510,51 @@
 				  //货件状态3变成4
 			}
 			//装箱数量校验
-			function packNumchange(row){
+			function packNumSum(row){
 				let sum = 0
 				for(var i=0;i<inputboxNum.value ;i++){
-				    sum +=row['boxNum'+i]
+				    if(row['boxNum'+i]){
+					sum +=parseInt(row['boxNum'+i]);
+					}
 				}
-				if(sum>row.shipmentnum){
-					 ElMessage({
-					    message: '当前总数量超过货件数量',
-					    type: 'error',
-					  })
+				row.sum=sum;
+			}
+			function packNumchange(row,index){
+				var boxindex='boxNum'+index;
+				if(row[boxindex]&&row[boxindex]!="0"){
+				   row[boxindex]=CheckInputIntLGZero(row[boxindex]);
 				}
+				packNumSum(row);
 			}
 			//箱子重量变化
 			function boxweightChange(){
 				//console.log("重量数组",boxWeightData.value)
 			}
 			//添加箱子尺寸
-			function addBoxSize(){
+			function addBoxSize(type){
 				let obj = {boxlength:'',boxwidth:'',boxheight:'',boxcheck:[]};
-				boxListData.list.push(obj)
+				if(type=="init"){
+					boxListData.list=[];
+					boxListData.list.push(obj);
+				}else{
+					boxListData.list.push(obj)
+				}
+				
 			}
 			//删除
 			function delectBox(row){
 				boxListData.list.splice(boxListData.list.indexOf(row), 1)
 			}
-			function loadCarrier(carr){
+			function loadCarrier(){
 				  var tranType=form.tranType;
 				  if(boxDetail.value.market!=null){
 					  shipmenthandlingApi.getCarrier({
 					  	"country":boxDetail.value.market,
-					  					"transtyle":tranType
+					  	"transtyle":tranType
 					  }).then(res=>{
-					  					   carrierData.list=res.data
+					  	   carrierData.list=res.data;
 					  })
 				  }
-				  
-				   
-					 
 			}
 			function getBoxDetial(){
 				shipmenthandlingApi.getBoxDetial({
@@ -565,10 +565,9 @@
 						tableData.list=res.data.itemlist;
 						loadCarrier();
 						 inputboxNum.value=res.data.totalBoxNum;
-						 if(!inputboxNum.value){
-							 inputboxNum.value=0;
+						 if(res.data.shipment.carrier){
+						    form.carrier=res.data.shipment.carrier;
 						 }
-						 form.carrier=res.data.shipment.carrier;
 						 tableData.list.forEach( async function(item,index){
 						 	//混装发货 caselist
 						 	if(boxDetail.value.arecasesrequired==false){
@@ -579,13 +578,12 @@
 										item["boxNum"+i]=0;
 									}
 						 		}
-							 
+							   packNumSum(item);
 						 	}else{
 						 		//原厂包装发货 caselist
 						 		for(let i=0;i<totalBoxNum.value;i++){
 						 			if(item['boxselect'+i]==true){
-						 		 
-						 				 
+										
 						 			}
 						 		}
 						 
@@ -651,13 +649,20 @@
 				//console.log(tableData.list);
 				var caselist=[];
 				var boxlist=[];
+				var summary=getSummmary();
 				//混装发货 boxlist
 				if(boxDetail.value.arecasesrequired==false){
+					if(boxDetail.value.sumquantityshiped!=summary){
+						ElMessage({
+						   message: '数量校验失败，请确所有产品都已装箱！',
+						   type: 'error',
+						 });
+						 return ;
+					}
 					boxListData.list.forEach(function(item,index){
 						var boxnums="";							
 						for(let i=0;i<inputboxNum.value;i++){
 							 if(item.boxcheck[i]==true){
-								 console.log(boxnums);
 								 var boxrow={};
 								 boxrow.shipmentid=shipmentid;
 								 boxrow.boxnum=(i+1)+"";
@@ -667,12 +672,21 @@
 								 boxrow.unit='cm';
 								 boxrow.weight=boxWeightData.value[i];
 								 boxrow.wunit='kg';
-								 boxlist.push(boxrow);
+								 if(boxrow.length&&boxrow.weight){
+									 boxlist.push(boxrow);
+								 }
 							 }
 						}
-						
 					})
+					if(boxlist.length!=inputboxNum.value){
+						ElMessage({
+						   message: '请填写完整的箱子信息！',
+						   type: 'error',
+						 });
+						 return ;
+					}
 				}
+	
 				tableData.list.forEach( async function(item,index){
 					//混装发货 caselist
 					if(boxDetail.value.arecasesrequired==false){
@@ -730,9 +744,9 @@
 					"caseListDetail":caselist,
 					"boxListDetail":boxlist
 				}
-				console.log(data);
+				submitloading.value=true;
 				shipmenthandlingApi.submitCart(data).then(res=>{
-					console.log(res.data);
+				submitloading.value=false;
 					if(res.data){
 						ElMessage({
 						   message: '提交成功！',
@@ -740,6 +754,13 @@
 						 })
 						feedid.value=res.data;
 						feedStatus.value.submitfeedInfo(feedid.value);
+						emit("change");
+					}else{
+						emit("change");
+						ElMessage({
+						   message: '保存成功！',
+						   type: 'success',
+						 })
 					}
 				})
 			}
@@ -798,11 +819,7 @@
 				data.pagetype=boxmarksType.value;
 				data.labeltype=labeltype;
 				data.pannum=panNum.value;
-				shipmenthandlingApi.downLabel(data).then(res=>{
-					if(res.data){
-						window.open(res.data,"_blank")
-					}
-				})
+				shipmenthandlingApi.downLabel(data);
 			}
 			function loadOptData(datas){
 				optRef.value.shipDatas=datas;
@@ -814,25 +831,17 @@
 					boxDisable.value=true;
 					boxed.value=true;
 				}
-				form.tranType=infoData.value.transtyle;
+				if(infoData.value.transtyle){
+				   form.tranType=infoData.value.transtyle;
+				}
+				
+			
+				getBoxDetial();
 			}
 			function stepclick(step){
-				context.emit("stepdata",step);
+				emit("stepdata",step);
 			}
-
-			return { 
-				form,spacer,tableData,jumpBoxinfo,packNumchange,boxmarksType,rowBoxsumNum,infoData,
-				subimtBoxNum,inputboxNum,carrierData,boxed,boxMarks,newtableData,getSummmary,
-				boxWeightData,boxweightChange,boxweightSum,boxListData,rowboxNumAndsize,addBoxSize,
-				delectBox,sumbsn,checkboxChange,loadCarrier,getBoxDetial,
-				boxDetail,submitBox,centerDialogVisible,showEditBoxNum,totalBoxNum,changeTotalBoxNum
-				,setBoxNum,downloadBoxInfo,downloadLabel,panNum,feedid,
-				feedStatus,
-				cellTitle,loadOptData,optRef,stepclick,
-				boxDisable
-			}
-		}
-	}
+			 defineExpose({loadOptData})
 </script>
 
 <style scoped="scoped">
@@ -872,5 +881,11 @@
 	}
 	.box-ship .el-radio-group{
 		line-height:20px;
+	}
+</style>
+<style>
+	.myshipdrop .el-input__wrapper{
+		border-top-right-radius:0px !important;
+		border-bottom-right-radius:0px !important;
 	}
 </style>
