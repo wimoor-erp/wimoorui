@@ -1,5 +1,5 @@
 <template>
-	<div class="main-sty gary-bg">
+	<div id="materialeditbaseinfo" class="main-sty gary-bg">
 		<el-row >
 			<el-col :xl="4" :lg="2" class="ri-tabs">
 				<el-tabs tab-position="left"  v-model="activeName">
@@ -41,7 +41,7 @@
 					 <el-scrollbar class="he-scr-car" @scroll="scroll">
 					 <el-form ref="globalFormRef" :model="forms"  label-width="100px">
 						 <!-- 基础信息 -->
-						 <Base  ref="baseRef"  :dataForms="forms.baseforms"/>
+						 <Base  ref="baseRef"  :dataForms="forms.baseforms"   />
 						 
 					    <el-divider />
 						
@@ -53,7 +53,7 @@
 						 <el-divider />
 						 
 						 <!-- 采购信息 --> 
-						 <Purchase :dataForms="forms.supplierforms" />
+						 <Purchase :dataForms="forms.supplierforms" :dataBaseForms="forms.baseforms" />
 						 
 						   <el-divider />
 						   
@@ -74,7 +74,7 @@
 						<div class='text-center mar-top-16'>
 							<el-space>
 								<el-button @click="closeTab">取消</el-button>
-								<el-button @click.stop="submitForm" type="primary">提交</el-button>
+								<el-button v-if="forms.baseforms.delete!=true" @click.stop="submitForm" type="primary">提交</el-button>
 							</el-space>
 						</div>
 						
@@ -95,6 +95,7 @@ import Assemble from"./components/assemble_info.vue"
 import Parents from "./components/parent_info.vue"
 import tabScroll from"@/utils/tab_scroll"
 import {useRouter } from 'vue-router'
+import {checkVisiable} from '@/utils/jquery/table/float-header';
 import { ElMessage } from 'element-plus'
 import materialApi from '@/api/erp/material/materialApi.js';
 
@@ -110,7 +111,7 @@ import materialApi from '@/api/erp/material/materialApi.js';
 		let state =reactive({
 			activeName:"1",
 			forms:{
-				baseforms:{sku:'',name:'',imgfile:{},taglist:"",effectivedate:new Date(),issfg:"0"},
+				baseforms:{sku:'',name:'',imgfile:{},taglist:"",effectivedate:new Date(),issfg:"0",isDelete:false},
 				supplierforms:[],
 				specsforms:{pkgdim:{},itemdim:{},boxdim:{},boxnum:0},
 				consforms:[],
@@ -130,6 +131,24 @@ import materialApi from '@/api/erp/material/materialApi.js';
 		function scroll(obj){
 			state.activeName= tabScroll(obj,"tab-scroll")
 		}
+		watch(() =>router.currentRoute.value.query,(newValue,oldValue)=> {
+		      if(newValue&&newValue['refresh']){
+					  setTimeout(()=>{
+						    if(checkVisiable("materialeditbaseinfo")){
+					  								state.forms={
+					  										baseforms:{sku:'',name:'',imgfile:{},taglist:"",effectivedate:new Date(),issfg:"0",isDelete:false},
+					  										supplierforms:[],
+					  										specsforms:{pkgdim:{},itemdim:{},boxdim:{},boxnum:0},
+					  										consforms:[],
+					  										logisforms:{nameCn:'',nameEn:'',unitprice:0,iselectricity:false,isdanger:false,},
+					  										assemblyforms:{list:[],assemblyTime:0,issemi:0},
+					  										logislist:[],
+					  										parentList:[],
+					  									}
+							  }
+					  },100);
+			     }
+		      },{ immediate: true });
 		function loadData(){
 			materialApi.getMaterialInfo({"id":mid}).then((res)=>{
 				baseRef.value.loadBrandCateList();
@@ -138,9 +157,17 @@ import materialApi from '@/api/erp/material/materialApi.js';
 						res.data.material.id="";
 						res.data.material.sku="";
 					 }
-					 state.forms.parentList=res.data.parentList;
+					 if(res.data.parentList && res.data.parentList.length>0){
+					 	state.forms.parentList=res.data.parentList;
+					 }
+					 console.log(res.data.material);
 					 state.forms.baseforms=res.data.material;
-					 state.forms.supplierforms=res.data.supplierList;
+					 if(res.data.tagNameList){
+						state.forms.baseforms.tagNameList=res.data.tagNameList;
+					 }
+					 if(res.data.supplierList && res.data.supplierList.length>0){
+						state.forms.supplierforms=res.data.supplierList;
+					 }
 					 var specsformsData={};
 					 var pkgdim={"length":0,"width":0,"height":0,"weight":0};
 					 var itemdim={"length":0,"width":0,"height":0,"weight":0};
@@ -181,46 +208,94 @@ import materialApi from '@/api/erp/material/materialApi.js';
 		}
 		function submitForm(){
 			//提交表单数据 saveData
-			let FormDatas = new FormData()
-			var datas={};
-			var asstime=state.forms.assemblyforms.assemblyTime;
-			var pricelist=[];
-			state.forms.baseforms.assemblyTime=asstime;
-			if(state.forms.specsforms.boxnum && state.forms.specsforms.boxnum!=""){
-				state.forms.baseforms.boxnum=parseInt(state.forms.specsforms.boxnum);
-			}
-			datas.material=state.forms.baseforms;
-			datas.itemDim= state.forms.specsforms.itemdim;
-			datas.boxDim=state.forms.specsforms.boxdim;
-			datas.pkgDim=state.forms.specsforms.pkgdim;
-			if(state.forms.baseforms.taglist!=null){
-				datas.taglist=state.forms.baseforms.taglist;
-			}
-			datas.customsItemList=state.forms.logislist;
-			datas.customs=state.forms.logisforms;
-			datas.supplierList=state.forms.supplierforms;
-			datas.consumableList=state.forms.consforms;
-			datas.assemblyList=state.forms.assemblyforms.list;
-			if(state.forms.assemblyforms.list && state.forms.assemblyforms.list.length>0){
-				datas.material.issfg="1";
-			}
-			if(iscopy=="ok"){
-				 datas.material.id="";
-				 datas.iscopy="ok";
-			}
-			FormDatas.append("infostr",JSON.stringify(datas));
-			if(state.forms.baseforms.imgfile){
-				FormDatas.append("file",state.forms.baseforms.imgfile);
-			}else{
-				FormDatas.append("file",{});
-			}
-			materialApi.saveData(FormDatas).then((res)=>{
-				  ElMessage({
-					message: "操作成功！",
-					type: 'success'
-				  })
-			});
+			globalFormRef.value.validate((isValid) => {
+				if (isValid) {
+					let FormDatas = new FormData()
+					var datas={};
+					var asstime=state.forms.assemblyforms.assemblyTime;
+					var pricelist=[];
+					state.forms.baseforms.assemblyTime=asstime;
+					if(state.forms.specsforms.boxnum && state.forms.specsforms.boxnum!=""){
+						state.forms.baseforms.boxnum=parseInt(state.forms.specsforms.boxnum);
+					}
+					var skustr=state.forms.baseforms.sku.toString();
+					datas.material=state.forms.baseforms;
+					datas.material.sku=skustr;
+					datas.itemDim= state.forms.specsforms.itemdim;
+					datas.boxDim=state.forms.specsforms.boxdim;
+					datas.pkgDim=state.forms.specsforms.pkgdim;
+					if(state.forms.baseforms.taglist!=null){
+						datas.taglist=state.forms.baseforms.taglist;
+					}
+					datas.customsItemList=state.forms.logislist;
+					if(datas.customsItemList && datas.customsItemList.length>0){
+						var ispass=true;
+						var nowcountry=""; 
+						datas.customsItemList.forEach(function(cust){
+							if(nowcountry==cust.country){
+								ispass=false;
+							}else{
+								nowcountry=cust.country;
+							}
+						});
+						if(ispass==false){
+							ElMessage({
+							    message: '海关信息不能添加相同的国家!',
+							    type: 'error'
+							})
+							return;
+						}
+					}
+					datas.customs=state.forms.logisforms;
+					datas.supplierList=state.forms.supplierforms;
+					datas.consumableList=state.forms.consforms;
+					datas.assemblyList=state.forms.assemblyforms.list;
+					if(state.forms.assemblyforms.list && state.forms.assemblyforms.list.length>0){
+						var isasspass=true;
+						 state.forms.assemblyforms.list.forEach(function(item){
+							 if(item.subnumber<=0){
+								 isasspass=false;
+							 }
+						 });
+						 if(isasspass==false){
+						 	ElMessage({
+						 	    message: '组装信息单位数量不能为0!',
+						 	    type: 'error'
+						 	})
+						 	return;
+						 }
+						 datas.material.issfg="1";
+					}else{
+						datas.material.issfg="0";
+					}
+					if(iscopy=="ok"){
+						 datas.material.id="";
+						 datas.iscopy="ok";
+					}
+					FormDatas.append("infostr",JSON.stringify(datas));
+					if(state.forms.baseforms.imgfile){
+						FormDatas.append("file",state.forms.baseforms.imgfile);
+					}else{
+						FormDatas.append("file",{});
+					}
+					materialApi.saveData(FormDatas).then((res)=>{
+						 if(res.data.id){
+							 ElMessage({ message: "操作成功！", type: 'success'});
+							 router.push({
+								path:'/material/details',
+								query:{
+								  title:"产品详情",
+								  path:'/material/details',
+								  details:res.data.id,
+								  replace:true
+								}
+							});
+						 }
+					});
+				}})
+		
 		}
+		
 			
 </script>
 

@@ -1,20 +1,31 @@
 <template>
-	<GlobalTable ref="globalTable" :tableData="tableData" @selectionChange='handleSelect' :defaultSort="{ prop: 'opttime', order: 'descending' }"  @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+	<GlobalTable ref="globalTable" :tableData="tableData"  height="calc(100vh - 180px)" @selectionChange='handleSelect' :defaultSort="{ prop: 'opttime', order: 'descending' }"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		<template #field>
 		<el-table-column type="selection"></el-table-column>
-		<el-table-column label="供应商编码" prop="number" width="120"></el-table-column>
-		<el-table-column label="供应商名称" prop="name"></el-table-column>
-		<el-table-column label="联系电话" prop="phone_num"></el-table-column>
-		<el-table-column label="联系人" prop="contacts"></el-table-column>
+		<el-table-column label="供应商名称" prop="name"   width="230" sortable="custom" ></el-table-column>
+		<el-table-column label="供应商编码" prop="number" width="130"  sortable="custom" ></el-table-column>
+		<el-table-column label="联系人" prop="contacts"   sortable="custom" >
+			<template #default="scope">
+				<div>{{scope.row.contacts}}</div>
+			    <div><span class="font-extraSmall">联系电话:</span>{{scope.row.phone_num}}</div>
+			</template>
+		</el-table-column>
+		<el-table-column label="总采购金额" prop="totalpay"  width="120">
+			<template #default="scope">
+				<div>￥<span v-if="scope.row.totalpay">{{scope.row.totalpay}}</span><span v-else>0</span></div>
+			    <div><span class="font-extraSmall">入库数量:</span><span v-if="scope.row.totalin">{{scope.row.totalin}}</span>
+				<span v-else>0</span></div>
+			</template>
+		</el-table-column>
 		<el-table-column label="联系地址" prop="address"></el-table-column>
-		<el-table-column label="其它信息" show-overflow-tooltip prop="contact_info"></el-table-column>
+		<el-table-column label="其它信息" show-overflow-tooltip   width="100" prop="contact_info"></el-table-column>
 		<el-table-column label="创建人" width="100" prop="operator2"></el-table-column>
-		<el-table-column label="创建时间" prop="opttime">
+		<el-table-column label="修改时间" prop="opttime"  width="100" sortable="custom" >
 			<template #default="scope">
 				<span>{{dateTimesFormat(scope.row.opttime)}}</span>
 			</template>
 		</el-table-column>
-		<el-table-column label="操作">
+		<el-table-column label="操作"  width="100"  fixed="right" >
 			<template #default='scope'>
 			<el-space>
 				<el-button @click="handleDetails(scope.row)" type="primary" link>详情</el-button>

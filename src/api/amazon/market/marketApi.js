@@ -15,8 +15,10 @@ function getMarketAll(){
  function getByMSku(data){
  	 return request.get("/amazon/api/v1/amzmarketplace/getByMSku",{params:data})
  }
- 
+ function getByCountry(data){
+ 	 return request.get("/amazon/api/v1/amzmarketplace/getByCountry",{params:data})
+ }
 export default{
-	getMarketByGroup,getMarketList,getMarketAll,getBySku,getByMSku,
+	getMarketByGroup,getMarketList,getMarketAll,getBySku,getByMSku,getByCountry,
 }
  

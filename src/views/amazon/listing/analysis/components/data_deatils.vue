@@ -248,6 +248,9 @@
 	.card-top-tabs .el-tabs__item{
 		background-color: #fff;
 	}
+	.dark .card-top-tabs .el-tabs__item{
+		background-color: #272727;
+	}
 .p-b-h{
 	display: flex;
 }

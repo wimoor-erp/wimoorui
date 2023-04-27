@@ -1,39 +1,39 @@
 <template>
-	<GlobalTable
-	border
-	:queryParams="queryParams"
-	:inDialog = 'true'
-	@loadTable="loadtableData" >
-		<template #field>
-		<el-table-column  prop="pay" label="付款方式" />
-		<el-table-column prop="type" label="费用类型" />
-	     <el-table-column prop="price" label="支付金额"/>
-		  <el-table-column prop="remarks" label="备注"  />
-		  <el-table-column prop="operate" label="操作人" />
-		  <el-table-column prop="time" label="操作时间"  />
-	    </template>
-	</GlobalTable>
+	<el-table :data="tableData" border>
+		<el-table-column  prop="methodname" label="付款方式" >
+			<template #default="scope">
+			{{NullTransform(scope.row.methodname)}}
+			</template>
+		</el-table-column>	
+		<el-table-column prop="projectname" label="费用类型" />
+	    <el-table-column prop="payprice" label="支付金额(￥)"/>
+		<el-table-column prop="remark" label="备注"  />
+		<el-table-column prop="operator" label="操作人" />
+		<el-table-column prop="opttime" label="操作时间"  />
+	</el-table>
 </template>
 
 <script setup>
-	import {ref,reactive,onMounted,toRefs,defineExpose} from 'vue'
+	import {ref,reactive,onMounted,toRefs,defineExpose} from 'vue';
+	import purchaselistApi from '@/api/erp/purchase/form/listApi.js';
+	import NullTransform from"@/utils/null-transform";
 	const state = reactive({
-		queryParams: {} ,
+		tableData:[],
 	})
 	const {
-		queryParams,
+		tableData,
 	}=toRefs(state)
-	function loadtableData(params,callback){
-		callback({
-			records:[
-			{
-			pay:'支付宝支付',
-			type:'运费',
-			}
-		],
-			total:2,
-		})
+	function show(id,ftype){
+		 ftype="all";
+		 purchaselistApi.getRecdetail({"id":id,"ftype":"pay","paytype":ftype}).then((res)=>{
+		 	if(res.data && res.data.paylist){
+				state.tableData=res.data.paylist;
+		 	}
+		 });
 	}
+	defineExpose({
+		show,
+	})
 </script>
 
 <style>

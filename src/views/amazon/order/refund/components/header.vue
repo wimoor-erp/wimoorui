@@ -5,7 +5,7 @@
 	  <Group ref="groups" @change="changeGroup" defaultValue="only"/>
 	  <Region ref="regionRef" @change="changeRegion" defaultValue="only"/>
 	  <Datepicker ref="datepickers" @changedate="changedate" />
-	   <el-input  v-model="searchKeywords" @input="searchConfirm" placeholder="请输入" class="input-with-select" >
+	   <el-input  v-model="searchKeywords" clearable @input="searchConfirm" placeholder="请输入" class="input-with-select" >
 	      <template #prepend> 
 	        <el-select v-model="selectlabel" @change='searchTypeChange' placeholder="SKU" style="width: 110px">
 	          <el-option label="SKU" value="sku"></el-option>
@@ -21,7 +21,7 @@
 	        </el-button>
 	      </template>
 	    </el-input>
-	   <el-popover   :teleported="false" v-model:visible="moreSearchVisible" :width="400" trigger="click">
+<!-- 	   <el-popover   :teleported="false" v-model:visible="moreSearchVisible" :width="400" trigger="click">
 	         <template #reference>
 	           <el-button  title='高级筛选'  class='ic-btn'>
 	           <menu-unfold theme="outline" size="16"  :strokeWidth="3"/>
@@ -34,7 +34,7 @@
 				       <el-button @click="resetForm(formRef)">取消</el-button>
 				     </el-form-item>
 				</el-form>
-	       </el-popover>
+	       </el-popover> -->
 	    <el-button>重置</el-button>
 	  </el-space>
 	  </el-row>

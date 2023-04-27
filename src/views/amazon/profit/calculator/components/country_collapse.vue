@@ -50,7 +50,7 @@
 										
 									</el-space>		
 								</template>	
-								<table style="width:100%;text-align:center;" class="el-table table  table-striped table-bordered" v-if="tableData.country&&tableData.country[country.market]">
+								<table style="width:100%;text-align:center;" border="0" cellpadding="0" cellspacing="0" class="el-table table  table-striped" v-if="tableData.country&&tableData.country[country.market]">
 									<tbody>
 									<tr><th>利润率</th><th>售价({{tableData.country[country.market].currency}})</th><th>利润</th></tr>
 									<tr><td>{{tableData.country[country.market].margin}}</td>
@@ -131,5 +131,11 @@
 	}
 	.table-bordered > thead > tr > th, .table-bordered > tbody > tr > th, .table-bordered > tfoot > tr > th, .table-bordered > thead > tr > td, .table-bordered > tbody > tr > td, .table-bordered > tfoot > tr > td {
 	    border: 1px solid #f4f4f4;
+	}
+	.dark .table-striped > tbody > tr:nth-of-type(odd) {
+	    background-color: #2f2f2f;
+	}
+	.dark .table-bordered > thead > tr > th,.dark .table-bordered > tbody > tr > th,.dark .table-bordered > tfoot > tr > th,.dark .table-bordered > thead > tr > td,.dark .table-bordered > tbody > tr > td,.dark .table-bordered > tfoot > tr > td {
+	    border: 1px solid #2f2f2f;
 	}
 </style>

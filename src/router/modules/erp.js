@@ -16,6 +16,11 @@ export default [
  	component:()=>import("@/views/erp/ship/ship_plan/plan_submit/index")  
  },
  {
+ 	path:"e/p/p/s",
+ 	name:'purchase_plan_submit',
+ 	component:()=>import("@/views/erp/purchase/plan_amz/plan_submit/index")  
+ },
+ {
  	path:"e/s/p/e",
  	name:'eu_split',
  	component:()=>import("@/views/erp/ship/ship_plan/plan_submit/eu_split")  
@@ -44,6 +49,7 @@ export default [
  {
  	path:"localproduct/editinfo",
  	name:'edit',
+	meta:{keepAlive:true},
  	component:()=>import("@/views/erp/baseinfo/material/editinfo/index")  
  },
  {
@@ -87,12 +93,12 @@ export default [
  	component:()=>import("@/views/erp/purchase/orders/components/create")  
  },
  {
- 	path:"e/w/o/s",
+ 	path:"e/w/os/s",
  	name:'overseas_stock_add',
  	component:()=>import("@/views/erp/warehouse/overseas/stock/components/create")  
  },
  {
- 	path:"e/w/o/d",
+ 	path:"e/w/os/d",
  	name:'overseas_stock_details',
  	component:()=>import("@/views/erp/warehouse/overseas/stock/components/details")  
  },

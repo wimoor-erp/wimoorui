@@ -142,11 +142,18 @@
 								<div class=" box-size">
 							     <span v-if="index == 0">包装箱尺寸(cm)</span>
 								 <el-link class="icon-c" @click="delectBox(item)" :underline="false" v-else><el-icon ><Close /></el-icon></el-link>
-								<el-input-number :disabled="boxDisable" :controls="false"  v-model="item.boxlength" :min="0" placeholder="长"/>
+								<el-input :disabled="boxDisable"    v-model="item.boxlength"  style="width:80px;"
+								 @input="item.boxlength=CheckInputFloat(item.boxlength)" placeholder="长"/>
 								<span>*</span>
-								<el-input-number :disabled="boxDisable" :controls="false"  v-model="item.boxwidth" :min="0" placeholder="宽"/>
+								<el-input :disabled="boxDisable"  
+								 v-model="item.boxwidth" 
+								 style="width:80px;"
+								 @input="item.boxwidth=CheckInputFloat(item.boxwidth)"
+								 placeholder="宽"/>
 								<span>*</span>
-								<el-input-number :disabled="boxDisable" :controls="false"  v-model="item.boxheight" :min="0" placeholder="高"/>
+								<el-input :disabled="boxDisable"    style="width:80px;"
+								@input="item.boxheight=CheckInputFloat(item.boxheight)"
+								v-model="item.boxheight"   placeholder="高"/>
 							</div>
 						</div>
 						</td>
@@ -178,7 +185,10 @@
 								<el-link type="primary" class="font-extraSmall" @click="addBoxSize" :underline="false">添加其他不同尺寸的箱子</el-link>
 								</div>
 							</td>
-							<td v-show="inputboxNum>0" :colspan="inputboxNum">使用以上复选框指定特定包装箱的尺寸</td>
+							<td v-show="inputboxNum>0" :colspan="inputboxNum">使用以上复选框指定特定包装箱的尺寸
+							<div style="float:right">
+								箱子信息：<FeedStatus ref="feedStatusExcel" :feedid="feedidexcel" filename="shipmentFeedFile.xlsx"></FeedStatus>
+							</div></td>
 							<td >
 							<div>{{sumbsn.boxnum}}箱</div>
 							<div>{{sumbsn.size}}m³</div>
@@ -258,7 +268,7 @@
 			</el-row>
 			<el-row :gutter="16" class="mar-bot">
 				<el-col :span="12">
-				<FeedStatus ref="feedStatus" :feedid="feedid" filename="shipmentFeedFile.xlsx"></FeedStatus>
+				<FeedStatus ref="feedStatus" :feedid="feedid" filename="shipmentFeedFile.xml"></FeedStatus>
 				</el-col>
 				<el-col :span="12">
 					<el-alert  :closable="false" title="打印箱子标签之后才能进行下一步!" type="info" />
@@ -317,7 +327,7 @@
 </template>
 
 <script setup>
-	import {h, ref ,watch,reactive,onMounted,computed,nextTick} from 'vue'
+	import {h, ref ,watch,reactive,onMounted,computed,nextTick,defineEmits} from 'vue'
 	import {Search,ArrowDown,Close} from '@element-plus/icons-vue'
 	import { ElDivider,ElMessageBox ,ElMessage } from 'element-plus'
 	import '@/assets/css/packbox_table.css'
@@ -327,7 +337,7 @@
 	import { useRoute,useRouter } from 'vue-router'
 	import ShipmentOpt from"./shipment_operator.vue"
 	import FeedStatus from "@/components/feedstatus/index.vue"
-	import {formatFloat,CheckInputIntLGZero} from '@/utils/index';
+	import {formatFloat,CheckInputIntLGZero,CheckInputFloat} from '@/utils/index';
 	import {pointKeyChnage} from '@/utils/jquery/key/point-key';
 	import boxMarks from '@/model/erp/ship/boxMarks.json';
    
@@ -339,9 +349,11 @@
 	let router = useRouter()
 	let country=ref("")
 	let boxDetail=ref({})
-	let feedStatus=ref(FeedStatus)
+	let feedStatus=ref(FeedStatus);
+	let feedStatusExcel=ref(FeedStatus);
 	let totalBoxNum=ref(0)
 	let feedid=ref("");
+	let feedidexcel=ref("");
 	let optRef=ref();
 	let centerDialogVisible=ref(false)
 	let submitloading=ref(false);
@@ -400,14 +412,20 @@
 			}
 			//箱子尺寸单选
 			function checkboxChange(i,a){
-				boxListData.list.forEach((item,index)=>{
-					if(a==index){
-						item.boxcheck[i] = true
-					}else{
-						item.boxcheck[i] = false
+				if(i==0&&a==0&&boxListData.list.length==1){
+					boxListData.list[0].boxcheck=[];
+					for(var ibox=0;ibox<inputboxNum.value ;ibox++){
+						boxListData.list[0].boxcheck.push(true);
 					}
-					
-				})
+				}else{
+					boxListData.list.forEach((item,index)=>{
+						if(a==index){
+							item.boxcheck[i] = true
+						}else{
+							item.boxcheck[i] = false
+						}
+					})
+				}
 			}
 			function rowBoxsumNum(row){
 				let sum = 0
@@ -556,10 +574,7 @@
 					  })
 				  }
 			}
-			function getBoxDetial(){
-				shipmenthandlingApi.getBoxDetial({
-					"shipmentid":shipmentid
-				}).then(res=>{
+			function getBoxDetial(res){
 					if(res.data){
 						boxDetail.value=res.data;
 						tableData.list=res.data.itemlist;
@@ -640,10 +655,12 @@
 						 })
 						if(res.data.shipment && res.data.shipment.submissionid){
 							feedid.value=res.data.shipment.submissionid;
+							feedidexcel.value=res.data.shipment.submissionidExcel;
 						    feedStatus.value.submitfeedInfo(res.data.shipment.submissionid);
+							feedStatusExcel.value.submitfeedInfo(res.data.shipment.submissionidExcel);
 						}
 					}
-				})
+				 
 			}
 			function submitBox(opttype){
 				//console.log(tableData.list);
@@ -752,8 +769,10 @@
 						   message: '提交成功！',
 						   type: 'success',
 						 })
-						feedid.value=res.data;
+						feedid.value=res.data.submissionid;
+						feedidexcel.value=res.data.submissionidExcel;
 						feedStatus.value.submitfeedInfo(feedid.value);
+						feedStatusExcel.value.submitfeedInfo(feedidexcel.value);
 						emit("change");
 					}else{
 						emit("change");
@@ -822,8 +841,8 @@
 				shipmenthandlingApi.downLabel(data);
 			}
 			function loadOptData(datas){
-				optRef.value.shipDatas=datas;
-				infoData.value=datas;
+				optRef.value.loadOptData(datas.shipmentAll);
+				infoData.value=datas.shipmentAll;
 				if(infoData.value.status=="2" || infoData.value.status=="3" || infoData.value.status=="4"){
 					boxDisable.value=false;
 					boxed.value=false;
@@ -834,9 +853,7 @@
 				if(infoData.value.transtyle){
 				   form.tranType=infoData.value.transtyle;
 				}
-				
-			
-				getBoxDetial();
+				getBoxDetial({"data":datas});
 			}
 			function stepclick(step){
 				emit("stepdata",step);

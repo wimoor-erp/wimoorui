@@ -4,8 +4,8 @@
 		<div class="con-header">
 			<el-tabs v-model="queryParams.ftype"  class="demo-tabs" @tab-change="handleQuery">
 			  <el-tab-pane label="正品仓" :name="props.ftype+'_usable'"></el-tab-pane>
-			  <el-tab-pane label="测试仓" :name="props.ftype+'_test'" ></el-tab-pane>
-			  <el-tab-pane label="废品仓" :name="props.ftype+'_unusable'" ></el-tab-pane>
+			  <el-tab-pane label="测试仓" v-if="props.ftype!='oversea'" :name="props.ftype+'_test'" ></el-tab-pane>
+			  <el-tab-pane label="废品仓" v-if="props.ftype!='oversea'" :name="props.ftype+'_unusable'" ></el-tab-pane>
 			</el-tabs>
 		    <el-row>
 				<el-space>
@@ -13,7 +13,7 @@
 					  <plus theme="outline" size="18" fill="#fff" :strokeWidth="4"/>
 					  <span>添加仓位</span>
 					</el-button>
-					<el-button @click.stop="handleDelete">删除</el-button>
+					<el-button @click.stop="handleDelete" :disabled="deleteDisable">删除</el-button>
 					<el-input  v-model="queryParams.search" @input="handleQuery" placeholder="仓位名称" style="width: 250px;" class="input-with-select" >
 						<template #suffix>
 						  <el-icon style="font-size:16px;" class="el-input__icon" @click="handleQuery"><search/></el-icon>
@@ -31,7 +31,7 @@
 						  @loadTable="loadtableData" 
 						  :defaultSort="{ prop: 'findex', order: 'ascending' }"  
 						  @selectionChange="handleSelectionChange"
-						  border style="width: 100%;margin-bottom:16px;">
+						  :stripe="true"  style="width: 100%;margin-bottom:16px;">
 			 	<template #field>
 			        <el-table-column type="selection" width="55" align="center" />
 			        <el-table-column prop="number" label="仓位编码" width="145"> 
@@ -113,6 +113,7 @@
         tableData: {records:[],total:0}  ,
 		groupList:[],
 		marketList:[],
+		deleteDisable:true,
 		ids:"",
 	});
 	state.queryParams.ftype=props.ftype+"_usable";
@@ -121,6 +122,7 @@
 		list,
 		ids,
 		queryParams,
+		deleteDisable,
 		marketList,
 		groupList,
 		tableData,
@@ -176,6 +178,11 @@
 	}
 	function handleSelectionChange(selection){
 			  state.ids = selection.map((item) => item.id);
+			  if(selection.length>0){
+				  state.deleteDisable=false;
+			  }else{
+				  state.deleteDisable=true;
+			  }
 	}
     function handleUpdate(row){
 			warehouseRef.value.show(state.queryParams.parentid,state.queryParams.ftype,row.id);

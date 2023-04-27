@@ -52,7 +52,7 @@
 			</div>
 		</div>
 		<el-row v-show="tablabel=='shelf'">
-			<el-table :data="tableData.records"   height="calc(100vh - 230px)"  @sort-change="shelfSort"  @selection-change='selectCheckboxShelf' :row-key="getRowKeys" border
+			<el-table :data="tableData.records"   height="calc(100vh - 230px)"  @sort-change="shelfSort"  @selection-change='selectCheckboxShelf' :row-key="getRowKeys" :stripe="true" 
 				class="sys-table">
 				<el-table-column type="selection" :reserve-selection="false" width="38" />
 				<el-table-column prop="image" label="图片" width="60">
@@ -98,7 +98,7 @@
 				</el-pagination>
 		</el-row>
 		<el-row v-show="tablabel=='unshelf'">
-			<el-table :data="unshelftableData.records"  v-loading="loading"  height="calc(100vh - 230px)"    @sort-change="unshelfSort" @selection-change='selectCheckboxunShelf' :row-key="getRowKeys" border
+			<el-table :data="unshelftableData.records"  v-loading="loading"  height="calc(100vh - 230px)"    @sort-change="unshelfSort" @selection-change='selectCheckboxunShelf' :row-key="getRowKeys" :stripe="true" 
 				class="sys-table">
 				<el-table-column type="selection" :reserve-selection="false" width="38" />
 				<el-table-column prop="image" label="图片" width="60">
@@ -647,7 +647,7 @@
 	}
 </script>
 
-<style>
+<style scoped>
 	.btn-header {
 		display: flex;
 		justify-content: space-between;

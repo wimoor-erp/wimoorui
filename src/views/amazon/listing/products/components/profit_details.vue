@@ -19,7 +19,8 @@
 				<h4 class="m-b-8 m-t-32">参与计算的参数</h4>
 				<el-space direction="vertical" alignment="left"  class="w-100">
 					<div class=" flex-center-between">
-						<span>&nbsp;当前售价：</span>
+						<span v-if="ftype=='has'">&nbsp;当前售价：</span>
+						<span v-else>&nbsp;七日平均售价：</span>
 						<span>{{profitData.costDetailMap.currency}}{{profitData.avgsales}}</span>
 					</div>
 					<div class=" flex-center-between">
@@ -65,7 +66,7 @@
 						  <el-table-column label="费用项">
 							  <template #default = "scope">
 							    <div>{{scope.row.name}}</div>
-								<div class="font-extraSmall">{{scope.row.enname}}</div>
+								<div class="font-extraSmall" v-html="scope.row.enname"></div>
 							  </template>
 						  </el-table-column>
 						  <el-table-column label="金额" width="80" prop="cost" >
@@ -124,6 +125,7 @@
 			   tableData,
 			   pid,
 			   profitCfg,
+			   ftype,
 			   visible,
 			   loading,
 			 } = toRefs(state);
@@ -180,7 +182,13 @@
 						var row2={"name":"运费","enname":"Shipment","cost":datas.shipment,"realcost":maps.reshipmentfee,title:shiptitle};
 						var row3={"name":"平台佣金","enname":"Amazon Referral Fee","cost":datas.referralFee,"realcost":maps.order_Commission};
 						var row4={"name":"变动结算费","enname":"Variable Closing Fee","cost":datas.vcfee,"realcost":null};
-						var row5={"name":"FBA处理费","enname":"FBA","cost":datas.fba,"realcost":maps.order_FBAPerUnitFulfillmentFee};
+						var fbatitle="";
+						if(state.ftype=='has'){
+							fbatitle="<span title='本地SKU长宽高重使用利润计算器计算'>(系统计算)<span>";
+						}else{
+							fbatitle="<span title='通过下载亚马逊平台FBA Fee Preview Report报表获取'>(平台报表)";
+						}
+						var row5={"name":"FBA处理费","enname":"FBA"+fbatitle,"cost":datas.fba,"realcost":maps.order_FBAPerUnitFulfillmentFee};
 						if(maps.orderFinDetailList && maps.orderFinDetailList.length>0){
 							var str="<table class='table' style='width:300px;'><tr>"+
 							"<td>订单:</td><td> "+maps.orderid+"</td></tr>";

@@ -5,8 +5,14 @@ function getWarehouseList(data){
 function getWarehouseListPage(data){
 	 return request.post("/erp/api/v1/warehouse/listpage",data)
 }
+function getWarehouse(data){
+	 return request.get("/erp/api/v1/warehouse/getlist",{params:data })
+}
 function getWarehouseUseable(){
 	 return request.get("/erp/api/v1/warehouse/getlist",{params:{"ftype":"self_usable"} })
+}
+function getOversaWarehouse(data){
+	 return request.get("/erp/api/v1/warehouse/getOverseaList",{params:data });
 }
 function getOversaWarehouseUseable(){
 	 return request.get("/erp/api/v1/warehouse/getlist",{params:{"ftype":"oversea_usable"} })
@@ -48,5 +54,6 @@ export default{
 	getWarehouseList,getWarehouseUseable,getWarehouseUnUseable,
 	getWarehouseTest,getSelfWarehouseById,getWarehouseNameList,
 	getWarehouseListPage,deleteInfo,saveData,detail,updateData,updateDefault,
-	updateIndex,updateStockByChange,getOversaWarehouseUseable
+	updateIndex,updateStockByChange,getOversaWarehouseUseable,getWarehouse,
+	getOversaWarehouse
 }

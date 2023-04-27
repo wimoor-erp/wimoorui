@@ -16,7 +16,7 @@
 				</el-row>
 		</div>
 	<el-row>
-	  <GlobalTable ref="globalTable" :tableData="tableData" height="calc(100vh - 230px)" @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+	  <GlobalTable ref="globalTable" :tableData="tableData" height="calc(100vh - 230px)" @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		  <template #field>
 			    <el-table-column prop="img"    label="图片" width="60" >
 			  	       <template #default="scope">
@@ -27,6 +27,7 @@
 	       <template #default="scope">
 				<div class='name'>{{scope.row.pname}}</div>
 				<div class='sku'>{{scope.row.sku}}
+				<el-tag  v-if="scope.row.isSmlAndLight==true"  type="success">轻小产品</el-tag>
 				 </div>  
 			   
 	      </template>

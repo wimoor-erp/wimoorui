@@ -53,9 +53,12 @@
 			 function editSaleStatus(){
 				SaleStatusRef.value.saleStatusVisable =true
 			 }
+			 function reset(){
+				 statusid.value ="";
+			 }
 			return{
 				 statusid,statusList,statusChange,getStatusData,
-				 editSaleStatus,SaleStatusRef,
+				 editSaleStatus,SaleStatusRef,reset,
 			}
 		}
 	}

@@ -32,7 +32,7 @@
 							<div class='item-list-from'>
 								<div class="label">货件状态</div>
 								<div class="value">
-									 <el-tag :type="tranStatusType(shipment)" v-if="shipment.status">{{tranStatus(shipment)}}</el-tag>
+									 <el-tag :type="tranStatusType(shipment)" v-if="shipment">{{tranStatus(shipment)}}</el-tag>
 								</div>
 							</div>
 							<div class='item-list-from'>
@@ -99,14 +99,14 @@
 						<el-timeline >
 						    <el-timeline-item  :hollow="true"  timestamp="发货地址" >
 								<p>{{fromAddress.name}}</p>
-								<p>{{fromAddress.addressline1}}{{getValue(fromAddress.addressline2)}}</p>
-								<p>{{fromAddress.city}}{{getValue(fromAddress.stateorprovincecode)}}{{getValue(fromAddress.postalcode)}}</p>
+								<p>{{fromAddress.addressline1}}{{getAddressValue(fromAddress.addressline2)}}</p>
+								<p>{{fromAddress.city}}{{getAddressValue(fromAddress.stateorprovincecode)}}{{getAddressValue(fromAddress.postalcode)}}</p>
 								<p>{{fromAddress.countrycode}}</p>
 						    </el-timeline-item>
 							<el-timeline-item :hollow="true"   timestamp="收货地址" >
 								 <p>{{toAddress.name}}</p>
-								 <p>{{toAddress.addressline1}}{{getValue(toAddress.addressline2)}}</p>
-								 <p>{{toAddress.city}}{{getValue(toAddress.stateorprovincecode)}}{{getValue(toAddress.postalcode)}}</p>
+								 <p>{{toAddress.addressline1}}{{getAddressValue(toAddress.addressline2)}}</p>
+								 <p>{{toAddress.city}}{{getAddressValue(toAddress.stateorprovincecode)}}{{getAddressValue(toAddress.postalcode)}}</p>
 								 <p>{{toAddress.countrycode}}-({{shipment.destinationfulfillmentcenterid}})</p>
 							</el-timeline-item>
 						  </el-timeline>
@@ -117,102 +117,97 @@
 	</div>
 </template>
 
-<script>
+<script setup>
 	import {TakeOff,TransactionOrder,Local} from '@icon-park/vue-next';
 	import { ref,reactive,onMounted } from 'vue';
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
-	import { useRoute,useRouter } from 'vue-router'
 	import {tranStatus,tranStatusType} from "@/hooks/erp/shipment/shipment_status.js"
-	
-	export default{
-		name:'Shipment_info',
-		components:{
-			TakeOff,TransactionOrder,Local,
-		},
-		setup(){
-			onMounted(()=>{
-			  getBaseInfo();
-			})
-			let shipmentInfo=ref({})
-			let router = useRouter()
-			let weighttxt=ref("实际结算重量")
-			let weightvalue=ref("")
-			let volume=ref("")
-			let shiptype=ref("")
-			let boxnum=ref("")
-			let totalprice=ref("")
-			let totalfee=ref("")
-			let fromAddress=ref({})
-			let toAddress=ref({})
-			let shipment=ref({})
-			const shipmentid = router.currentRoute.value.query.shipmentid;
-			function noDatatran(val){
-				if(val==null||val==undefined){
-					return "--"
-				}else{
-					return val
-				}
-			}
-		 
-			function getValue(value){
-				if(value==null||value==""||typeof(value)=="undefined"||(typeof(value) === "number" && isNaN(value))){
-					return "";
-				}
-				else {
-				  return ","+value;
-				}
-			}
-			function getBaseInfo(){
-				shipmenthandlingApi.getBaseInfo({
-					"shipmentid":shipmentid
-				}).then(res=>{
-					if(res.data){
-						var data=res.data;
-						shipment.value=data.shipment;
-						volume.value=data.totalBoxSize;
-						shiptype.value=data.shipment.transtyle;
-						boxnum.value=data.shipment.boxnum;
-						totalprice.value="￥"+getValue(parseFloat(data.detail.itemprice));
-						if(data["fromAddress"]){
-							fromAddress.value=data["fromAddress"];
-						}
-						if(data["toAddress"]){
-							toAddress.value=data["toAddress"];
-						}
-						if(data.transinfo==null || data.transinfo==undefined){
-							totalfee.value="0";
-						}else{
-							if(!data.transinfo.otherfee)data.transinfo.otherfee=0;
-							if(!data.transinfo.transweight)data.transinfo.transweight =0;
-							if(!data.transinfo.singleprice)data.transinfo.singleprice=0;
-							totalfee.value=( "￥"+  (parseFloat(parseFloat(data.transinfo.transweight) *parseFloat(data.transinfo.singleprice))+parseFloat(data.transinfo.otherfee))); 
-						}
-						if(data.transinfo && data.transinfo.transweight){
-							if(data.transinfo.wunit){
-								weightvalue.value=(data.transinfo.transweight+""+getValue(data.transinfo.wunit));
-							}else{
-								if(data.transchannel.priceunits=="weight"){
-									weightvalue.value=(data.transinfo.transweight+"kg");
-								}else{
-									weightvalue.value=(data.transinfo.transweight+"cbm");
-								}
-							}
-							weighttxt.value="实际结算重量";
-						}else{
-							weightvalue.value=(getValue(data.detail.readweight));
-							weighttxt.value="发货重量(kg)";
-						}
-					}
-				})
-			}
-			
-			return{
-				shipmentInfo,noDatatran,getBaseInfo,weighttxt,weightvalue,getValue,volume,shiptype,boxnum,totalprice,
-				totalfee,fromAddress,toAddress,shipment,tranStatus,tranStatusType
-				
+		let shipmentInfo=ref({})
+		let weighttxt=ref("实际结算重量")
+		let weightvalue=ref("")
+		let volume=ref("")
+		let shiptype=ref("")
+		let boxnum=ref("")
+		let totalprice=ref("")
+		let totalfee=ref("")
+		let fromAddress=ref({})
+		let toAddress=ref({})
+		let shipment=ref({})
+		const emit = defineEmits(['change']);
+		
+		function noDatatran(val){
+			if(val==null||val==undefined){
+				return "--"
+			}else{
+				return val
 			}
 		}
-	}
+	 
+		function getValue(value){
+			if(value==null||value==""||typeof(value)=="undefined"||(typeof(value) === "number" && isNaN(value))){
+				return "";
+			}
+			else {
+			  return  value;
+			}
+		}
+		
+		function getAddressValue(value){
+			if(value==null||value==""||typeof(value)=="undefined"||(typeof(value) === "number" && isNaN(value))){
+				return "";
+			}
+			else {
+			  return ","+value;
+			}
+		}
+		
+		function getBaseInfo(shipmentid){
+			shipmenthandlingApi.getBaseInfo({
+				"shipmentid":shipmentid
+			}).then(res=>{
+				if(res.data){
+					var data=res.data;
+					shipmentInfo.value=data.shipmentAll;
+					shipment.value=data.shipment;
+					volume.value=data.totalBoxSize;
+					shiptype.value=data.shipment.transtyle;
+					boxnum.value=data.shipment.boxnum;
+					totalprice.value="￥"+getValue(parseFloat(data.detail.itemprice));
+					if(data["fromAddress"]){
+						fromAddress.value=data["fromAddress"];
+					}
+					if(data["toAddress"]){
+						toAddress.value=data["toAddress"];
+					}
+					if(data.transinfo==null || data.transinfo==undefined){
+						totalfee.value="0";
+					}else{
+						if(!data.transinfo.otherfee)data.transinfo.otherfee=0;
+						if(!data.transinfo.transweight)data.transinfo.transweight =0;
+						if(!data.transinfo.singleprice)data.transinfo.singleprice=0;
+						totalfee.value=( "￥"+  (parseFloat(parseFloat(data.transinfo.transweight) *parseFloat(data.transinfo.singleprice))+parseFloat(data.transinfo.otherfee))); 
+					}
+					if(data.transinfo && data.transinfo.transweight){
+						if(data.transinfo.wunit){
+							weightvalue.value=(data.transinfo.transweight+""+getValue(data.transinfo.wunit));
+						}else{
+							if(data.transchannel.priceunits=="weight"){
+								weightvalue.value=(data.transinfo.transweight+"kg");
+							}else{
+								weightvalue.value=(data.transinfo.transweight+"cbm");
+							}
+						}
+						weighttxt.value="实际结算重量";
+					}else{
+						weightvalue.value=(getValue(data.detail.readweight));
+						weighttxt.value="发货重量(kg)";
+					}
+					emit("change",data);
+				}
+			})
+		}
+  defineExpose({ getBaseInfo })
+			 
 </script>
 
 <style>

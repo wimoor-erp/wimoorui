@@ -21,47 +21,36 @@
 							  <el-row>
 							 <el-col :span="12">
 							 <el-form-item label="单据编码"   >
-							 	<el-input class="in-wi-24" disabled  v-model="form.name" placeholder="请输入"> </el-input>
+							 	<el-input class="in-wi-24" disabled  v-model="form.number" placeholder="请输入"> </el-input>
 							 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
 							 <el-form-item label="预计到货日期" >
 							     <el-date-picker
-							         v-model="value1"
+							         v-model="form.arrivaltime"
 							         type="date"
 							         placeholder="请选择"
 							       />
 							 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
-								 <el-form-item label="调出仓库" prop="warehouse">
-								 	<el-select v-model="value"  placeholder="选择仓库">
-								 	<el-option
-								 	v-for="item in options"
-								 	:key="item.value"
-								 	:label="item.label"
-								 	:value="item.value"
-								 	/>
-								 	</el-select>
-								 </el-form-item>
+								<el-form-item label="调出仓库" prop="fromwarehouse">
+									 <el-space>
+										 <Warehouse   :defaultid="form.fwid" @changeware="getfromWarehouse" defaultValue="only" :isform="true" />
+									 </el-space>
+								</el-form-item>
 							 </el-col>
 							 <el-col :span="12">
-							   <el-form-item label="调入仓库" prop="overseas">
-							   	<el-select v-model="value"  placeholder="选择仓库">
-							   	<el-option
-							   	v-for="item in options"
-							   	:key="item.value"
-							   	:label="item.label"
-							   	:value="item.value"
-							   	/>
-							   	</el-select>
+							   <el-form-item label="调入仓库" prop="towarehouse">
+							   <el-space>
+							   	  <Warehouse   :defaultid="form.twid" @changeware="gettoWarehouse" defaultValue="only" :isform="true" />
+							   </el-space>
 							   </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
 								  <el-form-item label="备注"  >
-									<el-input class="in-wi-24" type="textarea" v-model="form.name" placeholder="备注"> </el-input>
+									<el-input class="in-wi-24" type="textarea" v-model="form.remark" placeholder="输入备注"> </el-input>
 								  </el-form-item>
-							 							
 							 </el-col>
 							  </el-row>
 						 </el-form>
@@ -73,7 +62,7 @@
 						   </div>
 						   <el-button @click="handleAdd" type="primary">添加商品</el-button>
 						 </div>
-						 <el-table border :data="TableData">
+						 <el-table border :data="tableData">
 							 <el-table-column label="序号" type="index" width="80"/> 
 							 <el-table-column  prop="image" label="图片" width="80" >
 							    <template #default="scope">
@@ -91,13 +80,13 @@
 							 <el-table-column label="可用库存" prop="fulfillable"/>
 							 <el-table-column label="调库数量">
 								  <template #default="scope">
-									  <el-input v-model="scope.row.num">
+									  <el-input v-model="scope.row.amount" @input="scope.row.amount=CheckInputInt(scope.row.amount)">
 									  </el-input>
 								  </template>  
 							 </el-table-column>
 							 <el-table-column label="操作" width="80">
 								  <template #default="scope">
-								    <el-button @click="handleDelete(scope.row,scope.$index)" link type="primary" >删除</el-button>
+								    <el-button @click="handleDelete(scope.$index)" link type="primary" >删除</el-button>
 					        	  </template>
 							 </el-table-column>
 						 </el-table>
@@ -107,13 +96,15 @@
 							 <div style="padding-top:10px;">
 								<el-space>
 									<el-button type="" @click="closeTab">取消</el-button>
-									<el-button type="primary" plain>直接完成</el-button>
-									<el-button type="primary" @click="submitCompanyDetail">提交</el-button>
+									<el-button type="primary" @click.stop="submitForm('passdone')" plain>直接完成</el-button>
+									<span style="padding-left:10px;"></span>
+									<el-button type="success" @click.stop="submitForm('save')">保存</el-button>
+									<el-button type="primary" @click.stop="submitForm('submit')">提交</el-button>
 								</el-space>
 							</div>
 						</div>
 	</div>
-	<MaterialDialog @getdata="getdata" ref = "MaterialRef"/>
+	<MaterialDialog @getdata="getRows" :isfulfillable="true" :warehouseid="form.fromwarehouseid" ref = "MaterialRef"/>
 </template>
 
 <script setup>
@@ -122,45 +113,179 @@
 	import { ref,reactive,onMounted,watch,inject,toRefs } from 'vue'
 	import {ElMessage } from 'element-plus'
 	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog"
-	import { useRoute,useRouter } from 'vue-router'
-	const MaterialRef = ref()
+	import { useRoute,useRouter } from 'vue-router';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
+	import Warehouse from '@/components/header/warehouse.vue';
+	import serialnumberApi from '@/api/erp/common/serialnumberApi.js';
+	import dispatchApi from '@/api/erp/inventory/dispatchApi.js';
+	const MaterialRef = ref();
+	const router = useRouter();
+	const editid = router.currentRoute.value.query.id;
+	const fwid = router.currentRoute.value.query.fwid;
+	const twid = router.currentRoute.value.query.twid;
 	const emitter = inject("emitter"); // Inject `emitter`
 	function closeTab(){
 		emitter.emit("removeTab", 100);
 	};
 	const state = reactive({
 		form:{
-			name:'',
-			
+			number:'',
+			fromwarehouseid:'',
+			towarehouseid:'',
+			remark:'',
+			arrivaltime:new Date(),
+			fwid:fwid,
+			twid:twid
 		},
 		rules: {
-			warehouse: [{ required: true, message: '发货仓库不能为空', trigger: 'blur' }],
-			overseas: [{ required: true, message: '收货仓库不能为空', trigger: 'blur' }],
+			fromwarehouse: [{ required: true, message: '发货仓库不能为空', trigger: 'blur' }],
+			towarehouse: [{ required: true, message: '收货仓库不能为空', trigger: 'blur' }],
 		},
-		TableData:[],
+		tableData:[],
+		skulist:{},
 	})
 	const {
 		form,
 		rules,
-		TableData,
+		tableData,
+		skulist,
 	}=toRefs(state)
-			onMounted(()=>{
-	
-			});
+			 
     function handleAdd(){
-		MaterialRef.value.show()
+		MaterialRef.value.show();
+		MaterialRef.value.loadData();
 	}
-	function getdata(row){
-		row.forEach((item)=>{
-			state.TableData.push(item)
-		})
+	function getRows(rows){
+		if(rows && rows.length>0){
+			if(state.tableData && state.tableData.length>0){
+				var skus="";
+				state.tableData.forEach(function(datas){
+					 skus+=(datas.sku)+(",");
+				});
+				rows.forEach(function(item){
+					if(skus.indexOf((item.sku+","))<0){
+						state.tableData.push(item);
+					}
+				});
+			}else{
+				state.tableData=rows;
+			}
+		}
 	}
-	function handleDelete(row,index){
-		state.TableData.splice(index,1)
+	function handleDelete(index){
+		state.tableData.splice(index,1)
 	}
+	function getfromWarehouse(wid){
+		state.form.fromwarehouseid=wid;
+	}
+	function gettoWarehouse(wid){
+		state.form.towarehouseid=wid;
+	}
+	function getSKUList() {
+		    state.skulist={};
+			var flag=true;
+			state.tableData.forEach(function(item){
+				var sku = item.id;
+				var amount = item.amount;
+				if(state.skulist[sku]){
+					ElMessage({
+					  type: 'error',
+					  message: "不能重复添加SKU！ ",
+					})
+					flag=false;
+				}
+				if (typeof(sku)!="undefined"&&sku!=""&&amount!="" && amount>0) {
+					state.skulist[sku]=amount;
+				}
+			});
+			if(isEmptyObject(state.skulist)){
+				ElMessage({
+				  type: 'error',
+				  message: "请至少输入一个产品SKU及其数量！ ",
+				})
+				flag= false;
+			}
+			return flag;
+	} 
+	function submitForm(ftype){
+		if(state.form.fromwarehouseid==state.form.towarehouseid){
+			ElMessage({
+			  type: 'error',
+			  message: "不能选择相同仓库！ ",
+			})
+		}else{
+			var isok=getSKUList();
+			if(isok==true){
+				var data={};
+				data.action=ftype;
+				data.skumapstr=JSON.stringify(state.skulist);
+				data.remark=state.form.remark;
+				data.fromwarehouseid=state.form.fromwarehouseid;
+				data.towarehouseid=state.form.towarehouseid;
+				data.arrivaltime=state.form.arrivaltime;
+				data.id="";
+				dispatchApi.saveData(data).then((res)=>{
+					isok=true;
+					if(res.data){
+						ElMessage({
+						  type: 'success',
+						  message: "添加成功！",
+						});
+						if(res.data && res.data.id && res.data.id!=null && res.data.id!="" && res.data.id!=undefined){
+								router.push({
+									path:"/e/w/t/d",
+									query:{
+										title:'调库单详情',
+										path:"/e/w/t/d",
+										id:res.data.id,
+									    replace:true
+									},
+								})
+						}
+					}else{
+						ElMessage({
+						  type: 'error',
+						  message: res.data,
+						})
+					}
+				});
+			}
+		}
+	}
+	function load(){
+		serialnumberApi.getSerialNumber({"ftype":"PD","isfind":"true"}).then((res)=>{
+			if(res.data){
+				state.form.number=res.data;
+			}
+		});
+		if(editid!="" && editid!=undefined && editid!=null){
+			setTimeout(function(){
+				dispatchApi.getData({"id":editid}).then((res)=>{
+					if(res.data){
+						var dataform=res.data.warehouseform;
+						state.form.fromwarehouseid=dataform.from_warehouseid;
+						state.form.towarehouseid=dataform.to_warehouseid;
+						state.form.number=dataform.number;
+						state.form.remark=dataform.remark;
+						state.tableData=res.data.dispatchFormEntryList;
+						console.log(res.data);
+					}
+				});
+			},800)
+		}
+	}
+	function isEmptyObject(e) {  //判断一个Object对象{}是否为空
+	    var t;  
+	    for (t in e)  
+	        return !1;  
+	    return !0  
+	} 
+	onMounted(()=>{
+		load();
+	});
 </script>
 
-<style>
+<style scoped>
 		.he-scr-car{
 			height:calc(100vh - 176px);
 			margin-bottom: 20px;

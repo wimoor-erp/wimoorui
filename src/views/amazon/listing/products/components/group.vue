@@ -84,7 +84,7 @@
 			}
 			return{
 				 groupList,marketList,groupChange,marketChange,groupid,marketplaceid,
-				 getData,groupRadioRef,marketRadioRef,
+				 getData,groupRadioRef,marketRadioRef,getGroupData
 			}
 		}
 	}

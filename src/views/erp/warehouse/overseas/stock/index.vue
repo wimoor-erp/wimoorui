@@ -1,125 +1,109 @@
 <template>
 	<div class="main-sty">
 		<div class="con-header">
-	   <el-tabs v-model="activeName" class="demo-tabs" @tab-change="handleClick">
-	     <el-tab-pane v-for="(item,index) in orderState" :label="item.label" :name="item.name" :key="item.name">
-	     </el-tab-pane> 
-	   </el-tabs>
-	   <el-row>
-		   <el-form ref="queryFormRef" :model="queryParams" :inline="true">
-		   	<el-form-item prop="Shipment">
-				<el-select v-model="queryParams.shipment" placeholder="发货仓库" clearable>
-					<el-option v-for="item in warehouseData"></el-option>
-				</el-select>
-		   	</el-form-item>
-		   	<el-form-item prop="receipt">
-				<el-select v-model="queryParams.Receipt" placeholder="海外仓库" clearable>
-					<el-option v-for="item in warehouseData"></el-option>
-				</el-select>
-		   	</el-form-item>
-		   	<el-form-item prop="date">
-				<div class="date-picker-group">
-					<el-select v-model="queryParams.date.dateType">
-						<el-option v-for="item in dateOptions" :label="item.label" :value="item.value"></el-option>
-					</el-select>
-					<Datepicker ref="datepickers" @changedate="changedate" />
-				</div>
-		   	</el-form-item>
-		   	<el-form-item prop="search">
-				<el-input  v-model="queryParams.search.keywords" @input="changeData" placeholder="请输入" class="input-with-select" >
-				   <template #prepend>
-				     <el-select v-model="queryParams.search.searchType" placeholder="SKU" style="width: 110px">
-				       <el-option label="备货单号" value="sku"></el-option>
-				       <el-option label="SKU" value="name"></el-option>
-				       <el-option label="物流渠道" value="supplier"></el-option>
-				        <el-option label="备注" value="remark"></el-option>
-				     </el-select>
-				   </template>
-				   <template #append>
-				     <el-button @click.stop="changeData">
-				        <el-icon class="ic-cen font-medium">
-				         <search />
-				      </el-icon>
-				     </el-button>
-				   </template>
-				 </el-input>
-		   	</el-form-item>
-			<el-form-item>
-				 <el-button  @click="resetQuery"> 重置 </el-button>
-			</el-form-item>
-		   </el-form>
-	   </el-row>
-	   <el-row>
-		   <el-button type="primary" class="im-but-one" @click="handleAdd">
-				<plus theme="outline" size="18" fill="#fff" :strokeWidth="4"/>
-				<span >添加备货单</span>
-		   </el-button>
-		   <el-button>删除</el-button>
-		</el-row>
-		<el-row>
-			<Table :queryParams="queryParams"/>
-		</el-row>
-	   </div>
+			<Header @getdata="changedata" ref="headerRef"  />
+		</div>
+		<div class="con-body">
+		<GlobalTable ref="globalTable" :defaultSort="defaultSort"  @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 220px)" :stripe="true"  @loadTable="loadTableData" style="width: 100%;margin-bottom:16px;">
+				<template #field>
+				<el-table-column label="备货单号" prop="number" />
+				<el-table-column label="发货仓库" prop="wfname"/>
+				<el-table-column label="海外仓库" prop="wtname">
+					<template #default="scope">
+					   <div>{{scope.row.wtname}}</div>
+					   <div class="font-extraSmall">
+						   <span v-if="scope.row.groupname">{{scope.row.groupname}}/</span>
+						   <span>{{scope.row.country}}</span></div>
+					</template>
+				</el-table-column>
+				<el-table-column label="状态" width="120">
+					<template #default="scope">
+						<el-tag v-if="scope.row.auditstatus==1" effect="plain" type="info" >待审核</el-tag>
+						<el-tag v-if="scope.row.auditstatus==2"  effect="plain" type="primary">配货中</el-tag>
+						<el-tag v-if="scope.row.auditstatus==3" effect="plain" type="primary">已发货</el-tag>
+						<el-tag v-if="scope.row.auditstatus==4" type="success" effect="plain">已完成</el-tag>
+						<el-tag v-if="scope.row.auditstatus==5" type="danger" effect="plain">已驳回</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column label="SKU个数" prop="skunum"/>
+				<el-table-column label="申请人" prop="creator"/>
+				<el-table-column label="申请时间" prop="createdate">
+					<template #default="scope">
+						<span>{{dateTimesFormat(scope.row.createdate)}}</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="备注" prop="remark"/>
+				<el-table-column label="操作">
+					<template #default='scope'>
+					<el-space>
+						<el-button @click="handleDetail(scope.row.id)" type="primary" link>详情</el-button>
+					  </el-space>	
+					</template>
+				</el-table-column>
+				</template>
+			</GlobalTable>
+		</div>
 	</div>
 </template>
 
 <script setup>
-	import {ref,reactive,toRefs,onMounted,computed} from"vue"
-	import {Search,} from '@element-plus/icons-vue'
-	import {Plus,Help} from '@icon-park/vue-next';
-	import Datepicker from '@/components/header/datepicker.vue';
-	import { ElForm, ElMessage, ElMessageBox } from 'element-plus';
-	import Table from"./components/table.vue"
-	import {useRouter } from 'vue-router'
-	const queryFormRef = ref(ElForm);
-	const router = useRouter()
+	import Header from"./components/header.vue"
+	import {ref,reactive,toRefs,onMounted,defineEmits,defineProps}from"vue"
+	import {MoreOne,} from '@icon-park/vue-next';
+	import {Histogram} from '@element-plus/icons-vue'
+	import { ElMessage, ElMessageBox, ElDivider } from 'element-plus'
+	import {useRouter } from 'vue-router';
+	import {dateFormat,dateTimesFormat} from '@/utils/index.js';
+	import dispatchApi from '@/api/erp/inventory/dispatchOverseaApi.js';
+	const router = useRouter();
+	let globalTable=ref();
+	let headerRef=ref();
 	const state = reactive({
-		orderState:[
-			{label:'全部',name:'0'},
-			{label:'待审核',name:'1'},
-			{label:'配货中',name:'2'},
-			{label:'已发货',name:'3'},
-			{label:'已完成',name:'4'},
-			{label:'已驳回',name:'5'},
-		],
-		dateType:'0',
-		dateOptions:[
-			{label:'创建日期',value:'0',},
-			{label:'发货日期',value:'1',},
-			{label:'到货日期',value:'2',},
-		],
-		//查询参数
-		queryParams:{
-			searchType:'sku',
-			date:{dateType:'0',},
-			search:{keywords:'',searchType:'sku'},
-		} ,
+		tableData:{records:[],total:0},
+		queryParams:{},
+		defaultSort:{"prop": 'opttime', "order": 'desc' },
+		selectrows:[]
 	})
-	function handleAdd(){
+	const {
+		tableData,
+		queryParams,
+		defaultSort,
+		selectrows
+	}=toRefs(state)
+	 
+	function handleDetail(id){
 		router.push({
-			path:"/e/w/o/s",
+			path:"/e/w/os/d",
 			query:{
-				title:'添加备货单',
-				path:"/e/w/o/s",
+				title:'海外仓备货单详情',
+				path:"/e/w/os/d",
+				id:id
 			},
 		})
 	}
-	const {
-		dateType,
-		dateOptions,
-		orderState,
-		queryParams,
-	}=toRefs(state)
-	function resetQuery(){
-		queryFormRef.value.resetFields();
+	function changedata(params){
+		state.queryParams=params;
+		state.queryParams.sort=state.defaultSort.prop;
+		state.queryParams.order=state.defaultSort.order;
+		globalTable.value.loadTable(state.queryParams);
 	}
+	function selectChange(selection) {
+		state.selectrows=selection;
+	}
+	function loadTableData(params){
+		if(params.auditstatus=='1' || params.auditstatus=='2' || params.auditstatus=='3'){
+			params.fromDate=undefined;
+			params.toDate=undefined;
+		}
+		dispatchApi.list(params).then((res)=>{
+			state.tableData.records = res.data.records;
+			state.tableData.total =res.data.total;
+		})
+	}
+	onMounted(() => {
+	   
+	});
 </script>
 
-<style scoped>
-	.el-form--inline .el-form-item{
-		margin-right:8px;
-	}
-	.el-form-item--default{
-		margin-bottom: 0px;
-	}
+<style>
 </style>

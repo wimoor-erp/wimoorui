@@ -42,7 +42,7 @@
  @loadTable="loadtableData" 
  :defaultSort="{ prop: 'opttime', order: 'descending' }"  
  @selectionChange="handleSelectionChange"
- border style="width: 100%;margin-bottom:16px;">
+ :stripe="true"  style="width: 100%;margin-bottom:16px;">
  	<template #field>
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column prop="name" label="地址名称" width="200"/>

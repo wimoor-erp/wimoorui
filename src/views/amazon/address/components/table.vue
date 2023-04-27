@@ -1,6 +1,6 @@
 <template>
 	<el-col :span="24">
-		<GlobalTable ref="globalTable" :tableData="tableData"  @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+		<GlobalTable ref="globalTable" :tableData="tableData"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		  <template #field>
 		    <el-table-column type="selection" width="38" />
 		    <el-table-column prop="name"  label="名称" sortable='custom' >

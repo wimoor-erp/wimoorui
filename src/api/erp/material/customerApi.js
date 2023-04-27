@@ -1,6 +1,5 @@
 import request from "@/utils/request";
- import axios from 'axios';
- import downloadhandler from "@/utils/download-handler";
+import downloadhandler from "@/utils/download-handler";
 // function getMaterialList(data){
 // 	 return request.get('/erp/api/v1/material',{params:data});
 // }
@@ -50,10 +49,13 @@ function deletecust(data){
 function getSupplierByMid(data){
 	return request.get('/erp/api/v1/customer/getSupplierByMid',{params:data});
 }
+function listAll(){
+	return request.get('/erp/api/v1/customer/listAll');
+}
 
 
 
 
 export default{
-	 getData,saveData,downloadCustomerList,list,getCustomer,deletecust,uploadCustomerFile,getSupplierByMid
+	 getData,saveData,downloadCustomerList,list,getCustomer,deletecust,uploadCustomerFile,getSupplierByMid,listAll
 }

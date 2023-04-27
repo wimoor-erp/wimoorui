@@ -97,14 +97,6 @@
 			let moreSearchVisible=ref(false)
 			let color=ref("");
 			let isload=true;
-		   watch(() =>router.currentRoute.value.query,(newValue,oldValue)=> {
-		         if(newValue&&newValue['refreshSF']){
-					 setTimeout(()=>{
-						 context.emit("getdata",queryParam);
-					 },100);
-				 }
-		         },{ immediate: true });
-				 
 			function addShipment(){
 				router.push({
 					path:'/invoice/addshipment',

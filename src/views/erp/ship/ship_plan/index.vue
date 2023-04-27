@@ -7,7 +7,7 @@
 		 :tableData="tableData"  
 		 :size="10"
 		 @loadTable="loadTableData" 
-		 :defaultSort="{ prop: 'needship', order: 'descending' }"  
+		 :defaultSort="{ prop: 'marketneedship', order: 'descending' }"  
 		 rowKey="id"
 		 @row-click="tableRowClick"
 		 :rowClassName="handleRowClassName"
@@ -21,10 +21,11 @@
 				  <el-button v-else @click="expendAll()" :loading="closeloading" key="false" type="info"  link
 				     > <el-icon><ArrowRightBold /></el-icon></el-button>
 			 </template>
-			 <template #default="scope">
+			 <template #default="props">
 				<!-- 展开的table -->
-				 <Expandtable :tableData="scope.row.expendData"  
-				             :row="scope.row"  
+				<Expandtable :tableData="props.row.expendData"  
+				             :row="props.row"  
+							 :isOversea="queryParams.isOversea"
 							 :transtypeOptions="transtypeOptions"
 							 @reload="loadDetail"
 							 @show-sales-adjust="handleShowSalesAdjust"
@@ -32,44 +33,99 @@
 							 @show-ship-record="handleShowShipRecord"
 							 @show-eudata="handleShowEUData"
 							 @show-split-row="showSplitRow"
-							 :status="scope.row.rowstatue"/>  
+							 :status="props.row.rowstatue"/> 
 			 </template>
 		</el-table-column>
 		<el-table-column prop="img" label="图片" width="60" >
 		   <template #default="scope">
-		    <el-image :src="scope.row.image"   width="40" height="40"  ></el-image>
+		    <el-image :src="scope.row.image"   width="60" height="60"  ></el-image>
 		  </template>
 		</el-table-column>
-		<el-table-column prop="product" label="名称/SKU" width="240" show-overflow-tooltip>
+		<el-table-column prop="sku" label="名称/SKU" :sort-orders="sortOrders" sortable='custom'  show-overflow-tooltip>
 		   <template #default="scope">
 		      <div class='name'>{{scope.row.name}}</div>
-		      <el-link type="primary" class="font-small">{{scope.row.sku}} </el-link>
+			  <div>
+		      <el-link type="primary" @click.stop="productDetails(scope.row)"  class="font-small">{{scope.row.sku}} </el-link>
+			  <div>
+				  <el-space>
 			  <span v-if="scope.row.issfg=='1'" @click.stop="handleEmtpy" >
 			  <AssemblyDialog @change="getAssembliyList(scope.row)" :loading="scope.row.assloading" :assemblyList="scope.row.assemblyList">
 			  						  <template #field>
-			  							  <el-link type="warning" class="font-small" v-if="scope.row.issfg=='1'"
+			  							  <el-tag type="warning"  v-if="scope.row.issfg=='1'"
 			  							  size="small" 
-			  							  style="margin-left:3px;" >组</el-link>
+										  title="组合产品"
+			  							   >组合</el-tag>
 			  						  </template>
 			  </AssemblyDialog>
 			  </span>
+			  <el-tag v-if="scope.row.tagNameList" effect="plain" :type="item.color"  v-for="item in scope.row.tagNameList" size="small" >
+			  	{{item.name}}
+			  </el-tag>
+			  </el-space>
+			  </div>
+			  </div>
 		  </template>
 		</el-table-column>
-		<el-table-column label="建议发货总量" prop="needship"  sortable='custom'  width="125"></el-table-column>
-		<el-table-column label="实际发货总量" sortable prop="amount" width="125">
+		<el-table-column label="报表" width="80">
 			<template #default="scope">
-				<div v-if="scope.row.amount">{{scope.row.amount}}</div>
-				<div v-else>0</div>
+				<el-space :size="12">
+					   <el-link :underline="false" @click.stop="handlesaleChart(scope.row)">
+						   <el-tooltip content="销量报表" placement="top" :hide-after="0" :show-after="200">
+					   <chart-histogram class="ic-cen" theme="outline" size="16" fill="#ff6700" :strokeWidth="4"/>
+					   </el-tooltip>
+					   </el-link>   
+					   <el-link :underline="false"  @click.stop="handlarrivalChart(scope.row)">
+						   <el-tooltip content="预计到货报表" placement="top" :hide-after="0" :show-after="200">
+					  <chart-line class="ic-cen" theme="filled" size="15" fill="#529b2e"/>
+					   </el-tooltip>
+					   </el-link>
+				</el-space>	
 			</template>
 		</el-table-column>
-		<el-table-column label="可用库存" sortable prop="quantity" width="100">
+		<el-table-column label="公告" >
+			<template #default="scope">
+					<span class="table-edit-flex" >
+						<span style="color: #888;">{{scope.row.notice}}</span>
+						<el-icon @click.stop="editRemarks(scope.row)"><Edit/></el-icon>
+					</span>
+			</template>
+		</el-table-column>
+		<el-table-column label="发货需求量" 
+		:sort-orders="sortOrders" prop="marketneedship"  
+		sortable='custom'  width="125">
+		<template #default="scope">
+			<div v-if="queryParams.plansimple">
+				<div class="font-bold" v-if="queryParams.isOversea">{{scope.row.needshipfba}}</div>
+				<div class="font-bold" v-else>{{scope.row.marketneedship}}</div>
+			</div>
+			<div v-else>
+				<div class="font-bold" v-if="queryParams.isOversea">{{scope.row.needshipfba}}</div>
+				<div class="font-bold" v-else>{{scope.row.needship}}</div>
+			</div>
+		
+		</template>
+		</el-table-column>
+		<el-table-column label="实际发货总量" sortable prop="amount" width="125">
+			<template #default="scope">
+				
+				<div v-if="queryParams.plansimple">
+					<div class="font-bold" v-if="scope.row.marketamount">{{scope.row.marketamount}}</div>
+					<div class="font-bold" v-else>0</div>
+				</div>
+				<div v-else>
+				<div class="font-bold" v-if="scope.row.amount">{{scope.row.amount}}</div>
+				<div class="font-bold" v-else>0</div>
+				</div>
+			</template>
+		</el-table-column>
+		<el-table-column label="可用库存" :sort-orders="sortOrders" sortable='custom' prop="allquantity" width="100">
 			<template #default="scope">
 				<div @click.stop="handleEmtpy" >
 					<el-popover   trigger="click" @show="handleQueryInventoryQty(scope.row)" placement="top" width="400"  >
 					<template  #reference>	
 			         <div class="text-center pointer" >
-							<span v-if="scope.row.quantity">{{scope.row.quantity}}</span>
-					        <span  v-else >0</span>
+							<span class="font-bold" v-if="scope.row.quantity">{{scope.row.quantity}}</span>
+					        <span class="font-bold"  v-else >0</span>
 					 </div>
 					</template>
 					 <ul class="border-line">
@@ -77,7 +133,7 @@
 						                                  <el-tag v-if="scope.row.inbound"> {{scope.row.inbound}}</el-tag>
 														  <el-tag v-else> 0</el-tag>
 							 </li>
-						 <li class="flex-center-between"><span>可售库存</span>
+						 <li class="flex-center-between"><span>可用库存</span>
 						                                <el-tag type="success" v-if="scope.row.fulfillable">{{scope.row.fulfillable}}</el-tag>
 														<el-tag type="success" v-else>0</el-tag>
 														</li>
@@ -95,44 +151,22 @@
 					</div>
 			</template>
 		</el-table-column>
-		<el-table-column label="公告">
-			<template #default="scope">
-					<span class="table-edit-flex" >
-						<span>{{scope.row.notice}}</span>
-						<el-icon @click.stop="editRemarks(scope.row)"><Edit/></el-icon>
-					</span>
-			</template>
-		</el-table-column>
-		<el-table-column label="报表" width="90">
-			<template #default="scope">
-			   <el-space :size="12">
-				   <el-link :underline="false" type="warning" @click.stop="handlesaleChart(scope.row)">
-					   <el-tooltip content="销量报表" placement="top" :hide-after="0" :show-after="200">
-				   <chart-histogram class="ic-cen" theme="outline" size="19" :strokeWidth="4"/>
-				   </el-tooltip>
-				   </el-link>   
-				   
-				   <el-link :underline="false" type="danger" @click.stop="handlarrivalChart(scope.row)">
-					   <el-tooltip content="预计到货报表" placement="top" :hide-after="0" :show-after="200">
-				  <chart-line class="ic-cen" theme="filled" size="18" fill="#67c23a"/>
-				   </el-tooltip>
-				   </el-link>
-			</el-space>	
-			</template>
-		</el-table-column>
+		
+	 
 		<el-table-column label="操作" width="160">
 			<template #default="scope">
 				<div class="flex-center-bew" @click.stop="handleEmtpy" >
 				<el-link @click.stop="handleEmtpy"  :underline="false" type="primary" class="font-small">
 					<div v-if="scope.row.rowstatue.isEdit"  class="opt-td-div">
-						<span  @click.stop="handleCancel(scope.row)" style="margin-left:20">取消</span> 
 						<span  @click.stop="submitForm(scope.row)">保存</span>
+						<span  @click.stop="handleCancel(scope.row)" style="margin-left:20">取消</span> 
 					</div>
 					<div v-else class="opt-td-div">
+						<span   @click.stop="handleAdd(scope.row)" >编辑</span>
+						
 						<span v-if="scope.row.rowstatue.isplan" 
 						       @click.stop="handleDelete(scope.row)" >  移除</span> 
-						<span v-else style="padding-left: 30px;">  </span> 
-						<span   @click.stop="handleAdd(scope.row)" >编辑</span>
+						
 					</div>
 				</el-link>
 				<el-dropdown  :hide-on-click="false" trigger="click">
@@ -142,8 +176,8 @@
 				   <template #dropdown>
 				    <el-dropdown-menu>
 				      <el-dropdown-item >
-						  <span v-if="scope.row.displayState" @click.stop="hideProduct(scope.row)">隐藏产品</span>
-						  <span v-else @click.stop="showProduct(scope.row)">显示产品</span>
+						  <span v-if="scope.row.ishide=='1'" @click.stop="showProduct(scope.row)">显示产品</span>
+						  <span v-else  @click.stop="hideProduct(scope.row)">隐藏产品</span>
 					  </el-dropdown-item>
 				    </el-dropdown-menu>
 				</template>
@@ -157,7 +191,7 @@
 	<SalechartDialog ref="salechartRef"/>
 	<ArrivalDialog ref="arrivalchartRef"/>
 	<RemarksDialog ref="remarksRef" @confirm="remarkConfirm"/>
-    <SaleAdjustDialog ref="saleAdjustDialogRef"></SaleAdjustDialog>
+    <SaleAdjustDialog ref="saleAdjustDialogRef" @confirm="loadDetail"></SaleAdjustDialog>
 	<GoodsDeatils ref="goodsDeatilsRef"  />
 	<ShipRecordDialog ref="shipRecordDialogRef"></ShipRecordDialog>
 	<SplitPlanDialog ref="splitPlanDialogRef" 
@@ -173,7 +207,7 @@
 	import ShipRecordDialog from "./components/ship_record.vue"
 	import RemarksDialog from "./components/remarks_dialog.vue"
 	import SaleAdjustDialog from "@/views/amazon/sales/forecast/components/sale_adjust_dialog";
-	import AssemblyDialog from "./components/assembly_dialog";
+	import AssemblyDialog from "@/views/erp/components/assembly_dialog";
 	import SplitPlanDialog from "./components/split_plan_dialog"
 	import GoodsDeatils from "@/views/amazon/listing/common/goods_deatils"
     import Header from "./components/header";
@@ -183,10 +217,11 @@
 	import {Edit,ArrowRightBold,ArrowDownBold} from '@element-plus/icons-vue';
 	import { ElMessage ,ElMessageBox} from 'element-plus'
 	import transportationApi from '@/api/erp/ship/transportationApi';
-	import warehouseApi from '@/api/erp/warehouse/warehouseApi'
 	import markApi from '@/api/erp/material/markApi';
 	import {Help,MoreOne,ChartHistogram,ChartLine} from '@icon-park/vue-next';
 	import {sublit} from "@/api/erp/assembly/assemblyApi";
+	import { useRouter } from 'vue-router'
+   let router = useRouter()
    let globalTableRef=ref();
    let salechartRef =ref()
    let arrivalchartRef =ref()
@@ -202,6 +237,7 @@
      tableData: {records:[],total:0}  ,
      // 弹窗属性
      dialog: { visible: false }  ,
+	 sortOrders:[ 'descending','ascending', null],
      // 查询参数
      queryParams: {} ,
 	 expendRows:[],
@@ -211,13 +247,13 @@
 	 transtypeOptions:[],
      // 表单数据
      formData: { } ,
-	 overseaOptions:[],
      // 表单参数校验
    });
    const {
      tableData,
      queryParams,
 	 transtypeOptions,
+	 sortOrders,
 	 exploading,
 	 closeloading,
 	 isExpendAll,
@@ -267,15 +303,16 @@
 		if(state.isExpendAll==true){
 			state.closeloading=true;
 			state.isExpendAll=false;
-			state.tableData.records.forEach(row=>{
+			state.tableData.records.forEach((row,index)=>{
 				   if(row.rowstatue.isexpends==true){
 				      globalTableRef.value.toggleRowExpansion(row);
+					   console.log(123)
 				   }
 			});
 		}else{
 		   state.exploading=true;
 		   state.isExpendAll=true;
-		   state.tableData.records.forEach(row=>{
+		   state.tableData.records.forEach((row,index)=>{
 			     if(row.rowstatue.isexpends==false){
 			        globalTableRef.value.toggleRowExpansion(row);
 				 }
@@ -303,13 +340,23 @@
 				row.rowstatue.showeu=true;
 			}
 			 if(!row["expendEuData"]){
-				var param={groupid:row.groupid,msku:row.sku,warehouseid:row.warehouseid,iseu:true};
+				var param={"groupid":row.groupid,
+				           "sku":itemrow.sku,
+						   "msku":parentrow.sku,
+						   "warehouseid":state.queryParams.warehouseid,
+						   "plantype":"ship",
+						   "plansimple":state.queryParams.plansimple,
+						   "marketplaceids":state.queryParams.marketplaceids,
+						   "iseu":true,
+						   "amount":0};
 				row.rowstatue.loading=true;
 				 planApi.getExpandCountryData(param).then(res=>{
 								row.rowstatue.loading=false;
 								if(res.data){
 									res.data.forEach(item=>{
-										item.amount=item.reallyamount;
+										if(item.reallyamount&&parseInt(item.reallyamount)){
+											item.amount=item.reallyamount;
+										}
 										item.visible=false;
 										item.iseu=true;
 										row.expendData.push(item);
@@ -320,7 +367,7 @@
 			 } 
 	}
 	function showSplitRow(itemrow,parentrow){
-		splitPlanDialogRef.value.show(itemrow,parentrow,state.transtypeOptions,state.overseaOptions);
+		splitPlanDialogRef.value.show(itemrow,parentrow,state.transtypeOptions);
 	}
 	function handleShowProductDetail(itemrow,parentrow){
 		goodsDeatilsRef.value.show(itemrow);
@@ -364,7 +411,8 @@
 	if(state.isExpendAll==true){
 	   expendAll();
 	   }
-	   planApi.getShipPlanList(params).then(res=>{
+	   params.plantype="ship";
+	   planApi.getPlanList(params).then(res=>{
 		   state.tableData.records=res.data.records;
 		   state.tableData.total=res.data.total;
 		   if(res.data.records){
@@ -377,7 +425,7 @@
 					   showeu:false,
 				   };
 				   item.expendData=[];
-				   if(item.amount){
+				   if(item.amount&&parseInt(item.amount)){
 						item.rowstatue.isplan=true;
 				   }
 			   });
@@ -450,6 +498,7 @@
 							row.amount=subitem.amount;
 							row.transtype=subitem.transtype;
 							row.subnum=0;
+							row.warehouseid=state.queryParams.warehouseid;
 							row.overseaid=subitem.overseaid;
 							planData.push(row); 
 					   })
@@ -464,6 +513,7 @@
 						   boxerror=true;
 					   }
 					 quantity=quantity-item.amount;
+					 item.warehouseid=state.queryParams.warehouseid;
 					 planData.push(item); 
 		   		}
 				   
@@ -511,49 +561,83 @@
    }
    /* 隐藏产品 */
    function hideProduct(row){
+	   if(row.rowstatue.isplan){
+		   ElMessage({
+		   			message: '当前产品已加入计划，无法隐藏！',
+		   			type: 'error',
+		   });
+		   return ;
+	   }
 	   markApi.hide({materialid:row.id}).then(res=>{
 	   		    row.displayState = true;
 				ElMessage({
 							message: '产品已隐藏！',
 							type: 'success',
-				})
+				});
+				handleQuery();
 	   })
+   }
+   function showProduct(row){
+   	   markApi.show({materialid:row.id}).then(res=>{
+   		    row.displayState = true;
+   			ElMessage({
+   						message: '产品显示成功！',
+   						type: 'success',
+   			})
+   			handleQuery();
+   	   })
+   }
+   function productDetails(row){
+   			  router.push({
+   			  	path:'/material/details',
+   			  	query:{
+   			  	  title:"产品详情",
+   			  	  path:'/material/details',
+   				  details:row.id
+   			  	}
+   			  })
    }
    
-   function showProduct(row){
-	   markApi.show({materialid:row.id}).then(res=>{
-		    row.displayState = true
-	   })
-   }
    function tableRowClick(row){
 	   globalTableRef.value.toggleRowExpansion(row);
    }
    function loadDetail(row){
 			 	row.rowstatue.loading=true;
 				var subrow=[];
-				 var quantity=row.quantity;
+				 var quantity=row.quantity?parseInt(row.quantity):0;
 				 if(row["canAssembly"]){
 				 		  quantity=quantity+parseInt(row.canAssembly); 
 				 }
 				 row.rowstatue.showeu=false;
 				 row.expendEuData=null;
-			 	 var param={groupid:row.groupid,msku:row.sku,warehouseid:row.warehouseid,iseu:false};
+			 	 var param={"groupid":row.groupid,
+				            "msku":row.sku,
+				            "warehouseid":state.queryParams.warehouseid,
+						    "plantype":"ship",
+							"plansimple":state.queryParams.plansimple,
+							"marketplaceids":state.queryParams.marketplaceids,
+							"iseu":false,
+							"amount":0};
 				 planApi.getExpandCountryData(param).then(res=>{
 			 	    row.rowstatue.loading=false;
 			 		if(res.data){
 						var reallyamount=0;
+						var needship=0;
 			 			res.data.forEach(item=>{
-			 				if(!item.amount){
+			 				if(!parseInt(item.amount)){
 			 					item.amount=0;
 			 				}
-							if(item.reallyamount){
-								item.amount=item.reallyamount;
-								quantity=quantity-item.amount;
-								reallyamount+=item.reallyamount;
-							}else if(quantity-item.amount>0){
-								item.amount=item.amount;
-								quantity=quantity-item.amount;
-							}else if(quantity>0){
+							if(item.needship&&parseInt(item.needship)){
+								needship=needship+parseInt(item.needship);
+							}
+							if(item.reallyamount&&parseInt(item.reallyamount)){
+								item.amount=parseInt(item.reallyamount);
+								quantity=quantity-parseInt(item.amount);
+								reallyamount+=parseInt(item.reallyamount);
+							}else if(quantity-parseInt(item.amount)>0){
+								item.amount=parseInt(item.amount);
+								quantity=quantity-parseInt(item.amount);
+							}else if(parseInt(quantity)>0){
 								item.amount=quantity;
 								quantity=0;
 							}else{
@@ -569,7 +653,10 @@
 							subrow.push(item);
 			 			});
 						row.amount=reallyamount;
+						row.needship=needship;
 						row.expendData=subrow;
+						console.log(state.queryParams)
+						
 			 		}
 			 	 })
 			 }
@@ -595,12 +682,7 @@
 			  row.rowstatue.isexpends=false
 		 }
    }
-   function loadOverSeaWarehouse(){
-	   warehouseApi.getOversaWarehouseUseable().then((res)=>{
-	   		res.data.push({"id":"","name":"FBA仓"})
-	   	    state.overseaOptions=res.data;
-		});
-   }
+
    function loadTransTypeAllList(){
    		transportationApi.getTransTypeAll().then((res)=>{
 			if(res.data){
@@ -610,7 +692,6 @@
    }
    onMounted(()=>{
 	   loadTransTypeAllList();
-	   loadOverSeaWarehouse();
    })
    /* 编辑公告 */
    function editRemarks(row){
@@ -655,6 +736,14 @@
 		  background-repeat: no-repeat;
 		  background-size: 42px 42px;
 	 }
- 
+	 .dark .selectedtr td:nth-child(n+1){
+			  background-color: #302d2c;
+	 }
+	 .dark .selectedtr td:first-child{
+			  background-image: url('~@/assets/image/pages/shipplan/ship_plan_checked.png');
+		  background-color: #302d2c;
+			  background-repeat: no-repeat;
+			  background-size: 42px 42px;
+	 }
 	 .waring-bg{background-color: var(--el-color-primary-light-9)!important;}
 </style>

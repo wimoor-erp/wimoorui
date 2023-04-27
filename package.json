@@ -13,9 +13,11 @@
     "core-js": "^3.8.3",
     "echarts": "^5.4.0",
     "element-plus": "^2.2.17",
+    "jquery": "^3.6.1",
     "mitt": "^3.0.0",
     "vue": "^3.2.40",
     "vue-router": "^4.0.3",
+    "vue3-print-nb": "^0.1.4",
     "vuedraggable": "^4.1.0",
     "vuex": "^4.0.0"
   },

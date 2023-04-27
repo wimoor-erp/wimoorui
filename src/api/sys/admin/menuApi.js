@@ -47,10 +47,18 @@ export const menuApi={
 																		  "isout":false});
 												  }else{
 													  if(item["redirect"]&&(item.redirect.indexOf(".do")>0||item.redirect.indexOf(".jsp")>0)){
-													  		namegrouplist.push({"name":item.meta.title,
-															                     "id":item.name,
-																				 "isout":true,
-													  		                     "path":"https://erp.wimoor.com/page.do?location="+item.oldid });  
+													  		if(item["sort"]>=711 &&item["sort"]<=717 ){
+																namegrouplist.push({"name":item.meta.title,
+																                     "id":item.name,
+																					 "isout":true,
+																                     "path":"https://weilan.wimoor.com/page.do?location="+item.oldid });  
+															}else{
+																namegrouplist.push({"name":item.meta.title,
+																                     "id":item.name,
+																					 "isout":true,
+																                     "path":"https://erp.wimoor.com/page.do?location="+item.oldid });  
+															}
+															
 													  }
 													  
 													

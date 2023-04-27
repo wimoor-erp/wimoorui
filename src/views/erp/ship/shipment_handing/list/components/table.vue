@@ -1,6 +1,6 @@
 <template>
 	<el-row>
-	  <GlobalTable ref="globalTable" :tableData="tableData"  @loadTable="loadtableData" :defaultSort="{ prop: 'createdate', order: 'descending' }" height="calc(100vh - 270px)" style="width: 100%;margin-bottom:16px;">
+	  <GlobalTable ref="globalTable" :tableData="tableData"  @loadTable="loadtableData" :defaultSort="{ prop: 'createdate', order: 'descending' }" :stripe="true"  height="calc(100vh - 270px)" style="width: 100%;margin-bottom:16px;">
 	    <template #field>
 		   <el-table-column type="selection" width="38" />
 		   <el-table-column prop="orderNum" label="货件编码/货件名称" width='170'>
@@ -100,7 +100,7 @@
 			   </template> 
 			</el-table-column>    
 		   <el-table-column prop="remark" label="备注"  />
-	    <el-table-column prop="operate" label="操作"  width="100"   >
+	    <el-table-column prop="operate" label="操作"  width="100"  fixed="right" >
 	        <template #default="scope">
 	          <el-space>
 	            <el-button type="primary" plain @click="shipmentfollow(scope.row)">跟踪发货</el-button>
@@ -235,7 +235,7 @@
 					path:'/shipment_handing/shipstep',
 					query:{
 					  shipmentid:row.shipmentid,
-					  title:"发货流程",
+					  title:"发货流程"+row.shipmentid,
 					  path:'/shipment_handing/shipstep',
 					}
 				})

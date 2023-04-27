@@ -1,22 +1,20 @@
 import router from "@/router";
-
+import store from '@/store/index';
 export  const hasPerm = {
     install:(app)=>{
 		 app.directive('hasPerm', {
 			  mounted(el, binding){
 				  let flag=false;
-				  if(router.currentRoute.value.fullPath){
-					  if(router.currentRoute.value.meta["permissions"]){
-						  var permissions = router.currentRoute.value.meta.permissions;
-						  if( binding.arg){
-							  const value = binding.arg
-							  flag = permissions.includes(value) ;
+					  var permissions=store.state.permissionStore.permission;
+					  if(permissions){
+						  if( binding.value){
+							  const value = binding.value
+							  flag = permissions.has(value) ;
 						  }else{flag=false;}
-						 
+					  } else{
+						  flag=true;
 					  }
-				  }else{
-					  flag= false;
-				  }
+				  
 				  if (!flag) {
 				      if (!el.parentNode) {
 				          el.style.display = 'none'

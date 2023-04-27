@@ -8,7 +8,7 @@
 			      <el-radio-button label="已结算" />
 			      <el-radio-button label="未结算" />
 			    </el-radio-group>
-		<!-- <Group @change="getGroup" isproduct="ok" /> -->
+		<Group @change="getGroup" isproduct="ok" />
 		<el-select v-model="currentyType">
 			<el-option v-for="item in currentyOptions" :label="item.label" :value="item.value"></el-option>
 		</el-select>
@@ -81,17 +81,25 @@
 				</el-col>
 			</el-row>
 			<el-table border :data="tableData">
-				<el-table-column  label="店铺">Kuwai</el-table-column>
-				<el-table-column label="国家" >美国</el-table-column>
-				<el-table-column label="结算周期" >2022/02/22-2022-06-16</el-table-column>
+				<el-table-column  label="店铺" prop="group"></el-table-column>
+				<el-table-column label="国家" prop="market"></el-table-column>
+				<el-table-column label="结算周期" prop="weektime"></el-table-column>
 				<el-table-column label="状态" >
 					<template #default="scope">
-						<el-tag type="success">已结算</el-tag>
+						<el-tag :type="scope.row.status.color">{{scope.row.status.name}}</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column label="存款总计" >USD 95,288.83</el-table-column>
-				<el-table-column label="转账日期">2022/02/22</el-table-column>
-				<el-table-column label="转账状态"><el-tag type="success">成功</el-tag></el-table-column>
+				<el-table-column label="存款总计" prop="amount">
+					<template #default="scope">
+					   {{scope.row.currency}}{{scope.row.amount}}
+					</template>
+				</el-table-column>
+				<el-table-column label="转账日期" prop="date">2022/02/22</el-table-column>
+				<el-table-column label="转账状态">
+					<template #default="scope">
+					<el-tag :type="scope.row.incom.color">{{scope.row.incom.name}}</el-tag>
+					</template>
+					</el-table-column>
 				<el-table-column label="操作">
 					<template #default="scope">
 						<el-button type="primary" link>下载明细</el-button>
@@ -107,17 +115,38 @@
 	import {Help,BankTransfer} from '@icon-park/vue-next';
 	import Datepicker from '@/components/header/datepicker.vue';
 	import Group from '@/components/header/group.vue';
-	let state = reactive({
+	const state = reactive({
 		radio:'全部',
 		currentyType:'1',
 		dateType:'1',
 		dateOptions:[{label:'结算日期',value:'1'},{label:'转账日期',value:'2'}],
 		currentyOptions:[{label:'原币种',value:'1'},{label:'CNY',value:'2'},{label:'USD',value:'3'}],
+		tableData:[
+			{
+				group:'AKSAKND',
+				market:'美国', 
+				weektime:'2022/02/22-2022/06/16',
+				status:{color:'success',name:'已结算'},
+				amount:'95,288.83',
+				currency:'USD',
+				date:'2023/03/02',
+				incom:{color:'success',name:'成功'},
+			},
+			{
+				group:'AKSAKND',
+				market:'美国', 
+				weektime:'2022/02/22',
+				status:{color:'info',name:'未结算'},
+				amount:'12,564.02',
+				currency:'USD',
+				date:'-',
+				incom:{color:'info',name:'无'},
+			}
+		]
 	})
-	let tableData =reactive([
-        {}
-	])
-	let {radio,currentyType,currentyOptions,dateType,dateOptions}=toRefs(state)
+	const {radio,currentyType,currentyOptions,dateType,dateOptions,
+	tableData,
+	}=toRefs(state)
 </script>
 
 <style scoped="scoped">

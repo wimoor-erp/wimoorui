@@ -26,7 +26,6 @@
 		  </el-space>
 	    </el-descriptions-item>
 		
-		<el-descriptions-item label="价格" :span="2">{{baseInfo.price}}</el-descriptions-item>
 		<el-descriptions-item label="负责人" :span="2">{{baseInfo.ownername}}</el-descriptions-item>
 		<el-descriptions-item label="生效日期" :span="2">{{dateFormat(baseInfo.effectivedate)}}</el-descriptions-item>
 		<el-descriptions-item label="创建日期" :span="2">{{dateFormat(baseInfo.createdate)}}</el-descriptions-item>
@@ -38,16 +37,7 @@
 	    </el-descriptions-item>
 	  </el-descriptions>
 	 <el-divider />
-	  <div v-if="baseInfo.issfg=='0'">
-		  <h3 id="normal" class="tab-scroll">组合信息</h3>
-		  <el-descriptions  :column="1"  size="default" >
-			  <el-descriptions-item label="组合信息" :span="2" class-name="flex-one">
-			  无
-			  </el-descriptions-item>
-		  </el-descriptions>  
-		  <el-divider />
-	  </div>
-	 <div v-if="baseInfo.issfg=='2'">
+	 <div v-if="baseInfo.issfg=='2'&&parentList">
 	 <h3 id="parent" class="tab-scroll">父SKU信息</h3>
 		<el-descriptions  :column="1"  size="default" >
 			 <el-descriptions-item label="父SKU列表" :span="2" class-name="flex-one">
@@ -66,14 +56,16 @@
 			 			<div class='sku'>{{scope.row.sku}} </div>
 			 		</template>
 			 	</el-table-column>
-			 	<el-table-column label="单位数量" prop="moq" width="120" >
-			 	</el-table-column>
+			 	<el-table-column label="单位数量" prop="MOQ" width="100" ></el-table-column>
+				<el-table-column label="可用库存" prop="fulfillable" width="100" ></el-table-column>
+				<el-table-column label="待入库" prop="inbound" width="100" ></el-table-column>
+				<el-table-column label="待出库" prop="outbound" width="100" ></el-table-column>
 			 </el-table>
 			 </el-descriptions-item>
 		</el-descriptions>
 	 <el-divider />
 	 </div>
-	 <div v-if="baseInfo.issfg=='1'">
+	 <div v-if="baseInfo.issfg=='1'&&assemblyList" >
 	 <h3 id="children" class="tab-scroll">子SKU信息</h3>
 	 <el-descriptions  :column="1"  size="default" >
 		 <el-descriptions-item label="子SKU列表" :span="2" class-name="flex-one">
@@ -118,6 +110,10 @@
 	<h3 id="purchase" class="tab-scroll">采购信息</h3>
 	<el-descriptions  :column="1"  size="default" >
 		<!-- <el-descriptions-item label="采购员" :span="2">李四</el-descriptions-item> -->
+		<el-descriptions-item label="采购成本" :span="2">{{baseInfo.price}}元</el-descriptions-item>
+		<el-descriptions-item label="采购加权成本" :span="2">{{baseInfo.priceWavg}}元</el-descriptions-item>
+		<el-descriptions-item label="采购加权运费" :span="2">{{baseInfo.priceShipWavg}}元</el-descriptions-item>
+		<el-descriptions-item label="供货周期(天)" :span="2">{{baseInfo.deliveryCycle}}</el-descriptions-item>
 		<el-descriptions-item label="供应商" :span="2" class-name="flex-one">
 			<el-table :data="supplierList" border >
 				<el-table-column type="index"></el-table-column>
@@ -203,8 +199,8 @@
 		</el-descriptions-item>
 	  </el-descriptions>
 	  <el-divider />
-	  <h3 id="consumables" class="tab-scroll">辅料关联</h3>
-	  <el-descriptions  :column="1"  size="default" >
+	  <h3 id="consumables" v-if="consList&&consList.length>0" class="tab-scroll">辅料关联</h3>
+	  <el-descriptions  v-if="consList&&consList.length>0"  :column="1"  size="default" >
 		  <el-descriptions-item label="辅料" :span="2" class-name="flex-one">
 		  	<el-table border :data="consList">
 		  			 <el-table-column width="50"  type="index"> 
@@ -232,8 +228,8 @@
 		  </el-descriptions-item>
 	  </el-descriptions>
 	  <el-divider />
-	  <h3 id="logistics" class="tab-scroll">物流信息</h3>
-	  <el-descriptions  :column="1"  size="default" >
+	  <h3 id="logistics" v-if="logistics" class="tab-scroll">物流信息</h3>
+	  <el-descriptions  v-if="logistics" :column="1"  size="default" >
 		  <el-descriptions-item label="申报单价" :span="2">
 		  	{{logistics.unitprice}}{{logistics.currency}}
 		  </el-descriptions-item>
@@ -276,23 +272,23 @@
 				  <el-table-column label="仓库" prop="warehouse"></el-table-column>
 				  <el-table-column label="安全库存周期" prop="stockingCycle" width="120">
 					  <template #default="scope">
-						  <el-input v-model="scope.row.stockingCycle" ></el-input>
+						  <el-input v-model="scope.row.stockingCycle" @input="scope.row.stockingCycle=CheckInputInt(scope.row.stockingCycle)" ></el-input>
 					  </template>
 				  </el-table-column>
-				  <el-table-column label="最小补货周期" prop="mincycle" width="120">
+				 <!-- <el-table-column label="最小补货周期" prop="mincycle" width="120">
 					  <template #default="scope">
-					  		 <el-input v-model="scope.row.mincycle" ></el-input>
+					  		 <el-input v-model="scope.row.mincycle"  @input="scope.row.mincycle=CheckInputInt(scope.row.mincycle)"></el-input>
 					  </template>
-				  </el-table-column>
+				  </el-table-column> -->
 				  <el-table-column label="待入库" prop="inbound"></el-table-column>
 				  <el-table-column label="可用" prop="fulfillable"></el-table-column>
 				  <el-table-column label="待出库" prop="outbound"></el-table-column>
-				  <el-table-column label="操作" prop="id">
+				 <!-- <el-table-column label="操作" prop="id">
 					  <template #default="scope">
 						  <el-button v-if="scope.row.fulfillable && scope.row.fulfillable>0" link type="primary" @click.stop="dispatchInv(scope.row)" >调库</el-button>
 						  <el-button v-else link type="primary"  disabled >调库</el-button>
 					  </template>
-				  </el-table-column>
+				  </el-table-column> -->
 			  </el-table>
 		  </el-tab-pane>
 	      <el-tab-pane label="FBA仓库" name="12">
@@ -301,25 +297,25 @@
 					  <el-table-column label="仓库" prop="name"></el-table-column>
 					  <el-table-column label="店铺" prop="gname"></el-table-column>
 					  <el-table-column label="SKU" prop="sku"></el-table-column>
-					  <el-table-column label="安全库存周期" prop="stockingCycle" width="120">
+					  <el-table-column label="安全库存周期(天)" prop="stockingCycle" width="120">
 						  <template #default="scope">
-							   <el-input v-model="scope.row.stockingCycle" ></el-input>
+							   <el-input v-model="scope.row.stockingCycle" @input="scope.row.stockingCycle=CheckInputInt(scope.row.stockingCycle)" ></el-input>
 						  </template>
 					  </el-table-column>
-					  <el-table-column label="最小发货周期" prop="mincycle" width="120">
+					  <el-table-column label="发货频率(天)" prop="mincycle" width="120">
 						  <template #default="scope">
-								<el-input v-model="scope.row.mincycle" ></el-input>
+								<el-input v-model="scope.row.mincycle" @input="scope.row.mincycle=CheckInputInt(scope.row.mincycle)" ></el-input>
 						  </template>
 					  </el-table-column>
 					  <el-table-column label="头程运费费用" prop="firstlegcharges" width="120">
 							  <template #default="scope">
-								  	<el-input v-model="scope.row.firstlegcharges" ></el-input>
+								  	<el-input v-model="scope.row.firstlegcharges" @input="scope.row.firstlegcharges=CheckInputFloat(scope.row.firstlegcharges)" ></el-input>
 							  </template>
 					  </el-table-column>
 					  <el-table-column label="可售" prop="afnFulfillableQuantity"></el-table-column>
 					  <el-table-column label="正在发货" prop="afnInboundWorkingQuantity"></el-table-column>
 					  <el-table-column label="待接收" prop="afnInboundShippedQuantity"></el-table-column>
-					  <el-table-column label="正在接受" prop="afnInboundReceivingQuantity"></el-table-column>
+					  <el-table-column label="正在接收" prop="afnInboundReceivingQuantity"></el-table-column>
 					  <el-table-column label="不可售" prop="afnUnsellableQuantity"></el-table-column>
 			  </el-table>
 		  </el-tab-pane>
@@ -333,6 +329,7 @@ import {Edit} from '@element-plus/icons-vue';
 import {useRouter } from 'vue-router'
 import {ElMessage } from 'element-plus';
 import {dateFormat} from '@/utils/index.js';
+import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 import inventoryApi from '@/api/erp/inventory/inventoryApi.js';
 import inventoryRptApi from '@/api/amazon/inventory/inventoryRptApi.js';
 import fbaCycleApi from '@/api/amazon/inbound/fbacycleApi.js';

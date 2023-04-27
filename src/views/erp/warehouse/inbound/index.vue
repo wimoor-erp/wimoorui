@@ -102,7 +102,7 @@
 	function handleDelete(){
 		 if(state.selectrows && state.selectrows.length>0){
 			 ElMessageBox.confirm(
-			    '删除后库存将回撤销，确定删除吗？',
+			    '删除后库存将会撤销，确定删除吗？',
 			    '删除入库单',
 			    {
 			      confirmButtonText: '确定',

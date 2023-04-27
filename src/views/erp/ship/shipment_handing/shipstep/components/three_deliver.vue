@@ -55,7 +55,7 @@
 									   />
 								</el-select>
 							</el-form-item>
-							<el-form-item label="跟踪编号">
+							<el-form-item label="API对接编号">
 							      <el-input v-model="form.ordernumber" />
 							    </el-form-item>
 								<el-form-item label="货件发货日期">
@@ -135,8 +135,20 @@
 			</el-col>
 			<el-col :span="12">
 				<div class="shi-right">
-                    <h4>提交货件跟踪信息</h4>
-					<el-select style="margin-top: 5px;" v-model="form.carrier" placeholder="请选择">
+                    <h4>提交货件跟踪信息<span class="font-extraSmall" v-if="transportStatus">
+					--运输状态:{{transportStatus}}</span>
+					</h4>
+					<el-radio-group v-model="form.tranType" style="margin-top: 5px;" @change="loadCarrier" :disabled="boxDisable">
+						<el-radio  label="SP">
+						<p>小包裹快递</p>
+						<span class="font-extraSmall">我要用单独的箱子由快递配送</span>
+						</el-radio>
+						<el-radio   label="LTL" >
+						<p>汽车零担</p>
+						<span class="font-extraSmall">我要发送托拍</span>
+						</el-radio>
+					</el-radio-group>
+					<el-select style="margin-top: -3px;padding-left:10px"  v-model="form.carrier" placeholder="请选择">
 						<el-option
 							 v-for="item in carrlist.list"
 							 :key="item"
@@ -144,20 +156,31 @@
 							 :value="item"
 						   />
 					</el-select>
-					<el-button style="margin-top: 5px;margin-left: 10px;" :loading="saveTransLoading" type="primary" @click="saveTransTrace">
+					<el-button style="margin-top: -3px;margin-left: 10px;" :loading="saveTransLoading" type="primary" @click="saveTransTrace">
 						提交
 					</el-button>
 					<el-table :data="boxinfolist.list" border  show-summary="true" >
-						<el-table-column prop="boxnum" label="箱子编号" width="100"   />
-						<el-table-column prop="" label="追踪编号" width="260">
+						<el-table-column prop="boxnum" label="箱号" width="55"   />
+						<el-table-column prop="" label="追踪编号" width="210">
 							<template #default="scope">
-								<el-input v-if="scope.$index==0" @input="trackingChange(scope.row)" v-model="scope.row.tracking_id"></el-input>
-								<el-input v-else v-model="scope.row.tracking_id"></el-input>
+							
+								<el-input v-if="scope.$index==0" @blur="trackingChange(scope.row,false)"  v-model="scope.row.tracking_id">
+								<template #suffix>
+								          <el-icon  @click="trackingChange(scope.row,true)" class="el-input__icon"><DCaret /></el-icon>
+								        </template>
+								</el-input>
+								<el-input v-else  v-model="scope.row.tracking_id"></el-input>
 							</template>
 						</el-table-column>
-						<el-table-column prop="package_status" label="包裹状态" width="100"   />
-						<el-table-column prop="qty" label="装箱数量" width="100"   />
-						<el-table-column prop="weight" label="重量(kg)" width="100"   />
+						<el-table-column prop="packagestatus" label="包裹状态" width="90"   >
+							<template #default="scope">
+								  <el-button link :loading="pkgLoading" v-if="scope.row.package_status"> {{scope.row.packagestatus}}</el-button>
+								  <el-button link :loading="pkgLoading"  type="info" v-else>未提交</el-button>
+								</template>
+							</el-table-column>
+							
+						<el-table-column prop="qty" label="装箱数量" width="80"   />
+						<el-table-column prop="weight" label="重量(kg)" width="80"   />
 						<el-table-column prop="volume" label="尺寸(cm)材积"  >
 							<template #default="scope">
 								<span>{{scope.row.length}}</span>*
@@ -185,7 +208,7 @@
 				<div class="rt-btn-group">
 					<el-button @click="openMaterialCon">耗材出库</el-button>
 					<el-button type="primary" @click="stepclick(3)" plain>下一步</el-button>
-					<el-button type="primary" :loading="submitloading" @click="saveSelfTrans('confirm')">确认出库</el-button>
+					<el-button type="primary" v-if="shipmentstatus<=4 && shipmentstatus>=2"  :loading="submitloading" @click="saveSelfTrans('confirm')">确认出库</el-button>
 				</div>
 		</el-row>
 		
@@ -362,8 +385,8 @@
 			</el-dialog>
 	</div>
 </template>
-<script>
-	import {h, ref ,watch,reactive,onMounted} from 'vue'
+<script setup>
+	import {h, ref ,watch,reactive,onMounted,defineEmits} from 'vue'
 	import ShipmentOpt from"./shipment_operator.vue"
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
     import transportationApi from '@/api/erp/ship/transportationApi';
@@ -372,91 +395,90 @@
 	import { ElMessage,ElMessageBox } from 'element-plus';
 	import { ElTable } from 'element-plus'
 	import CompareList from "@/views/erp/ship/transportation/components/compare.vue"
-	import { View } from '@element-plus/icons-vue'
+	import { View ,DCaret} from '@element-plus/icons-vue'
 	import {BalanceTwo} from '@icon-park/vue-next';
 	import {getValue} from '@/utils/index';
-	export default {
-			name: 'Fromlist',
-			components: {
-				ShipmentOpt,
-				BalanceTwo,
-				CompareList,
-				View
-			},
-			emits: ["stepdata","change"],
-			setup(props, context) {
-				let router = useRouter()
-				let shipdata = ref({})
-				let shipfee = ref(0)
-				let totalfee = ref(0)
-				let historyDialogVisible = ref(false)
-				let cosDialogVisible = ref(false)
-				let materialDialogVisible = ref(false)
-				let submitloading=ref(false);
-				let optRef = ref();
-				let compareVisible = ref(false);
-				let saveTransLoading=ref(false);
-				let comareRef = ref(CompareList);
-				const shipmentid = router.currentRoute.value.query.shipmentid;
-				//上传后的文件列表
-				let fileList = ref([])
-				let infoVisiable = ref(false);
-				// 运行上传文件大小，单位 M
-				let fileSize = ref(2)
-				//请求头
-				let headers = ref({
-					"Content-Type": "multipart/form-data"
-				})
-				let cusfile = ref()
-				let form = reactive({
-					pronumber: '',
-					carrier: '',
-					arrdate: '',
-					shipdate: '',
-					remark: '',
-					transtype: '',
-					company: '',
-					channel: '',
-					wtype: '0',
-					wunit: 'kg',
-					rweight: 0,
-					singleprice: 0,
-					otherfee: 0,
-					outtime: '',
-					intime: '',
-					ordernumber: ''
-				})
-				let tranlist = reactive({
-					list: []
-				})
-				let companylist = reactive({
-					list: []
-				})
-				let channellist = reactive({
-					list: []
-				})
-				let carrlist = reactive({
-					list: []
-				})
-				let boxinfolist = reactive({
-					list: []
-				})
-				let historylist = reactive({
-					list: []
-				})
-				let materiallist = reactive({
-					list: []
-				})
-				let customslist = reactive({
-					list: []
-				})
-	            let pricemessage=ref("");
-				var param={sumBoxWeight:0,sumBoxVolume:0};
-				function trackingChange(row){
+	import PackageStatus from '@/model/amazon/ship/PackageStatus.json';
+	import TransportStatus from '@/model/amazon/ship/TransportStatus.json';
+	const emit = defineEmits(['stepdata',"change"]);
+		let router = useRouter()
+		let shipdata = ref({})
+		let shipfee = ref(0)
+		let totalfee = ref(0)
+		let historyDialogVisible = ref(false)
+		let cosDialogVisible = ref(false)
+		let materialDialogVisible = ref(false)
+		let submitloading=ref(false);
+		let optRef = ref();
+		let compareVisible = ref(false);
+		let saveTransLoading=ref(false);
+		let comareRef = ref(CompareList);
+		let pkgLoading=ref();
+		const shipmentid = router.currentRoute.value.query.shipmentid;
+		//上传后的文件列表
+		let fileList = ref([])
+		let infoVisiable = ref(false);
+		let transportStatus=ref("");
+		// 运行上传文件大小，单位 M
+		let fileSize = ref(2)
+		//请求头
+		let headers = ref({
+			"Content-Type": "multipart/form-data"
+		})
+		let cusfile = ref()
+		let shipmentstatus=ref();
+		let form = reactive({
+			pronumber: '',
+			carrier: '',
+			arrdate: '',
+			shipdate: '',
+			remark: '',
+			transtype: '',
+			tranType:"SP",
+			company: '',
+			channel: '',
+			wtype: '0',
+			wunit: 'kg',
+			rweight: 0,
+			singleprice: 0,
+			otherfee: 0,
+			outtime: '',
+			intime: '',
+			ordernumber: ''
+		})
+		let tranlist = reactive({
+			list: []
+		})
+		let companylist = reactive({
+			list: []
+		})
+		let channellist = reactive({
+			list: []
+		})
+		let carrlist = reactive({
+			list: []
+		})
+		let boxinfolist = reactive({
+			list: []
+		})
+		let historylist = reactive({
+			list: []
+		})
+		let materiallist = reactive({
+			list: []
+		})
+		let customslist = reactive({
+			list: []
+		})
+		let pricemessage=ref("");
+		var param={sumBoxWeight:0,sumBoxVolume:0};
+				function trackingChange(row,allfill){
 					boxinfolist.list.forEach(item=>{
-						if(!item['tracking_id']){
-							item.tracking_id=row.tracking_id;
-						}
+						   if(allfill){
+							  item.tracking_id=row.tracking_id;
+						   }else if(!item.tracking_id){
+							   item.tracking_id=row.tracking_id;
+						   }
 					})
 				}
 				async function getTransTypeAll() {
@@ -478,7 +500,17 @@
 						getCompanyTranstypeList(val, type);
 					}
 				}
-	
+			function loadCarrier(){
+				  var tranType=form.tranType;
+				  if(shipdata.value.market!=null){
+					  shipmenthandlingApi.getCarrier({
+						"country":shipdata.value.market,
+						"transtyle":tranType
+					  }).then(res=>{
+						   carrierData.list=res.data;
+					  })
+				  }
+			}
 				function getFrameUrl(company) {
 					let url = "";
 					companylist.list.forEach(item=>{
@@ -528,7 +560,6 @@
 					 channellist.list.forEach(item=>{
 						 if(item.id==form.channel){  channel=item;  }
 					 })
-					  console.log(channel);
 					if(type=="init"){
 						if(channel.pretime>0&&!form.arrdate){
 							form.arrdate=new Date(new Date().getTime() + 3600 * 1000 * 24 * (channel.pretime));
@@ -625,14 +656,23 @@
 	
 				}
 	
-				function getShipAmazonInfo() {
-					shipmenthandlingApi.getShipAmazonInfo({
-						"shipmentid": shipmentid
-					}).then(res => {
+				function getShipAmazonInfo(res) {
 						var data = res.data;
+						var hastransCart=false;
+						shipmentstatus.value=res.data.shipment.status;
 						if (data.cart && data.cart.length > 0) {
 							boxinfolist.list = data.cart;
 							data.cart.forEach(item=>{
+								if(item.tracking_id&&(item.tracking_id.indexOf("FBA")==0||item.tracking_id=="123456")){
+									 item.package_status=undefined;
+									 item.tracking_id="";
+								 }
+								if(item.package_status){
+									 item.packagestatus=PackageStatus[item.package_status];
+									 if(item.package_status!='CLOSED'){
+										 hastransCart=true;
+									 }
+								} 
 								param.sumBoxWeight=param.sumBoxWeight+item.weight;
 								param.sumBoxVolume=param.sumBoxVolume+item.volume;
 							})
@@ -642,6 +682,10 @@
 						if (data.shipment.status5date&&!form.shipdate) {
 							form.shipdate = data.shipment.status5date;
 						}
+						form.tranType=data.shipment.transtyle;
+						if(!form.tranType){
+							form.tranType="SP";
+						}
 						if (data.transinfo) {
 							form.singleprice = data.transinfo.singleprice;
 							form.rweight = data.transinfo.transweight;
@@ -650,8 +694,9 @@
 							} else {
 								form.wtype = '1';
 							}
-	
-							form.wunit = data.transinfo.wunit;
+	                       if(data.transinfo.wunit){
+							  form.wunit = data.transinfo.wunit;
+						   }
 							if (data.transinfo.arrivalTime) {
 								form.arrdate = data.transinfo.arrivalTime;
 							}
@@ -684,6 +729,7 @@
 							if(!form.shipdate){
 								form.shipdate=new Date();
 							}
+							
 							changeTransType(form.transtype, 'init');
 						} else {
 							changeTransType(form.transtype);
@@ -693,7 +739,45 @@
 								form.carrier = data.shipment.carrier;
 							}
 						}
+						transportStatus.value=res.data.shipment.transportStatus;
+						if(data.shipment&&TransportStatus[data.shipment.transportStatus]){
+							 transportStatus.value=TransportStatus[data.shipment.transportStatus];
+						}
+						if(hastransCart==true){
+							 loadCartInfo();
+						}
+						loadCarrier();
+				}
+				
+				function loadCartInfo(){
+					pkgLoading.value=true;
+					shipmenthandlingApi.getShipCart({"shipmentid": shipmentid}).then(res => {
+						pkgLoading.value=false;
+						if(res.data){
+							var haspkg=false;
+						 if(res.data.cart){
+							 res.data.cart.forEach(box=>{
+								 if(box.tracking_id.indexOf("FBA")==0||box.tracking_id=="123456"){
+									 box.package_status=undefined;
+									 box.tracking_id="";
+								 }else{
+									 haspkg=true;
+								 }
+								if(box.package_status){
+									 box.packagestatus=PackageStatus[box.package_status];
+								}
+							 })
+						 }
+						 if(haspkg==true){
+							  boxinfolist.list = res.data.cart;
+						 }
+						 transportStatus.value=res.data.shipment.transportStatus;
+						 if(res.data.shipment&&TransportStatus[res.data.shipment.transportStatus]){
+							 	transportStatus.value=TransportStatus[res.data.shipment.transportStatus];
+						 }
+						}
 					})
+					
 				}
 	            function getDateValue(value){
 					if(value){
@@ -728,18 +812,7 @@
 					data.outarrivaldate=getDateValue(data.outarrivaldate);
 					data.inarrivaldate = form.intime;
 					data.inarrivaldate=getDateValue(data.inarrivaldate);
-					if ("SP" == shipdata.value.transtyle) {
-						// var boxinfos = [];
-						// boxinfolist.list.forEach(function(item, index) {
-						// 	var trackinginfo = {};
-						// 	trackinginfo.boxnum = item.boxnum;
-						// 	trackinginfo.value = item.tracking_id;
-						// 	boxinfos.push(trackinginfo);
-						// })
-						// data.boxinfo = boxinfos;
-					} else {
-						data.proNumber = form.pronumber;
-					}
+					data.proNumber = form.pronumber;
 					if(ftype=="confirm"){
 					    submitloading.value=true;
 					}
@@ -749,7 +822,9 @@
 							type: 'success',
 						});
 						 submitloading.value=false;
-						 context.emit("change");
+						 if(ftype=="confirm"){
+						    emit("change");
+						 }
 					}).catch(e=>{
 						  submitloading.value=false;
 					})
@@ -772,12 +847,15 @@
 					//}
 					data.carrier = form.carrier;
 					data.shipmentid = shipmentid;
+					data.transtype=form.tranType
 					shipmenthandlingApi.saveTransTrace(data).then(res => {
-						saveTransLoading.value=false;
 						ElMessage({
 							message: '操作成功！',
 							type: 'success',
-						})
+						});
+						saveTransLoading.value=false;
+						pkgLoading.value=true;
+						setTimeout(function(){  loadCartInfo(); },1000);
 					}).catch(e=>{
 						saveTransLoading.value=false;
 					})
@@ -827,12 +905,25 @@
 				function submitMaterialCon() {
 					var warehouseid = shipdata.value.warehouseid;
 					var skulist = [];
+					var isok=true;
 					materiallist.list.forEach(function(item) {
 						var row = {}
 						row.sku = item.sku;
 						row.amount = item.needamount;
+						if(row.amount<=0){
+							isok=false;
+						}
+						if(item.inventoryqty<=0){
+							isok=false;
+						}
 						skulist.push(row);
 					});
+					if(isok==false){
+						ElMessage({
+							message: '操作出库数量不能小于等于0或可用库存不够！',
+							type: 'error',
+						})
+					}
 					shipmenthandlingApi.saveInventoryConsumable({
 						"shipmentid": shipmentid,
 						"warehouseid": warehouseid,
@@ -927,82 +1018,26 @@
 					})
 				}
 	
-				function loadOptData(datas) {
-					optRef.value.shipDatas = datas;
-					shipdata.value = datas;
-					getTransTypeAll();
+				async function loadOptData(datas) {
+					optRef.value.loadOptData(datas.shipmentAll);
+					shipdata.value = datas.shipmentAll;
+					await getTransTypeAll();
+					if(!datas.shipmentAll.transtyle){
+						datas.shipmentAll.transtyle="SP";
+					}
 					shipmenthandlingApi.getCarrier({
-						"country":datas.countryCode,
-						"transtyle":datas.transtyle
-					}).then(res=>{
+						"country":datas.shipmentAll.countryCode,
+						"transtyle":datas.shipmentAll.transtyle
+					}).then(res=>{  
 						 carrlist.list=res.data;
 					})
-					getShipAmazonInfo();
+					getShipAmazonInfo({"data":datas});
 				}
 	
 				function stepclick(step) {
-					context.emit("stepdata", step);
+					emit("stepdata", step);
 				}
-				return {
-					form,
-					getTransTypeAll,
-					tranlist,
-					getCompanyTranstypeList,
-					changeTransType,
-					shipdata,
-					companylist,
-					channellist,
-					carrlist,
-					shipfee,
-					totalfee,
-					calculatefee,
-					getShipAmazonInfo,
-					saveSelfTrans,
-					boxinfolist,
-					historyDialogVisible,
-					cosDialogVisible,
-					materialDialogVisible,
-					openHistory,
-					openCosUpload,
-					openMaterialCon,
-					historylist,
-					feefunc,
-					submitMaterialCon,
-					materiallist,
-					dateFormat,
-					downloadCustoms,
-					customslist,
-					dateTimesFormat,
-					deleteFtpFile,
-					downloadDataTemplate,
-					uploadFile,
-					handleExceed,
-					beforeUpload,
-					fileList,
-					headers,
-					cusfile,
-					uploadCusFile,
-					loadOptData,
-					optRef,
-					stepclick,
-					changeCompany,
-					compareVisible,
-					comareRef,
-					selectTrans,
-					getFrameUrl,
-					infoVisiable,
-	                pricemessage,
-					formatFloat,
-					getValue,
-					trackingChange,
-					submitloading,
-					saveTransLoading,
-					handleOptChange,
-					saveTransTrace,
-					setFormData,
-				}
-			}
-		}
+			   defineExpose({loadOptData})
 </script>
 
 <style>

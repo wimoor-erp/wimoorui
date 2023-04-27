@@ -20,9 +20,10 @@
 			   v-loading="loading"
 			    height="calc(100vh - 370px)" 
 			   @selection-change="handleSelectionChange"
+			   @current-change="currentChange"
 			   border
 			 >
-			   <el-table-column type="selection" width="55" align="center" />
+			   <el-table-column v-if="!single" type="selection" width="55" align="center" />
 			   <el-table-column label="名称" prop="name" width="220" />
 			   <el-table-column label="编码" prop="number" width="220" />
 			   <el-table-column label="备注" align="center"  prop="remark" show-overflow-tooltip  > 
@@ -51,6 +52,7 @@
 			                        search:'',
 								    tableData:[],
 								    ids:[],
+									warehouse:null,
 								    queryParams:{ftype:"self_usable"},
 								    warehouseTypeOptions:[{label:"正品仓",value:"self_usable"},
 								                  {label:"测试仓",value:"self_test"},
@@ -59,19 +61,21 @@
 								    loading:false,
 			                     });
 								 
-    const { single,
+    const { 
 			loading,
 			tableData,
 			queryParams,
 			search,
 			ids,
+			warehouse,
 			dialog,
 			warehouseTypeOptions,
 		  } = toRefs(state);
 	let props = defineProps({
-	    visible:false
+	    visible:false,
+		single:false,
 	})
-	 const { visible } = toRefs(props);
+	 const { visible,single } = toRefs(props);
 	 const emit = defineEmits(['dataChange']);
 	 
 			function loadData() {
@@ -81,26 +85,37 @@
 						state.tableData=res.data;
 				}) 
 			}
-			
+			function currentChange(row){
+				state.warehouse =row;
+			}
             function handleClose(){
 				props.visible = false;
 				emit("handleClose");
 			}
 			
 			function submitFunc() {
-				if (state.ids.length > 0) {
-					props.visible = false;
-					emit("dataChange",state.ids);
-				} else {
-					ElMessage.error('提交的行数不能小于1！')
-					props.visible = true;
+				if(props.single){
+					if (state.warehouse!=null) {
+						props.visible = false;
+						emit("dataChange",state.warehouse);
+					} else {
+						ElMessage.error('提交的行数不能小于1！')
+						props.visible = true;
+					}
+				}else{
+					if (state.ids.length > 0) {
+						props.visible = false;
+						emit("dataChange",state.ids);
+					} else {
+						ElMessage.error('提交的行数不能小于1！')
+						props.visible = true;
+					}
 				}
+				
 			}
 		 
 		 function handleSelectionChange(selection) {
-		   state.ids = selection.map((item) => item.id);
-		   state.single = selection.length !== 1;
-		   state.multiple = !selection.length;
+		     state.ids = selection.map((item) => item.id);
 		 }
 		 onMounted(()=>{
 			 loadData();

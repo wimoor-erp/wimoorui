@@ -12,17 +12,19 @@
 				 <el-table-column prop="product" label="名称/SKU"   show-overflow-tooltip>
 				    <template #default="scope">
 				       <div class='name'>{{scope.row.name}}</div>
+					   <el-space>
 				       <el-link type="primary" class="font-small">{{scope.row.sku}} </el-link>
 				 	  <AssemblyDialog @change="getAssembliyList(scope.row)" :loading="scope.row.assloading" :assemblyList="scope.row.assemblyList">
 						  <template #field>
-							  <el-link type="warning" class="font-small" v-if="scope.row.issfg=='1'"
+							  <el-tag type="warning"  v-if="scope.row.issfg=='1'"
 							  size="small" 
-							  style="margin-left:3px;" >组</el-link>
+							  style="margin-left:3px;" >组合</el-tag>
 						  </template>
 					  </AssemblyDialog>
+					  </el-space>
 				   </template>
 				 </el-table-column>
-				 <el-table-column label="建议发货总量" prop="needship"  sortable='custom'  width="125"></el-table-column>
+				 <el-table-column label="建议发货总量" prop="needship"  sortable   width="125"></el-table-column>
 				 <el-table-column label="实际发货总量" sortable prop="amount" width="125">
 				 	<template #default="scope">
 				 		<div v-if="scope.row.amount">{{scope.row.amount}}</div>
@@ -40,11 +42,6 @@
 				 			</div>
 				 	</template>
 				 </el-table-column>
-				 <el-table-column label="提示" sortable prop="quantity" width="100">
-				 	<template #default="scope">
-				 	       <div>库存不足</div>
-				 	</template>
-				 </el-table-column>
 			</el-table>
 			<template #footer>
 				<el-button @click="dialog.visible=false">关闭</el-button>
@@ -56,7 +53,7 @@
 <script setup>
 	import{ref,defineExpose,reactive,toRefs,onMounted}from"vue"
 	import {Close} from '@element-plus/icons-vue';
-	import AssemblyDialog from "./assembly_dialog";
+	import AssemblyDialog from "@/views/erp/components/assembly_dialog";
 	import { ElMessage, ElMessageBox } from 'element-plus';
 	import {sublit} from "@/api/erp/assembly/assemblyApi";
 	const state=reactive({

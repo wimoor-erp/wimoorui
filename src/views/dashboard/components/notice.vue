@@ -1,5 +1,5 @@
 <template>
-  <el-col :span="6">
+  <el-col :span="span">
     <el-space style="margin-bottom:8px;">
       <span class="pag-title">公告</span>
       <span class="pag-small-Extra"> </span>
@@ -30,6 +30,7 @@ import notifyApi from '@/api/sys/admin/notify'
 export default {
   name: "Notice",
   components: {},
+  props:["span"],
   setup() {
 	  let messageData =reactive({list: []});
 	  onMounted(()=>{

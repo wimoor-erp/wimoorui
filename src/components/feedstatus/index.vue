@@ -75,13 +75,12 @@
 			let num = 0;
 
 			function submitfeedInfo(feedid) {
-				let param = {};
 				if (feedid) {
-					param.queueid = feedid
+					params.queueid = feedid
 				} else {
-					param.queueid = prop.feedid
+					params.queueid = prop.feedid
 				}
-				feedApi.submitfeedInfo(param).then(res => {
+				feedApi.submitfeedInfo(params).then(res => {
 					if (res.data) {
 						var data = res.data;
 						feed_processing_status.value = data.status;

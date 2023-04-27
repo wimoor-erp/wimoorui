@@ -1,5 +1,5 @@
 <template>
-	<el-dialog title="发货记录" 
+	<el-dialog title="发货记录(请注意:[确认]后需要[保存]才能生效)" 
 	           v-model="dialog.visible"
 	           :append-to-body="true" 
 			   >
@@ -45,8 +45,12 @@
 																 </el-select>
 															 </td>
 															 <td>
-																 <el-input-number  style="width:80px;" :controls="false"  
-																 v-model="row.amount"></el-input-number>
+																 <el-input-number  
+																 style="width:80px;" 
+																 :controls="false"  
+																 v-model="row.amount"
+																 @input="row.amount=CheckInputInt(row.amount)"
+																 ></el-input-number>
 															 </td>
 															 <td>
 																 <el-select class="in-wi-24" 
@@ -87,8 +91,9 @@
 	import {Close,Plus} from '@element-plus/icons-vue';
 	import * as echarts from 'echarts';
 	import shipmentApi from "@/api/amazon/inbound/shipmentApi.js";
-	import {dateFormat,getDateValue} from "@/utils/index.js";
-	import { ElMessage, ElMessageBox } from 'element-plus'
+	import {dateFormat,getDateValue,CheckInputInt} from "@/utils/index.js";
+	import { ElMessage, ElMessageBox } from 'element-plus';
+	import warehouseApi from '@/api/erp/warehouse/warehouseApi';
 	import planApi from '@/api/erp/ship/planApi.js';
 	const state=reactive({
 		    dialog:{visible:false},tableData:[],loading:false,parentrow:[],
@@ -133,18 +138,21 @@
 		state. dialog.visible=false;
 		emit("change",state.tableData,state.itemrow,state.parentrow);
 	}
-	function show(itemrow,parentrow,transtypeOptions,overseaOptions){
+	function show(itemrow,parentrow,transtypeOptions){
 		state.dialog.visible=true;
 		state.itemrow=itemrow;
 		var row=JSON.parse(JSON.stringify(itemrow));
 		planApi.subsplit(row).then(res=>{
 			if(res.data.length>0){
 				res.data.forEach(splititem=>{
-					if(!row.transtype){
-						row.transtype="";
+					if(!splititem.transtype){
+						splititem.transtype="";
 					}
-					if(!row.overseaid){
-						row.overseaid="";
+					if(splititem.overseaid==null
+					||splititem.overseaid==undefined
+					||splititem.overseaid==""
+					||splititem.overseaid=="null"){
+						splititem.overseaid="";
 					}
 				})
 				state.tableData=res.data;
@@ -152,7 +160,10 @@
 				if(!row.transtype){
 					row.transtype="";
 				}
-				if(!row.overseaid){
+				if(row.overseaid==null
+				||row.overseaid==undefined
+				||row.overseaid==""
+				||row.overseaid=="null"){
 					row.overseaid="";
 				}
 				state.tableData=[];
@@ -161,12 +172,19 @@
 		})
 		state.parentrow=parentrow;
 		state.transtypeOptions=JSON.parse(JSON.stringify(transtypeOptions));
-		state.overseaOptions=JSON.parse(JSON.stringify(overseaOptions));;
+		 loadOverSeaWarehouse(itemrow);
+	}
+	
+	function loadOverSeaWarehouse(itemrow){
+		   warehouseApi.getOversaWarehouse({ftype:"oversea_usable",groupid:itemrow.groupid,country:itemrow.country}).then((res)=>{
+		   		res.data.push({"id":"","name":"FBA仓"})
+		   	    state.overseaOptions=res.data;
+			});
 	}
 	defineExpose({show});
 </script>
 
-<style>
+<style scoped="scoped">
 	.badShip{
 		 background-color: #fff3ec;
 	}

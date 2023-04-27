@@ -96,40 +96,63 @@
 		   <el-row class="mar-bot">
 		  <el-space>
 			    <ShipmentOpt ref="optRef"  />
-				 <el-button @click="validateShipment" >验证货件是否正确</el-button>	 
+				 <el-button @click="validateShipment" :loading="validateLoading" >验证货件是否正确</el-button>	 
 		  </el-space>
 		  <div class="rt-btn-group">
 		  	 <el-button :disabled="piceDisable" :loading="confirmloading" type="primary" @click="qtyconfirm">确认配货数</el-button>
 			  <el-button type="primary"  @click="stepclick(1)" plain>下一步</el-button>
 		  </div>
 		  </el-row>
-		  
+		  <el-row v-if="hasAssembly">
+			  <el-col :span="24">
+			   <el-card  shadow="never"   class=" assemblynoticecls">
+				   <el-space>
+					 <div>
+						 <el-icon class="text-red" style="font-size:24px;margin-top:3px;"><WarningFilled /></el-icon>
+					 </div>  
+					 <div  style="maring-top:-4px;">
+						该货件生成了1个组装任务，
+						系统已经入库可组装库存，
+						请在该货件发货前，
+						完成相应主SKU的组装任务，
+						<el-button link type="primary" @click.stop="handleToAssemblyForm" size="large">
+							<span style="font-size:16px;">去查看</span></el-button>
+						组装单 
+					 </div>
+					   						
+				   </el-space>
+				
+			   </el-card>
+			   </el-col>
+		  </el-row>
 		   
 	</div>
+	
 </template>
 
-<script>
-	import {Search,ArrowDown} from '@element-plus/icons-vue'
+<script setup>
+	import {Search,ArrowDown,WarningFilled} from '@element-plus/icons-vue'
 	import {Printer,AddPrint,InboxOut} from '@icon-park/vue-next';
-	import { ref,reactive,onMounted } from 'vue'
+	import { ref,reactive,onMounted,defineEmits } from 'vue'
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
 	import {format,dateFormat,dateTimesFormat} from '@/utils/index';
 	import { ElMessage,ElMessageBox } from 'element-plus';
 	import { useRoute,useRouter } from 'vue-router'
-	import ShipmentOpt from"./shipment_operator.vue"
-	export default{
-		name:"One_picking",
-		components:{Search,ArrowDown,Printer,AddPrint,InboxOut,ShipmentOpt},
-		emits:["stepdata"],
-		setup(props,context){
-			let router = useRouter()
-			let productData=reactive({list:[]})
-			let shipInfo=ref({})
-			let boxcontents=ref("FEED")
-			let optRef=ref();
-			let piceDisable=ref(false);
-			let confirmloading=ref(false);
-			let boxconName=ref("系统提交装箱");
+	import ShipmentOpt from"./shipment_operator.vue";
+	import {downloadShipmentLabel} from '@/hooks/amazon/listing/label.js';
+	import {assemblyShipment} from '@/api/erp/assembly/assemblyApi.js'
+		const emit = defineEmits(['stepdata']);
+		let router = useRouter()
+		let productData=reactive({list:[]})
+		let shipInfo=ref({})
+		let validateLoading=ref(false);
+		let hasAssembly=ref(false);
+		let boxcontents=ref("FEED")
+		let optRef=ref();
+		let piceDisable=ref(false);
+		let confirmloading=ref(false);
+		let boxconName=ref("系统提交装箱");
+		
 			function openShipmentInfo(ftype){
 					if(ftype=="mobile"){
 						var path={path:"/shipment_handing/pehuo","query":{"shipmentid":shipInfo.value.shipmentid, title:"配货单",path:"/shipment_handing/pehuo"}};
@@ -164,63 +187,8 @@
 					}
 				
 			}
-			function downloadLabel(ftype){
-				if(ftype=="pdf"){
-					shipmenthandlingApi.downPDFLabel({
-						"shipmentid":shipInfo.value.shipmentid,
-						"ftype":"0",
-						"paramStr":''
-					}).then(res => {
-							ElMessage({
-							    message: '导出成功！',
-							    type: 'success',
-							  })
-						 const blob = new Blob([res]);
-						 if(window.navigator["msSaveOrOpenBlob"]&&window.navigator.msSaveOrOpenBlob()){
-							navigator.msSaveBlob(blob, "shipmentLabel.pdf")
-						 }else{
-							 var link=document.createElement("a");
-							 link.href=window.URL.createObjectURL(blob);
-							 link.download="shipmentLabel.pdf";
-							 link.click();
-							 window.URL.revokeObjectURL(link.href);
-						 }
-					
-					}).catch(e=>{
-							ElMessage({
-							    message: '导出失败！',
-							    type: 'error',
-							  })
-					})
-				}else{
-					shipmenthandlingApi.downExcelLabel({
-						"shipmentid":shipInfo.value.shipmentid,
-						"ftype":"0",
-						"paramStr":''
-					}).then(res => {
-							ElMessage({
-							    message: '导出成功！',
-							    type: 'success',
-							  })
-						 const blob = new Blob([res]);
-						 if(window.navigator["msSaveOrOpenBlob"]&&window.navigator.msSaveOrOpenBlob()){
-							navigator.msSaveBlob(blob, "shipmentLabel.xlsx")
-						 }else{
-							 var link=document.createElement("a");
-							 link.href=window.URL.createObjectURL(blob);
-							 link.download="shipmentLabel.xlsx";
-							 link.click();
-							 window.URL.revokeObjectURL(link.href);
-						 }
-					
-					}).catch(e=>{
-							ElMessage({
-							    message: '导出失败！',
-							    type: 'error',
-							  })
-					})
-				}
-				
+			function downloadLabel(ftype){ 
+				downloadShipmentLabel(shipInfo.value.shipmentid,ftype,null);
 			}
 			function changeboxcontents(value){
 				boxcontents.value=value;
@@ -246,7 +214,7 @@
 					"itemList":lists
 				}).then(res=>{
 					confirmloading.value=false;
-					context.emit("stepdata",1);
+					emit("stepdata",1);
 				}).catch(error=>{
 					confirmloading.value=false;
 				})
@@ -255,18 +223,23 @@
 			
 			
 			function validateShipment(){
+				validateLoading.value=true;
 				shipmenthandlingApi.validateShipment({
 					"shipmentid":shipInfo.value.shipmentid
 				}).then(res=>{
+					validateLoading.value=false;
 					 ElMessage({
 					     message: '验证成功,该货件未发现问题！',
 					     type: 'success',
 					   })
+				}).catch(error=>{
+					validateLoading.value=false;
 				})
 			}
-			function loadOptData(datas){
-				optRef.value.shipDatas=datas;
-				shipInfo.value=datas;
+			function loadOptData(shipmentAll){
+				optRef.value.loadOptData(shipmentAll);
+				shipInfo.value=shipmentAll;
+				productData.list=shipmentAll.itemList;
 				if(shipInfo.value.status=="2" || shipInfo.value.status=="3" || shipInfo.value.status=="4"){
 					piceDisable.value=false;
 				}else{
@@ -277,19 +250,29 @@
 				}else{
 					boxconName.value="系统提交装箱";
 				}
+				assemblyShipment({"shipmentid":shipmentAll.shipmentid}).then(res=>{
+					if(res.data&&parseInt(res.data)>0){
+						hasAssembly.value=true;
+					}
+				})
 			}
 			function stepclick(step){
 				context.emit("stepdata",step);
 			}
-			return{
-				productData,openShipmentInfo,shipInfo,downloadLabel,changeboxcontents,boxcontents,qtyconfirm,
-				validateShipment,loadOptData,optRef,stepclick,piceDisable,boxconName,confirmloading
+			function handleToAssemblyForm(){
+				router.push({
+					path:'/erp/purchase/process',
+					query:{
+					  shipmentid:shipInfo.value.shipmentid,
+					  title:"加工单",
+					  path:'/erp/purchase/process',
+					}
+				})
 			}
-		}
-	}
+		  defineExpose({loadOptData})
 </script>
 
-<style>
+<style scoped>
 	.icon-prin{
 		display: flex;
 		align-items: center;
@@ -297,5 +280,9 @@
 	.icon-prin .el-dropdown-link{
 		margin-left: 8px;
 		color: var(--el-color-primary);
+	}
+	.assemblynoticecls{
+		background:#FFF3D8;
+		border: solid 1px #FFDDA2;
 	}
 </style>

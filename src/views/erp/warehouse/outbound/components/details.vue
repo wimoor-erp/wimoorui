@@ -1,8 +1,15 @@
 <template>
-	  <div class="main-sty">
+	<el-scrollbar class="he-scr-car" @scroll="scroll">
+							 <div class="gird-line-head">
+							 <h3>出库单详情</h3>
+							 <el-button   class='ic-btn' title='帮助文档'>
+							   <help theme="outline" size="16" :strokeWidth="3"/>
+							 </el-button>
+							 </div>
+							 <div class="fill-from-body">
 			<el-descriptions :column="2">
 			    <el-descriptions-item label="单据编码">{{warehouseform.number}}</el-descriptions-item>
-				<el-descriptions-item label="收件人">{{warehouseform.customer}}</el-descriptions-item>
+				<el-descriptions-item label="收件人">{{warehouseform.customers}}</el-descriptions-item>
 			    <el-descriptions-item label="出库仓库">{{warehouseform.warehouse}}</el-descriptions-item>
 			    <el-descriptions-item label="快递物流">{{warehouseform.express}}</el-descriptions-item>
 				<el-descriptions-item label="出库申请人">{{warehouseform.creator}}</el-descriptions-item>
@@ -41,19 +48,26 @@
 			  		 <el-table-column label="可用库存" prop="fulfillable">
 			  		 </el-table-column>
 			  	 </el-table>
-				  <div style="float: right;margin-top: 10px;">
-					<el-button  @click.stop="closePage">关闭</el-button>
-				  </div>
+				 </div>
+			</el-scrollbar>
+				 					<div class='text-center mar-top-16'>
+				 						 <div style="padding-top:10px;">
+				 							<el-space>
+				 								<el-button  @click.stop="closePage">关闭</el-button>
+				 							</el-space>
+				 						</div>
+				 					</div>
 	 
-	</div>
 </template>
 <script setup>
+	import {Plus,Minus,Help} from '@icon-park/vue-next';
 	import {ArrowDown,Edit,View,Upload,Download} from '@element-plus/icons-vue';
 	import { ref,reactive,onMounted,watch,defineExpose,toRefs,inject } from 'vue';
 	import { ElMessage, ElMessageBox } from 'element-plus';
 	import {dateFormat,dateTimesFormat} from '@/utils/index.js';
 	import outApi from '@/api/erp/inventory/outApi.js';
 	import {useRouter } from 'vue-router';
+	import {redirectToList} from '@/utils/page_helper.js';
 	const emitter = inject("emitter"); // Inject `emitter`
 	const router = useRouter();
 	const id = router.currentRoute.value.query.id;
@@ -77,16 +91,7 @@
 		});
 	}
 	function closePage(){
-		closeTab();
-		setTimeout(function(){
-			router.push({
-				path:"/erp/warehouse/outbound",
-				query:{
-					title:'出库单详情',
-					path:"/erp/warehouse/outbound",
-				},
-			})
-		},500)
+              redirectToList(router,"/erp/warehouse/outbound",'出库单详情');
 	}
 	
 	defineExpose({
@@ -97,6 +102,31 @@
 	});
 </script>
 
-<style>
-
+<style scoped>
+.font-12{font-size: 12px;margin-right:4px;}
+		.he-scr-car{
+			height:calc(100vh - 176px);
+			margin-bottom: 20px;
+		}
+	.in-wi-24{
+			width: 400px;
+		}
+		.mark-re{
+			margin-top: 16px;
+			margin-bottom:16px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+	.mark-re h5::before{
+		content: "";
+		display: inline-block;
+		height: 13px;
+		width: 4px;
+		margin-right:8px;
+		background-color: #FF6700;
+	}
+	.fill-from-body{
+		margin:16px 24px;
+	}
 </style>

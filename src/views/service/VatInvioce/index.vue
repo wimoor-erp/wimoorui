@@ -51,7 +51,7 @@
        		  <el-form-item label="颜色">
        		       <el-select  :popper-append-to-body="false" placeholder="颜色选择" @change="colorChange">
        		       <el-option
-       		             v-for="item in color"
+       		              v-for="item in color"
        		             :key="item.value"
        		             :label="item.label"
        		             :value="item.value"
@@ -152,8 +152,8 @@
             //数据接收
                 return{
                 tableData,
-                    pagesize,
-                    currentPage,
+                pagesize,
+                currentPage,
                 markType,
                 markData,
             }

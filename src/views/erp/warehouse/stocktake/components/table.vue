@@ -1,51 +1,63 @@
 <template>
-	<el-table :data="tableData" border @select="handleSelect">
+	<GlobalTable ref="globalTable" :defaultSort="defaultSort"  :tableData="tableData" height="calc(100vh - 220px)" :stripe="true"  @loadTable="loadTableData" style="width: 100%;margin-bottom:16px;">
+		<template #field>
 		<el-table-column type="selection"></el-table-column>
-		<el-table-column label="盘点单编码" prop="code"></el-table-column>
+		<el-table-column label="盘点单编码" prop="number" sortable="custom"></el-table-column>
 		<el-table-column label="盘点仓库" prop="warehouse"></el-table-column>
-		<el-table-column label="库存总数" prop="sumnum"></el-table-column>
-		<el-table-column label="库存总金额" align="right" prop="sumprice"></el-table-column>
-		<el-table-column label="盘盈金额" align="right" prop="up"></el-table-column>
-		<el-table-column label="盘亏金额" align="right" prop="dowm"></el-table-column>
-		<el-table-column label="盘点状态" prop="state">
+		<el-table-column label="库存总数" prop="whtotalamount" sortable="custom"></el-table-column>
+		<el-table-column label="库存总金额(¥)" align="right" prop="whtotalprice" sortable="custom"></el-table-column>
+		<el-table-column label="盘盈金额(¥)" align="right" prop="overprice" sortable="custom">
 			<template #default="scope">
-				<el-tag :type="scope.row.state.type" >{{scope.row.state.label}}</el-tag>
+				<span v-if="scope.row.overprice" style="color: #51aa41;">+{{scope.row.overprice}}</span>
+				<span v-else  >-</span>
 			</template>
 		</el-table-column>
-		<el-table-column label="创建时间" prop="time"></el-table-column>
-		<el-table-column label="备注" prop="remarks"></el-table-column>
+		<el-table-column label="盘亏金额(¥)" align="right" prop="lossprice" sortable="custom">
+			<template #default="scope">
+				<span v-if="scope.row.lossprice"  style="color: #ff1c51;">-{{scope.row.lossprice}}</span>
+				<span v-else  >-</span>
+			</template>
+		</el-table-column>
+		<el-table-column label="盘点状态" prop="isworking">
+			<template #default="scope">
+				<el-tag v-if="scope.row.isworking==false" type="success">盘点完成</el-tag>
+				<el-tag v-else type="warning">正在盘点</el-tag>
+			</template>
+		</el-table-column>
+		<el-table-column label="创建时间" prop="createdate">
+			<template #default="scope">
+				{{dateFormat(scope.row.createdate)}}
+			</template>
+		</el-table-column>
+		<el-table-column label="备注" prop="remark"></el-table-column>
 		<el-table-column label="操作">
 			<template #default='scope'>
 			<el-space>
-				<el-button @click="handleDetails(row)" type="primary" link>详情</el-button>
+				<el-button @click="handleDetails(scope.row)" type="primary" link>详情</el-button>
 			  </el-space>	
 			</template>
 		</el-table-column>
-	</el-table>
+	</template>
+	</GlobalTable>
 </template>
 
 <script setup>
-	import {h,ref,reactive,toRefs} from 'vue'
+	import {h,ref,reactive,toRefs,defineExpose} from 'vue'
 	import {Download,Edit} from '@element-plus/icons-vue';
 	import {MoreOne} from '@icon-park/vue-next';
-	import { useRoute,useRouter } from 'vue-router'
+	import {dateFormat,dateTimesFormat} from '@/utils/index.js';
+	import { useRoute,useRouter } from 'vue-router';
+	import stocktakingApi from '@/api/erp/inventory/stocktakingApi.js';
 	const router = useRouter()
 	let detailsRef = ref()
+	let globalTable=ref();
 	let state = reactive({
-		tableData: [{
-			code: 'da15wd1a8w9d',
-			warehouse: '东莞(实际使用)',
-			sumnum: 164664,
-			sumprice:" ¥161561.05",
-			up:" - ¥410.04",
-			dowm:"-",
-			state:{label:'盘点完成',type:'info'},
-			time:"2022-11-24",
-			remarks:'',
-		}],
+		tableData:{records:[],total:0},
+		queryParams:{},
+		defaultSort:{"prop": 'opttime', "order": 'descending' }
 	})
 	let {
-		tableData,
+		tableData,queryParams,defaultSort
 	} = toRefs(state)
 	function handleDetails(row){
 		router.push({
@@ -53,9 +65,23 @@
 			query:{
 				title:'盘点单详情',
 				path:"/e/w/s/d",
+				id:row.id
 			},
 		})
 	}
+	function load(params){
+		state.queryParams=params;
+		globalTable.value.loadTable(params);
+	}
+	function loadTableData(params){
+		stocktakingApi.list(params).then((res)=>{
+			state.tableData.records = res.data.records;
+			state.tableData.total =res.data.total;
+		})
+	}
+	defineExpose({
+	  load,
+	})
 </script>
 
 <style>

@@ -1,7 +1,7 @@
 <template>
 	<div class="list-from">
 		<el-row>
-			<el-col :span="16">
+			<el-col :span="20">
 				<el-form  label-width="120px">
 					<el-row>
 						<el-col :span="12">
@@ -74,10 +74,10 @@
 						</el-col>
                         <el-col :span="24">
 							<el-form-item label="发货地址" prop="region">
-								<el-radio-group v-model="formData.shipfromaddressid" size="large" @change="radioChange">
-									<el-row >
-										<el-col class="addr-card" :span="8" v-for="(item,index) in addressData"  v-show="index<addrIndex" >
-								      <el-radio-button  :label="item.id">
+								<el-radio-group  v-model="formData.shipfromaddressid" size="large" @change="radioChange">
+									<el-row :gutter="16">
+										<el-col  :span="8" v-for="(item,index) in addressData"  v-show="index<addrIndex" >
+								      <el-radio-button class="m-b-16" :label="item.id">
 										  <div class="addr-info">
 											  <div class="addr-header">
 												  <el-tag v-show="item.checked" type="danger">默认地址</el-tag>
@@ -111,9 +111,7 @@
 						</el-col>	
 						<el-col :span="24">
 							<el-form-item label="备注">
-								<el-radio-group >
 									 <el-input v-model="formData.remark" type="textarea" />
-								</el-radio-group>
 							</el-form-item>
 						</el-col>
 					</el-row>
@@ -173,13 +171,16 @@
 			  			<el-input v-model.number="scope.row.quantity"  @input="formatQuantity(scope.row)" ></el-input>
 			  		</template>
 			  	</el-table-column>
-				<el-table-column prop="guidance" label="亚马逊校验" width="130" >
+				<el-table-column prop="guidance" label="亚马逊校验" width="160" >
 					<template #default="scope">
 						<el-tag v-if="scope.row.guidance=='success'" type="success">亚马逊校验成功</el-tag>
 						<el-tag v-else-if="scope.row.guidance=='warn'" type="error">亚马逊未正常校验</el-tag>
 						<el-tag v-else-if="scope.row.guidance=='error'" type="error">无效的SKU</el-tag>
 						<el-tag v-else  type="warning">亚马逊校验中</el-tag>
 						<el-tag v-if="scope.row.fulfillable-scope.row.quantity<0" type="warning">发货数量大于库存数</el-tag>
+					   <div class="font-extraSmall" v-if="scope.row.prep&&scope.row.prep.length>0">
+					   预备信息：<span v-for="item in scope.row.prep">{{item}}</span>
+					   </div>
 					</template>
 				</el-table-column>
 				<el-table-column prop="asin"  label="操作" width="60"  >
@@ -252,7 +253,7 @@ import materialApi from '@/api/erp/material/materialApi.js';
 import Editdialog from"@/views/amazon/address/components/editdialog.vue"
 import MateiralDialog from "./mateiralDialog";	
 import {CheckInputIntLGZero,CheckInputInt} from '@/utils/index';
-import {ElMessage } from 'element-plus'
+import {ElMessage } from 'element-plus';
 import {loadInventory,validSkuList,handleLoadPlanData,submitProductList} from "@/hooks/erp/shipment/data_helper";
 import {checkFile,printProductlabel,handleExceed,
          downloadtemplate,handleRemove} from "@/hooks/erp/shipment/file_helper";
@@ -332,7 +333,7 @@ onMounted(()=>{
  			}
 			
  			function addAddress(param){
- 				editRef.value.showModel(param);
+ 				    editRef.value.showModel(param);
  			}
 			
            function manageAlladdr(){
@@ -400,8 +401,9 @@ onMounted(()=>{
  				warehouseApi.getWarehouseUseable().then((res)=>{
  					state.warehouseList=res.data;
  					if(res.data&&res.data.length>0){
+						state.formData.warehouseid = "";
  						state.warehouseList.forEach(function(item){
- 							if(item.isdefault==true){
+ 							if(item.isdefault==true&&state.formData.warehouseid==""){
  								state.formData.warehouseid = item.id;
  							}
  						});
@@ -592,9 +594,8 @@ onMounted(()=>{
 </script>
 
 <style >
-	.list-from .el-radio-button__inner{
-		display: block !important;
-		
+	.m-b-16{
+		margin-bottom:16px;
 	}
 	.list-from {
 		margin-top: 16px;
@@ -614,19 +615,12 @@ onMounted(()=>{
 		top: -13px;
 		right: -21px;
 	}
-	.list-from .el-radio-button{
-		display: block;
-	}
-	.addr-card{
-		padding-right: 16px;
-		margin-bottom:16px;
-	}
-	.list-from .el-radio-group{
-		display: block;
-	}
 	.list-from .el-radio-button__original-radio:checked+.el-radio-button__inner{
 		color:inherit;
 		background-color:inherit;
+	}
+	.list-from .el-radio-button{
+		display: grid;
 	}
 	.adrr-btn{
 		display: flex;

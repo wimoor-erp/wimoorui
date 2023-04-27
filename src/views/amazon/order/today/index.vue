@@ -17,7 +17,7 @@
 				</el-row>
 		</div>
 	<el-row :gutter="16">
-			<el-col class="m-t-16" :span="12" v-if="summaryData && summaryData.nowtotalOrder">
+			<el-col class="m-t-16" :span="12" v-if="summaryData">
 			     <el-card  :body-style="{ padding: '16px' }">
 				<div class="font-extraSmall dot-before">{{summaryData.counrtyname}}:{{summaryData.counrtynow}}</div>
 				<div class="today-data-box">
@@ -45,7 +45,7 @@
 				</el-card>
 			</el-col>
 			
-			<el-col class="m-t-16" :span="12" v-if="summaryData && summaryData.yesstotalOrder">
+			<el-col class="m-t-16" :span="12" v-if="summaryData ">
 			 <el-card  :body-style="{ padding: '16px' }">
 				<div class="font-extraSmall dot-before">{{summaryData.counrtyname}}:{{summaryData.counrtyyes}}</div>
 				<div class="today-data-box">
@@ -74,7 +74,11 @@
 			</el-col>
 			</el-row>	
 	<el-row>
-	  <GlobalTable ref="globalTable" :tableData="tableData"   @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+	  <GlobalTable ref="globalTable" 
+	    :tableData="tableData" 
+		@loadTable="loadTableData"
+		 height="calc(100vh - 120px)"
+		 :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		  <template #field>
 			    <el-table-column prop="img"    label="图片" width="60" >
 			  	       <template #default="scope">
@@ -86,7 +90,7 @@
 			  
 				 <div class='name'>{{scope.row.name}}</div>
 				 <div class='sku'>{{scope.row.sku}}
-				  <span> ({{scope.row.groupname}}-{{marketFunc(scope.row.market)}})</span> 
+				  <span  class="font-extraSmall"> ({{scope.row.groupname}}-{{marketFunc(scope.row.market)}})</span> 
 				 </div>  
 			   
 	      </template>
@@ -231,16 +235,33 @@
 						state.summaryData.counrtynow=res.data.counrtynow;
 						state.summaryData.counrtyyes=res.data.counrtyyes;
 						state.summaryData.currency=res.data.currency;
-						state.summaryData.yesstotalOrder=res.data.list[1].total_order;
-						state.summaryData.nowtotalOrder=res.data.list[0].total_order;
-						state.summaryData.yesstotalprice=formatFloat(res.data.list[1].total_price);
-						state.summaryData.nowtotalprice=formatFloat(res.data.list[0].total_price);
-						state.summaryData.yesstotalquantity=res.data.list[1].total_quantity;
-						state.summaryData.nowtotalquantity=res.data.list[0].total_quantity;
-						state.summaryData.yessavgsales=formatFloat(res.data.list[1].total_quantity/res.data.list[1].total_order);
-						state.summaryData.nowavgsales=formatFloat(res.data.list[0].total_quantity/res.data.list[0].total_order);
-						state.summaryData.yessavgprice=formatFloat(res.data.list[1].total_price/res.data.list[1].total_quantity);
-						state.summaryData.nowavgprice=formatFloat(res.data.list[0].total_price/res.data.list[0].total_quantity);
+						if(res.data.list.length>0&&res.data.list[0]){
+							state.summaryData.nowtotalOrder=res.data.list[0].total_order;
+							state.summaryData.nowtotalprice=formatFloat(res.data.list[0].total_price);
+							state.summaryData.nowtotalquantity=res.data.list[0].total_quantity;
+							state.summaryData.nowavgsales=formatFloat(res.data.list[0].total_quantity/res.data.list[0].total_order);
+							state.summaryData.nowavgprice=formatFloat(res.data.list[0].total_price/res.data.list[0].total_quantity);
+						}else{
+							state.summaryData.nowtotalOrder=0;
+							state.summaryData.nowtotalprice=0.0;
+							state.summaryData.nowtotalquantity=0;
+							state.summaryData.nowavgsales=0.0;
+							state.summaryData.nowavgprice=0.0;
+						}
+						if(res.data.list.length>1&&res.data.list[1]){
+							state.summaryData.yesstotalOrder=res.data.list[1].total_order;
+							state.summaryData.yesstotalprice=formatFloat(res.data.list[1].total_price);
+							state.summaryData.yesstotalquantity=res.data.list[1].total_quantity;
+							state.summaryData.yessavgsales=formatFloat(res.data.list[1].total_quantity/res.data.list[1].total_order);
+							state.summaryData.yessavgprice=formatFloat(res.data.list[1].total_price/res.data.list[1].total_quantity);
+						}else{
+							state.summaryData.yesstotalOrder=0;
+							state.summaryData.yesstotalprice=0.0;
+							state.summaryData.yesstotalquantity=0;
+							state.summaryData.yessavgsales=0.0;
+							state.summaryData.yessavgprice=0.0;
+						}
+						console.log(state.summaryData);
 					} 
 					
 				})

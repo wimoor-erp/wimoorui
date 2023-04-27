@@ -5,7 +5,7 @@
 	     <Header @getdata="loadData" ref="headerRef"  />
 	</div>
 	<el-row>
-	   <GlobalTable ref="globalTable" @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 220px)"  @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+	   <GlobalTable ref="globalTable" :defaultSort="defaultSort" @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 220px)"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		   <template #field>
 	     <el-table-column fixed type="selection" width="38" />
 	      <el-table-column fixed prop="image" label="图片" width="60" >
@@ -14,7 +14,7 @@
 			<el-image v-else :src="require('@/assets/image/empty/noimage40.png')"   width="40" height="40"  ></el-image>
 	      </template>
 	    </el-table-column>
-	    <el-table-column fixed prop="product" label="名称/SKU" width="240" show-overflow-tooltip>
+	    <el-table-column fixed prop="sku" label="名称/SKU" sortable="custom" width="240" show-overflow-tooltip>
 	       <template #default="scope">
 	          <div class='name'>{{scope.row.name}}</div>
 	          <div class='sku'>{{scope.row.sku}}
@@ -22,41 +22,53 @@
 	          </div>
 	      </template>
 	    </el-table-column>
-	    <el-table-column prop="category"  label="品类" width="140" sortable />
-	    <el-table-column prop="weight" label="重量"  width="90" sortable/>
-	    <el-table-column prop="price" label="采购成本" width='100'  sortable>
+	    <el-table-column prop="category"  label="品类" width="140" sortable="custom" >
+			 <template #default="scope">
+				{{NullTransform(scope.row.category)}}
+			 </template>
+		</el-table-column>
+	    <el-table-column prop="weight" label="重量(kg)"  width="100" sortable="custom" >
+			<template #default="scope">
+				<div v-if="scope.row.weight">{{NullTransform(scope.row.weight)}}</div>
+				<div v-else>-</div>
+				<div class="font-extraSmall" v-if="scope.row.length">{{scope.row.length}}*{{scope.row.width}}*{{scope.row.height}} cm</div>
+			 </template>
+		</el-table-column>
+	    <el-table-column prop="price" label="采购成本" width='100'  sortable="custom">
 		  <template #default="scope">
 			  <el-popover
 			      placement="top"
 			      title="阶梯采购价"
 			      :width="200"
 				  trigger="click"
-				  @show="getWisePriceList(scope.row)"
+				  @before-enter="getWisePriceList(scope.row)"
 			    >
 			      <template #reference>
-			       <span class="pointer">{{scope.row.price}}</span> 
+			       <span v-if="scope.row.price" class="pointer">{{scope.row.price}}</span> 
+				   <span v-else >-</span> 
 			      </template>
-			  	<el-table :data="pricelist" >
+			  	<el-table :data="pricelist" v-loading="loading">
 			  		<el-table-column label="起订量" prop="amount"></el-table-column>
 			  		<el-table-column label="单价" prop="price"></el-table-column>
 			  	</el-table>
 			    </el-popover>
 		  </template>
 	    </el-table-column>
-	    <el-table-column prop="supplier" label="供应商" width='200'  sortable>
+	    <el-table-column prop="supplier" label="供应商" width='200'  sortable="custom">
 			<template #default="scope">
-				<el-link @click.stop="openPurchase(scope.row.purchaseUrl)" class="font-12">{{scope.row.supplier}}</el-link>
-			    <div><span class="font-extraSmall">供货周期：</span> {{scope.row.delivery_cycle}}</div>
+				<el-link v-if="scope.row.supplier" @click.stop="openPurchase(scope.row.purchaseUrl)" class="font-12">{{scope.row.supplier}}</el-link>
+				<el-link v-else>-</el-link>
+			    <div ><span class="font-extraSmall">供货周期：</span>{{NullTransform(scope.row.delivery_cycle)}}</div>
 			</template>	
 		</el-table-column>	
-	    <el-table-column prop="fulfillable" label="库存" width="100"   sortable>
+	    <el-table-column prop="fulfillable" label="库存" width="80"   sortable="custom">
 		<template #default="scope">
 			<el-popover
 			    placement="top"
 			    title="产品库存"
 			    :width="250"
 			    trigger="click"
-				@show="loadInventory(scope.row)"
+				@before-enter="loadInventory(scope.row)"
 			  >
 			    <template #reference>
 			     <span class="pointer">{{scope.row.fulfillable}}</span> 
@@ -68,14 +80,14 @@
 			  </el-popover>
 		</template>
 		 </el-table-column>
-	    <el-table-column prop="issfg" label="产品类型" width="110"   sortable>
+	    <el-table-column prop="issfg" label="产品类型" width="110"   sortable="custom">
 	        <template #default="scope">
 				<el-tag v-if="scope.row.issfg=='0'" type="success" effect="plain">单独产品</el-tag>
 				<el-tag v-if="scope.row.issfg=='1'" type="warning" effect="plain">组合产品</el-tag>
 				<el-tag v-if="scope.row.issfg=='2'" type="danger" effect="plain">待组装产品</el-tag>
 	        </template>
 	    </el-table-column>
-	    <el-table-column prop="name" class-name="editable-cell" label="标签" width="180" sortable>
+	    <el-table-column prop="name" class-name="editable-cell" label="标签" width="180" >
 	       <template #default="scope">
 	         <span class='tag-mr' v-if='scope.row.TagNameList'  v-for='(s,index) in scope.row.TagNameList' :key='index'>
 	             <el-tag  effect="plain" :title="s.name" :type="s.color">  {{s.name}}</el-tag>
@@ -84,8 +96,12 @@
 			<span class="edit-text" @click.stop="editTags(scope.row)" :class="scope.row.active">修改</span>
 	       </template>
 	    </el-table-column>
-	    <el-table-column prop="remark" label="备注"  show-overflow-tooltip sortable/>
-	    <el-table-column fixed="right" prop="operate" label="操作"  width="125"   sortable>
+	    <el-table-column prop="remark" label="备注"  show-overflow-tooltip sortable="custom" >
+			 <template #default="scope">
+				 {{NullTransform(scope.row.remark)}}
+			</template>
+		</el-table-column>
+	    <el-table-column fixed="right" prop="operate" label="操作"  width="125" >
 	        <template #default="scope">
 	          <el-space>
 	            <el-button type="primary" link @click="productDetails(scope.row)">详情</el-button>
@@ -97,6 +113,7 @@
 	               <template #dropdown>
 	                <el-dropdown-menu>
 	                  <el-dropdown-item @click.stop="deleteInfo(scope.row)">停用</el-dropdown-item>
+					  <el-dropdown-item @click.stop="recoverRows(scope.row)">启用</el-dropdown-item>
 	                 <!-- <el-dropdown-item >打印条码</el-dropdown-item> -->
 	                </el-dropdown-menu>
 	            </template>
@@ -131,7 +148,8 @@
 	import Header from "./components/header.vue"
 	import {useRouter } from 'vue-router'
 	import { ElMessage, ElMessageBox } from 'element-plus'
-	import CopyText from"@/utils/copy_text"
+	import CopyText from"@/utils/copy_text";
+	import NullTransform from"@/utils/null-transform";
 	import materialApi from '@/api/erp/material/materialApi.js';
 	import {getAllTags} from '@/api/sys/admin/tag.js';
 	import inventoryApi from '@/api/erp/inventory/inventoryApi.js';
@@ -142,6 +160,7 @@
 	let router = useRouter()
 	const globalTable=ref();
 	let state = reactive({
+		loading:true,
 		tagsList:[],
 		tableData:{records:[],total:0},
 		markprops:{ multiple: true },
@@ -152,8 +171,9 @@
 		inventoryList:[],
 		pricelist:[],
 		queryParams:{},
+		defaultSort:{"prop": 'opttime', "order": 'descending' }
 		})
-		let {tableData,tagsList,markprops,tagsValue,checkTags,nowTagProRow,markVisable,queryParams,
+		let {loading,tableData,tagsList,markprops,tagsValue,checkTags,nowTagProRow,markVisable,queryParams,defaultSort,
 		inventoryList,pricelist}=toRefs(state)
 		  function productDetails(row){
 			  router.push({
@@ -161,7 +181,7 @@
 			  	query:{
 			  	  title:"产品详情",
 			  	  path:'/material/details',
-				  details:row.id
+				  details:row.id,
 			  	}
 			  })
 		  }
@@ -169,7 +189,7 @@
 				 router.push({
 				 	path:'/localproduct/editinfo',
 				 	query:{
-				 	  title:"编辑产品",
+				 	  title:"编辑产品"+row.sku,
 				 	  path:'/localproduct/editinfo',
 				 	  details:row.id,
 				 	}
@@ -179,18 +199,12 @@ function submitTag(row){
 	var mid=state.nowTagProRow.id;;
 	var ids=state.checkTags;
 	materialApi.saveMaterialTags({"mid":mid,"ids":ids}).then((res)=>{
-		 if(res.data=="ok"){
 			 ElMessage({
 				  message: '操作成功！',
 				  type: 'success'
 			 })
-			state.markVisable = false 
-		 }else{
-			 ElMessage({
-				  message: '操作失败！',
-				  type: 'error'
-			 })
-		 }
+			state.markVisable = false;
+			headerRef.value.submitQuery();
 	});
 	
 }
@@ -205,6 +219,8 @@ function Addtag(){
 }
 function loadData(params){
 	state.queryParams=params;
+	state.queryParams.sort=state.defaultSort.prop;
+	state.queryParams.order=state.defaultSort.order;
 	globalTable.value.loadTable(params);
 	
 }
@@ -247,13 +263,17 @@ function changeTags(tags){
 		 }
 }
 function loadInventory(row){
+	state.loading =true;
 	inventoryApi.getInventoryByMaterial({"mid":row.id}).then((res)=>{
 		state.inventoryList=res.data;
+		state.loading =false
 	});
 }
 function getWisePriceList(row){
+	state.loading =true;
 	materialApi.getWisePriceList({"mid":row.id}).then((res)=>{
 		state.pricelist=res.data;
+			state.loading =false
 	});
 }
 function openPurchase(url){
@@ -269,6 +289,19 @@ function deleteInfo(row){
 			loadData(state.queryParams);
 		}
 	})
+}
+function recoverRows(row){
+		if(row.isDelete==true || row.isDelete==1){
+			materialApi.recoverData({"id":row.id,"sku":row.sku}).then((res)=>{
+				if(res.data){
+					ElMessage({
+						  message: res.data,
+						  type: 'success'
+					})
+					loadData(state.queryParams);
+				}
+			})
+		}
 }
 function selectChange(selection) {
 	 headerRef.value.selectRows=selection;

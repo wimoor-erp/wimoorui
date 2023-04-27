@@ -49,20 +49,34 @@
 			<el-space :spacer="spacer">
 				<span v-if="planData.auditstatus==1"  class="font-extraSmall">{{item.shipmentId}}</span>
 				<el-button v-if="planData.auditstatus==3" type="primary" link   @click="toTraceShipment(item.shipmentId)">{{item.shipmentId}}</el-button>
-				<span v-if="planData.auditstatus==3 && item.status==1"   class="pointer" style="color: crimson;font-size: 12px;"    @click="reApprove(item.shipmentId)">审核失败
-				</span>
+				<el-button v-if="planData.auditstatus==3 && item.status==1" 
+				  :loading="reApproveloading"
+				  type="danger"
+				  link
+				  @click="reApprove(item.shipmentId)">审核失败
+				</el-button>
 				<div class="font-small">
 				<span >物流:</span> 
-				<el-select style="margin-left: 5px;" v-model="item.companyid" @change="companyChange(index)">
+				<el-select size="small" style="margin-left: 5px;" v-model="item.companyid" :disabled="planData.auditstatus!=1" @change="companyChange(index)">
 					<el-option  v-for="company in item.companylist"   :key="company.id"  :label="company.name" :value="company.id"   >
 					</el-option>
 				</el-select>
-				 <el-select v-model="item.channelid"  style="margin-left: 5px;">
+				 <el-select size="small" v-model="item.channelid" :disabled="planData.auditstatus!=1" style="margin-left: 5px;">
 				 	<el-option  v-for="chan in item.channellist"   :key="chan.id"  :label="chan.channame" :value="chan.id"   >
 				 	</el-option>
 				 </el-select>
-				 <el-button style="margin-left: 5px;"  v-if="planData.auditstatus==1"  @click="saveTrans(item.companyid,item.channelid,item.shipmentId)">保存</el-button>
-				</div>
+					<el-radio-group size="small" v-model="item.transtyle" :disabled="planData.auditstatus!=1" style="padding-left:10px;padding-top:5px;" >
+						<el-radio  label="SP">
+						<p>小包裹快递</p>
+						</el-radio>
+						<el-radio   label="LTL" >
+						<p>汽车零担</p>
+						</el-radio>
+					</el-radio-group>
+				<el-button style="margin-left: 10px;"  
+				v-if="planData.auditstatus==1"  
+				@click="saveTrans(item)">保存</el-button>
+			</div>
 			</el-space>
 			</div>
 		</template>
@@ -130,7 +144,7 @@
 		<el-table :data="item.itemlist" border style="width: 100%;margin-top:16px;">
 		    <el-table-column prop="image" label="图片" width="68" >
 		     <template #default="scope">
-		      <el-image :src="scope.row.image"  class="product-img" ></el-image>
+		      <el-image :src="scope.row.image"  class="product-img"   ></el-image>
 		    </template>
 		  </el-table-column>
 		  <el-table-column prop="name" label="名称/SKU"  show-overflow-tooltip>
@@ -186,6 +200,7 @@
 			let splitDialogRef=ref();
 			let productInfoData=ref({});
 			let splitVisible=ref(false);
+			let reApproveloading=ref(false);
 			let expclicks=0;
 			let localshipmentid="";
 			function splitHandel(items){
@@ -219,6 +234,9 @@
 				    itemlist.list=shipmentlist;
 					itemlist.list.forEach(async function(shipment){
 						let res=await transportationApi.getTranlist();
+						if(!shipment.transtyle){
+							shipment.transtyle="SP";
+						}
 						if(res.data&&res.data.length>0){
 							shipment.companylist=res.data;
 						}
@@ -289,9 +307,18 @@
 			}
 			
 			
-			function saveTrans(companyid,channelid,shipmentid){
-				if(channelid!=null && channelid!=undefined && channelid!=''){
-					shipmentplanApi.saveTrans({"company":companyid,"channel":channelid,"shipmentid":shipmentid}).then((res)=>{
+			function saveTrans(item){
+				var companyid=item.companyid?item.companyid:"";
+				var channelid=item.channelid?item.channelid:"";
+				var transtyle=item.transtyle?item.transtyle:"";
+				var shipmentid=item.shipmentId;
+				console.log(item);
+				if(channelid || transtyle){
+					shipmentplanApi.saveTrans({
+					"company":companyid,
+					"channel":channelid,
+					"transtyle":transtyle,
+					"shipmentid":shipmentid}).then((res)=>{
 						if(res.data && res.data=="success"){
 							ElMessage({
 							   message: '修改成功！',
@@ -314,11 +341,16 @@
 				}
 			}
 			function reApprove(shipmentid){
+				reApproveloading.value=true;
 				shipmentplanApi.createShipment({"shipmentid":shipmentid}).then(res=>{
 					 ElMessage({
 					   message: '审核成功！',
 					   type: 'success'
-					 })
+					 });
+					 reApproveloading.value=false;
+					 planData.auditstatus=3;
+				}).catch(error=>{
+					 reApproveloading.value=false;
 				})
 			}
 			function showExceptionDialog(shipid){
@@ -367,7 +399,7 @@
 			return {
 				spacer,percentformat,goodsDeatilsRef,splitDialogRef,
 				splitHandel,productInfoData,
-				expclicks,
+				expclicks,reApproveloading,
 				localshipmentid,
 				rollbackShipnum,planData,itemlist
 				,submitShipmentName,submitShipmentRemark,

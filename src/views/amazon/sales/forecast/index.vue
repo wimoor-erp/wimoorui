@@ -3,9 +3,19 @@
 		<div class="con-header">
 	    	<el-row>
 	    		<el-space>
-	    			<Group ref="groups" @change="changeGroup" defaultValue="onlyEU"/>
+	    			<Group ref="groups" @change="changeGroup"  defaultValue="onlyEU"/>
 	    			<Owner   @owner="changeOwner" />
-	    			<el-input v-model="localParams.searchKeywords" @input="handleQuery"  placeholder="请输入" class="input-with-select">
+					        <el-date-picker
+					                v-model="queryParams.dateValue"
+					        		@change = "dateChange"
+					                type="daterange"
+					        		:clearable="false"
+					                range-separator="至"
+					                start-placeholder="开始日期"
+					                end-placeholder="结束日期"
+					                :shortcuts="shortcuts"
+					              />
+	    			<el-input v-model="localParams.searchKeywords"  clearable  @input="handleQuery"  placeholder="请输入" class="input-with-select">
 	    				<template #prepend>
 	    					<el-select v-model="localParams.selectlabel" @change="handleQuery"  placeholder="SKU"
 	    						style="width: 110px">
@@ -15,16 +25,18 @@
 	    					</el-select>
 	    				</template>
 	    				<template #append>
-	    					<el-button @click="handleQuery">
+	    					 <el-button @click="handleQuery">
 	    						<el-icon style="font-size: 16px;align-itmes:center">
 	    							<search />
 	    						</el-icon>
-	    		  	</el-button>
+	    		  	         </el-button>
 	    				</template>
 	    			</el-input>
+					
 	    			<!-- <el-button>重置</el-button> -->
 	    		</el-space>
 	    		<div class='rt-btn-group'>
+					<div style="padding-right:10px;"><el-checkbox  v-model="queryParams.needplan" @change="handleQuery" label="发货规划中未出现" size="large" /></div>
 					<el-button  :loading="downLoading" @click="handleDownloadSales"><el-icon><Download /></el-icon>下载</el-button>
 					<el-button :loading="upLoading"  @click="handleUploadSales"><el-icon><Upload /></el-icon>上传</el-button>
 	    			<el-button class='ic-btn' title='帮助文档'>
@@ -35,12 +47,13 @@
 		</div>
 		<div class="con-body">
 			<GlobalTable
-					height="calc(100vh - 168px)" 
-					:queryParams="queryParams"
+					height="calc(100vh - 220px)" 
+					ref="gloablTableRef"
+					:tableData="tableData"
+					:size="10"
+					:stripe="true" 
 					:defaultSort="{ prop: 'openDate', order: 'descending' }"  
-					@loadTable="loadtableData" 
-					@selectionChange="handleSelectionChange"
-			         >
+					@loadTable="loadtableData" >
 				<template #field>
 				<el-table-column label="图片" prop="img" width="65">
 					<template #default="scope">
@@ -63,8 +76,14 @@
 						<div class="font-extraSmall">{{scope.row.marketname}}</div>
 					</template>
 				</el-table-column>
+				<el-table-column label="本地库存" width="120" prop="fulfillable" :sort-orders="sortOrders"  sortable="custom" >
+					<template #default="scope">
+						<div >{{scope.row.fulfillable}}</div>
+						<div class="font-extraSmall">待入库:{{scope.row.inbound}}</div>
+					</template>
+				</el-table-column>
 				<el-table-column label="销量" prop="state" >
-					<el-table-column label="日均" prop="avgsales" width="80" sortable="custom" >
+					<el-table-column label="日均" prop="avgsales" width="80" :sort-orders="sortOrders" sortable="custom" >
 						<template #default="scope">
 							<span v-if="scope.row.avgsales">{{scope.row.avgsales}}</span>
 							<span v-else>0</span>
@@ -74,47 +93,55 @@
 							</el-link>
 						</template>
 					</el-table-column>
-					<el-table-column label="7天" prop="sumseven" width="80" sortable="custom" >
+					<el-table-column label="7天" prop="sumseven" :sort-orders="sortOrders" width="80" sortable="custom" >
 						<template #default="scope">
 							<span v-if="scope.row.sumseven">{{scope.row.sumseven}}</span>
 							<span v-else>0</span>
 						</template>
 					</el-table-column>
-					<el-table-column label="30天" prop="summonth" width="80" sortable="custom" >
+					<el-table-column label="30天" prop="summonth" :sort-orders="sortOrders" width="80" sortable="custom" >
 						<template #default="scope">
 							<span v-if="scope.row.summonth">{{scope.row.summonth}}</span>
 							<span v-else>0</span>
 						</template>
 					</el-table-column> 
 				</el-table-column>
-				<el-table-column label="上架时间" prop="openDate" sortable="custom" width="120">
+				<el-table-column label="上架时间" prop="openDate" :sort-orders="sortOrders" sortable="custom" width="110">
 					<template #default="scope">
 						<div>{{dateFormat(scope.row.openDate)}}</div>
 						<div v-if="scope.row.multplus" class="font-extraSmall">复合增长率{{scope.row.multplus}}%</div>
 					</template>
 				</el-table-column>
 				<el-table-column label="2023年销量预测"  prop="operator">
-					<el-table-column :label="header.month1+'月销量'" width="120">
+					<el-table-column :label="header.month1+'月销量'" width="100">
 						<template #default="scope">
-							<el-input v-model="scope.row.month1sales"></el-input>
+							<el-input v-model="scope.row.month1sales" 
+							   @input="scope.row.month1sales=CheckInputInt(scope.row.month1sales)"></el-input>
 						</template>
 					</el-table-column>
-					<el-table-column :label="header.month2+'月销量'" width="120">
+					<el-table-column :label="header.month2+'月销量'" width="100">
 						<template #default="scope">
-							<el-input v-model="scope.row.month2sales"></el-input>
+							<el-input v-model="scope.row.month2sales"
+							 @input="scope.row.month2sales=CheckInputInt(scope.row.month2sales)"
+							></el-input>
 						</template>
 					</el-table-column>
-					<el-table-column :label="header.month3+'月销量'" width="120">
+					<el-table-column :label="header.month3+'月销量'" width="100">
 						<template #default="scope">
-							<el-input v-model="scope.row.month3sales"></el-input>
+							<el-input v-model="scope.row.month3sales"
+							@input="scope.row.month3sales=CheckInputInt(scope.row.month3sales)"
+							></el-input>
 						</template>
 					</el-table-column>
 				</el-table-column>
 				
-				<el-table-column label="操作" width="150">
+				<el-table-column label="操作" width="130">
+					 <template #header>
+							操作 <el-button  style="margin-top:-3px;"  @click="submitFormBatch()" type="primary" link>批量保存</el-button>
+					 </template>
 					<template #default='scope'>
 					 <el-space>
-						<el-button @click="submitForm(scope.row)" type="primary" link>保存</el-button>
+						<el-button :loading="scope.row.saveLoading"  @click="submitForm(scope.row)" type="primary" link>保存</el-button>
 						<el-button @click="handleShowSalesAdjust(scope.row)" type="primary" link>详细计划</el-button>
 					  </el-space>	
 					</template>
@@ -141,7 +168,7 @@
 	import {getProductMonthSales} from "@/api/amazon/listing/preSalesApi.js";
 	import {getSales,save,clear} from "@/api/amazon/listing/preSalesApi.js";
 	import GoodsDeatils from "@/views/amazon/listing/common/goods_deatils"
-	import {dateFormat} from "@/utils/index.js";
+	import {dateFormat,CheckInputInt} from "@/utils/index.js";
 	import SaleAdjustDialog from "./components/sale_adjust_dialog";
 	import SaleAdjustUploadDialog from "./components/sale_adjust_upload_dialog";
 	import {downExcelSales} from "@/api/amazon/listing/preSalesApi.js";
@@ -149,25 +176,79 @@
 	const salechartRef =ref();
 	const saleAdjustDialogRef=ref();
 	const saleAdjustUploadDialogRef=ref();
+	const gloablTableRef=ref();
 	let goodsDeatilsRef=ref();
 	const router = useRouter();
 	const state = reactive({
-		queryParams:{},
+		queryParams:{needplan:false},
 		downLoading:false,
 		upLoading:false,
+		sortOrders:[ 'descending','ascending', null],
+		tableData:{records:[],total:0},
 		header:{month1:"",month2:"",month3:""},
 		localParams:{selectlabel:"sku"},
 	})
-	const { queryParams ,localParams,header,downLoading,upLoading}=toRefs(state)
-	function loadtableData(params,callback){
+	const { queryParams ,sortOrders,localParams,header,downLoading,upLoading,tableData}=toRefs(state);
+	const shortcuts = [
+	  {
+	    text: '近一个月上架',
+	    value: () => {
+	      const end = new Date()
+	      const start = new Date()
+	      start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+	      return [start, end]
+	    },
+	  },
+	  {
+	    text: '近3个月上架',
+	    value: () => {
+	      const end = new Date()
+	      const start = new Date()
+	      start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
+	      return [start, end]
+	    },
+	  },
+	  {
+	    text: '近1年上架',
+	    value: () => {
+	      const end = new Date()
+	      const start = new Date()
+	      start.setTime(start.getTime() - 3600 * 1000 * 24 * 365)
+	      return [start, end]
+	    },
+	  },
+	  {
+	    text: '近3年上架',
+	    value: () => {
+	      const end = new Date()
+	      const start = new Date()
+	      start.setTime(start.getTime() - 3600 * 1000 * 24 * 365*3)
+	      return [start, end]
+	    },
+	  },
+	];
+	
+	function loadtableData(params){
 		getProductMonthSales(params).then(res=>{
-			if(res&&res.data&&res.data.records.length>0){
+			if(res&&res.data&&res.data.total>0){
+				state.tableData.records=res.data.records;
+				state.tableData.total=res.data.total;
 				state.header.month1=res.data.records[0].month1+1;
 				state.header.month2=res.data.records[0].month2+1;
 				state.header.month3=res.data.records[0].month3+1;
+			}else{
+				state.tableData.records=[];
+				state.tableData.total=0;
 			}
-			callback(res);
+			console.log(state.tableData)
 		});
+	}
+	function dateChange(date){
+			if(date[1]){
+			  state.queryParams.fromDate = date[0];
+			  state.queryParams.toDate = date[1];
+			  handleQuery();
+			}
 	}
 	function showMore(row){
 		goodsDeatilsRef.value.show(row);
@@ -194,7 +275,7 @@
 				state.queryParams.asin="";
 				state.queryParams.msku="";
 		}
-		state.queryParams.searchSession=new Date();
+		 gloablTableRef.value.loadTable(state.queryParams);
 	}
 	function handleUploadSales(){
 		saleAdjustUploadDialogRef.value.show();
@@ -208,9 +289,13 @@
 	function changeGroup(value){
 	    state.queryParams.groupid=value.groupid;
 		state.queryParams.marketplaceid=value.marketplaceid;
+		handleQuery()
 	}
 	function changeOwner(value){
 		state.queryParams.owner=value;
+		if(state.queryParams.groupid){
+		   handleQuery()
+		}
 	}
 	function handleShowSalesAdjust(row){
 		row.sysavgsales=row.avgsales;
@@ -224,9 +309,24 @@
 		date=new Date(date); 
 		return date;
 	}
-	function submitForm(row){
+	async function submitFormBatch(){
+		for(var i=0;i<state.tableData.records.length;i++){
+			var row=state.tableData.records[i];
+			if(i==state.tableData.records.length-1){
+			   await submitForm(row,false);
+			}else{
+			   await submitForm(row,true);
+			}
+		}
+		 
+	}
+	async function submitForm(row,isbatch){
 			 var monthdata={};
 			 var preSaleList=[];
+			 if(  (row.month1sales&&row.month1sales!="0")
+			    ||(row.month2sales&&row.month2sales!="0")
+			    ||(row.month3sales&&row.month3sales!="0")
+			 ){
 		      monthdata[row.month1+1]={amount:row.month1sales};
 			  monthdata[row.month2+1]={amount:row.month2sales};
 			  monthdata[row.month3+1]={amount:row.month3sales};
@@ -252,7 +352,7 @@
 							monthdata[i].daynum=daynum; 
 			 			 }
 			 }
-			 console.log(monthdata);
+		
 		  for(var i=row.month1+1;i<=row.month3+1;i++){
 					 var amount=monthdata[i].amount;
 					 if(amount!=""){
@@ -266,7 +366,7 @@
 						 end=new Date(end); 
 						 while(start<end){
 									  var param={};
-									  param.sku=row.sku;
+									  param.sku=row.psku;
 									  param.groupid=row.groupid;
 									  param.amazonauthid=row.amazonauthid;
 									  param.marketplaceid=row.marketplaceid;
@@ -283,16 +383,25 @@
 						 }
 					 }
 			 }
-			save(preSaleList).then(res=>{
-						 ElMessage({ message: "保存成功", type: 'success', });
-						 handleQuery()
-			}) 
+			row.saveLoading=true;
+			await save(preSaleList).then(res=>{
+				 row.saveLoading=false;
+				 ElMessage({ message: "保存成功", type: 'success', });
+				 if(!isbatch){
+				    handleQuery()
+				 }
+			}).catch(error=>{
+				 row.saveLoading=false;
+			})
+	    }
 	}
 	function handleSales(row){
 		salechartRef.value.show(row.groupid,row.marketplaceid,row.amazonAuthId,row.sku,row.msku);
 	}
 	onMounted(() => {
-	 
+	state.queryParams.dateValue= shortcuts[0].value();
+	state.queryParams.fromDate = state.queryParams.dateValue[0];
+	state.queryParams.toDate = state.queryParams.dateValue[1];
 	});
 </script>
 

@@ -1,6 +1,6 @@
 <template>
  <div>
-	 <GlobalTable  ref="globalTable" :tableData="tableData"  @loadTable="loadTableData" border  :defaultSort="{ prop: 'opttime', order: 'descending' }" >
+	 <GlobalTable  ref="globalTable" :tableData="tableData"  @loadTable="loadTableData" :stripe="true"  :defaultSort="{ prop: 'opttime', order: 'descending' }" >
 		  <template #field>
 		 <el-table-column  v-if="!isDailog" type="selection" width="38" />
 		 <el-table-column v-if="!isDailog" label="图片" width="60">
@@ -39,7 +39,9 @@
 			 <el-table-column  prop="status" label="处理状态"  width="160" >
 				<template #default="scope">
 					 <FeedStatus v-if="scope.row.status!='DONE'&&scope.row.status!='_DONE_'" filename="price" :feedid="scope.row.feedid"></FeedStatus>
-					 <el-alert v-else :title="scope.row.statusText" type="success"  :closable="false"/>
+					 <el-tag v-else  type="success"  >
+						 {{scope.row.statusText}}
+					 </el-tag>
 				</template>
 				 </el-table-column>
 			 <el-table-column  prop="operator" label="操作人"  />

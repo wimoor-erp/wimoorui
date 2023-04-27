@@ -19,9 +19,9 @@
 							 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
-							 <el-form-item label="供应商" >
-								 <span>{{form.customername}}</span>
-								 <el-button style="margin-left: 10px;" @click.stop="showSupplier">选择供应商</el-button>
+							 <el-form-item label="收货方" >
+								 <el-input class="in-wi-24"    v-model="form.customername" placeholder="请输入"> </el-input>
+								<!-- <el-button style="margin-left: 10px;" @click.stop="showSupplier">选择供应商</el-button> -->
 							 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
@@ -73,7 +73,7 @@
 							 </el-table-column>
 							 <el-table-column label="出库数量">
 								  <template #default="scope">
-									  <el-input v-model="scope.row.outamount">
+									  <el-input v-model="scope.row.outamount" @input="scope.row.outamount=CheckInputInt(scope.row.outamount)">
 									  </el-input>
 								  </template>  
 							 </el-table-column>
@@ -94,8 +94,8 @@
 							</div>
 						</div>
 	</div>
-	<MaterialDialog  ref = "MaterialRef" @getdata="getRows" />
-	<SupplierDialog ref='supDiaRef' @getdata="getSupplierRows" />
+	<MaterialDialog  ref = "MaterialRef"  :isfulfillable="form.isNothungry" :warehouseid="form.warehouseid" @getdata="getRows" />
+	<!-- <SupplierDialog ref='supDiaRef' @getdata="getSupplierRows" /> -->
 </template>
 
 <script setup>
@@ -105,13 +105,14 @@
 	import {ElMessage } from 'element-plus';
 	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog";
 	import { useRoute,useRouter } from 'vue-router';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	import serialnumberApi from '@/api/erp/common/serialnumberApi.js';
 	import outApi from '@/api/erp/inventory/outApi.js';
 	import Warehouse from '@/components/header/warehouse.vue';
-	import SupplierDialog from "@/views/erp/baseinfo/supplier/supplier_dialog";
+	//import SupplierDialog from "@/views/erp/baseinfo/supplier/supplier_dialog";
 	const router = useRouter()
 	const MaterialRef = ref();
-	const supDiaRef =ref();
+	//const supDiaRef =ref();
 	const emitter = inject("emitter"); // Inject `emitter`
 	function closeTab(){
 		emitter.emit("removeTab", 100);
@@ -121,11 +122,12 @@
 			name:'',
 			number:'',
 			warehouseid:'',
+			isNothungry:true,
 			remark:'',
 			customer:'',
 			expressno:'',
 			express:'',
-			customername:'无',
+			customername:'',
 		},
 		rules: {
 			warehouse: [{ required: true, message: '出库仓库不能为空', trigger: 'blur' }],
@@ -143,7 +145,8 @@
 		load();
 	});
     function handleAdd(){
-		MaterialRef.value.show()
+		MaterialRef.value.show();
+		MaterialRef.value.loadData();
 	}
 	function load(){
 		serialnumberApi.getSerialNumber({"ftype":"O","isfind":"true"}).then((res)=>{
@@ -152,11 +155,26 @@
 			}
 		});
 	}
-	function getWarehouse(wid){
+	function getWarehouse(wid,type,warehouse){
 		state.form.warehouseid=wid;
+		state.form.isNothungry=!warehouse.ishungry;
 	}
 	function getRows(rows){
-		state.tableData=rows;
+		if(rows && rows.length>0){
+			if(state.tableData && state.tableData.length>0){
+				var skus="";
+				state.tableData.forEach(function(datas){
+					 skus+=(datas.sku)+(",");
+				});
+				rows.forEach(function(item){
+					if(skus.indexOf((item.sku+","))<0){
+						state.tableData.push(item);
+					}
+				});
+			}else{
+				state.tableData=rows;
+			}
+		}
 	}
 	 function getSKUList() {
 		    state.skulist={};
@@ -185,11 +203,19 @@
 			data.skumapstr=JSON.stringify(state.skulist);
 			data.remark=state.form.remark;
 			data.warehouseid=state.form.warehouseid;
-			data.purchaser=state.form.customer;
+			//data.purchaser=state.form.customer;
+			data.customer=state.form.customername;
 			data.express=state.form.express;
 			data.expressno=state.form.expressno;
 			data.toaddress="";
 			data.id="";
+			if(data.skumapstr=="{}"){
+				ElMessage({
+				  type: 'error',
+				  message: "至少添加一行数据！ ",
+				})
+				return;
+			}
 			outApi.saveData(data).then((res)=>{
 				isok=true;
 				if(res.data){
@@ -197,18 +223,16 @@
 					  type: 'success',
 					  message: "添加成功！",
 					});
-					closeTab();
 					if(res.data && res.data.id && res.data.id!=null && res.data.id!="" && res.data.id!=undefined){
-						setTimeout(function(){
 							router.push({
 								path:"/e/w/o/d",
 								query:{
 									title:'出库单详情',
 									path:"/e/w/o/d",
-									id:res.data.id
+									id:res.data.id,
+									replace:true
 								},
 							})
-						},1000)
 					}
 				}else{
 					ElMessage({
@@ -222,15 +246,15 @@
 	function handleDelete(index){
 		state.tableData.splice(index,1);
 	}
-	function showSupplier(){
-		supDiaRef.value.show();
-	}
-	function getSupplierRows(rows){
-		if(rows && rows[0] && rows[0].id){
-			state.form.customer=rows[0].id;
-			state.form.customername=rows[0].name;
-		}
-	}
+	// function showSupplier(){
+	// 	supDiaRef.value.show();
+	// }
+	// function getSupplierRows(row){
+	// 	if(row && row.id){
+	// 		state.form.customer=row.id;
+	// 		state.form.customername=row.name;
+	// 	}
+	// }
 </script>
 
 <style>

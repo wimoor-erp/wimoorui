@@ -15,7 +15,7 @@
 	        <el-option  v-for="item in channelList"   :key="item.id"  :label="item.name" :value="item.id"   >
 	        </el-option>
 	  </el-select>
-	   <el-input  v-model="searchKeywords" placeholder="请输入" class="input-with-select" >
+	   <el-input  v-model="searchKeywords" clearable placeholder="请输入" class="input-with-select" >
 	      <template #prepend>
 	        <el-select v-model="searchtype" @change='searchTypeChange' placeholder="SKU" style="width: 110px">
 	          <el-option label="SKU" value="sku"></el-option>

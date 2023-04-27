@@ -1,10 +1,10 @@
 <template>
 	<el-row>
 	    <el-space >
-	     <Owner @owner="changeOwner" ></Owner>
-	   <Category @change="changeCategory"></Category>
-	   <Tags @change="changeTags"></Tags>
-	   <el-input  v-model="searchKeywords" @input="changeData" placeholder="请输入" class="input-with-select" >
+	     <Owner @owner="changeOwner" ref="ownerRef" ></Owner>
+	   <Category @change="changeCategory" ref="categoryRef"></Category>
+	   <Tags @change="changeTags" ref="tagsRef"></Tags>
+	   <el-input  v-model="searchKeywords" clearable @input="changeData" placeholder="请输入" class="input-with-select" >
 	      <template #prepend>
 	        <el-select v-model="searchType" placeholder="SKU" style="width: 110px">
 	          <el-option label="SKU" value="sku"></el-option>
@@ -24,7 +24,7 @@
 		<el-popover   :teleported="true"  :width="500" trigger="click">
 			<template #reference>
 			<el-button  title='高级筛选'  class='ic-btn'>
-			<menu-unfold theme="outline" size="16"  :strokeWidth="3"/>
+			  <filtericon></filtericon>
 			</el-button>
 			</template>
 			 <el-form  label-width="auto"  label-position="left">
@@ -55,7 +55,7 @@
 				  </el-form-item>
 				 </el-form>
 			  </el-popover>	 
-	    <el-button>重置</el-button>
+	    <el-button @click.stop="clearSearch">重置</el-button>
 	  </el-space>
 	  </el-row>
 	   <!--功能区域 -->
@@ -80,6 +80,20 @@
 	        </el-dropdown-menu>
 	      </template>
 	    </el-dropdown>
+		<el-dropdown trigger="click" v-hasPerm="'erp:material:download'">
+		  <el-button>
+		             导出数据<el-icon class="el-icon--right"><arrow-down /></el-icon>
+		  </el-button>
+		  <template #dropdown>
+		    <el-dropdown-menu >
+		      <el-dropdown-item @click="downloadProduct('base')">导出产品</el-dropdown-item>
+		      <el-dropdown-item @click="downloadProduct('supplier')">导出供应商</el-dropdown-item>
+		      <el-dropdown-item @click="downloadProduct('cons')">导出耗材</el-dropdown-item>
+			  <el-dropdown-item @click="downloadProduct('customs')">导出海关</el-dropdown-item>
+			  <el-dropdown-item @click="downloadProduct('assembly')">导出组装关系</el-dropdown-item>
+		    </el-dropdown-menu>
+		  </template>
+		</el-dropdown>
 	    <el-button @click.stop="showPictureDialog">
 			同步图片/尺寸
 		</el-button>
@@ -130,7 +144,8 @@
 	 <template #footer>
 	   <span class="dialog-footer">
 		   <div class="flex-center-between">
-		 <el-button type="success" @click.stop="downloadTemp" plain>下载模板</el-button>
+		 <el-button v-if="state.uploadTitle!='导入产品图片'" type="success" @click.stop="downloadTemp" plain>下载模板</el-button>
+		 <span class="font-extraSmall" v-else>图片需对应SKU命名(sku.jpg/png),<br/>然后压缩文件为zip上传</span>
 		 <div>
 	     <el-button @click="uploadVisible = false">取消</el-button>
 	     <el-button type="primary" @click.stop="uploadExcel">
@@ -208,11 +223,15 @@
 	import {getAllTags} from '@/api/sys/admin/tag.js';
 	import downloadTemplateFileApi from '@/api/erp/common/downloadTemplateFileApi';
 	import downloadhandler from "@/utils/download-handler";
+	import filtericon from "@/components/icon/filtericon.vue";
 	onMounted(()=>{
 		changeData();
 	})
 	const emit = defineEmits(['getdata']);
-	let router = useRouter()
+	let router = useRouter();
+	let ownerRef=ref();
+	let categoryRef=ref();
+	let tagsRef=ref();
 	let state =reactive({
 		uploadVisible:false,
 		uploadTitle:'导入产品基础',
@@ -221,14 +240,6 @@
 		searchKeywords:'',
 		isdelete:'0',
 		remarks:'',
-		categoryList:[],
-		category:"",
-		// buyerData :[
-		//   {value:'1',label:'马晓东'},
-		//   {value:'2',label:'刘雨林'},
-		//   {value:'3',label:'张三'}
-		// ],
-		//buyer:'',
 		productType:'全部产品',
 		tagsList:[],
 		tagsValue:'',
@@ -253,7 +264,8 @@
 					  title:"添加产品",
 					  path:'/localproduct/editinfo',
 					  details:'',
-					}
+					  refresh:true,
+					},
 				}) 
 				 
 			}
@@ -279,16 +291,35 @@
 				state.uploadTitle="导入产品组装关系";
 			}
 		}
-		function  importMultipleProducts(){
-			state.uploadTitle = "导入组合产品",
-			state.uploadVisible = true
+		function downloadProduct(ftype){
+			state.uploadVisible = false;
+			 var data={};
+			 data=state.queryParam;
+			 if(ftype=="assembly"){
+				 ftype="MaterialAssembly";
+				 data.issfg="1";
+			 }
+			 if(ftype=="base"){
+			 	ftype='MaterialBaseInfo';
+			 }
+			 if(ftype=="supplier"){
+			 	ftype='MaterialSupplier';
+			 }
+			 if(ftype=="cons"){
+			 	ftype='MaterialConsumable';
+			 }
+			 if(ftype=="customs"){
+			 	ftype='MaterialCustoms';
+			 }
+			 data.downtype=ftype;
+			 materialApi.downExcelRecords(data);
 		}
 		function changeOwner(id){
 			state.queryParam.owner=id;
 			changeData();
 		}
 		function changeTags(tags){
-			 state.queryParam.taglist=arrs;
+			 state.queryParam.taglist=tags;
 			 changeData();
 		}
 		
@@ -313,7 +344,6 @@
 			changeData();
 		}
 		function changeData(){
-			 state.queryParam.categoryid=state.category;
 			 state.queryParam.searchtype=state.searchType;
 			 state.queryParam.search=state.searchKeywords;
 			 emit('getdata',state.queryParam);
@@ -355,6 +385,19 @@
 		}
 		function purchaseRows(){
 			//跳转至采购的路由url
+			var materialList=[];
+			state.selectRows.forEach(item=>{
+				materialList.push(item.id);
+			})
+				router.push({
+					path:"/e/p/o",
+					query:{
+						title:'添加采购单',
+						path:"/e/p/o",
+						materialList:materialList
+					},
+				})
+			 
 		}
 		function downloadTemp(){
 			if(state.uploadtype=="base"){
@@ -585,15 +628,29 @@
 					});
 				}
 		}
+		function clearSearch(){
+			ownerRef.value.ownerid="";
+			state.queryParam.owner="";
+			categoryRef.value.state.category=""
+			state.queryParam.categoryid="";
+			state.searchType="sku";
+			state.searchKeywords="";
+			state.productType=="全部产品";
+			state.queryParam.issfg="";
+			state.queryParam.isDelete="0";
+			state.isdelete="0";
+			state.remarks="";
+			state.queryParam.remark="";
+			state.queryParam.taglist=[];
+			tagsRef.value.state.tagsValue="";
+			changeData();
+		}
 		defineExpose({
-		  selectRows,
+		  selectRows,submitQuery,
 		})	
 </script>
 
-<style >
-	.el-cascader .el-icon{
-		font-size: 14px;
-	}
+<style scoped>
 	.font-large{
 		font-size: 48px;
 		color: #999;

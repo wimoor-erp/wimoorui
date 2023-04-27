@@ -1,28 +1,41 @@
 <template>
-			<el-select v-model="ownerid"     placeholder="产品负责人" @change="ownerChange">
-			      <el-option  v-for="item in ownerList"    :label="item.name" :value="item.id"   >
-			      </el-option>
-			</el-select>
+	<el-select v-model="defaultValue"  v-if="isInForm"  filterable placeholder="产品负责人" @change="ownerChange">
+	      <el-option  v-for="item in ownerList"    :label="item.name" :value="item.id"   >
+	      </el-option>
+	</el-select>
+	
+	<el-select v-model="ownerid"  v-else  filterable placeholder="产品负责人" @change="ownerChange">
+		  <el-option  v-for="item in ownerList"    :label="item.name" :value="item.id"   >
+		  </el-option>
+	</el-select>
 </template>
 
 <script>
-	import productinfoApi from '@/api/amazon/product/productinfoApi.js';
+	import materialApi from '@/api/erp/material/materialApi.js';
 	import { ref,reactive,onMounted,watch } from 'vue'
 	export default{
 		name:"owner",
 		components:{ },
 		emits:["owner"],
-		props:["defaultValue","notAll"],
+		props:["defaultValue","notAll","isInForm"],
 		setup(props,context){
 			let ownerList =ref([])
 			let ownerid=ref()
 			onMounted(()=>{
 				getOwnerData()
 			})
-		 
+		    function reset(){
+				ownerid.value ="";
+				if(props.notAll!="isNotAll"){
+					ownerid.value ="";
+				}
+				if(props.defaultValue){ 
+					ownerid.value =props.defaultValue;
+				}
+			}
 			//获取负责人列表
 			function getOwnerData(){
-				productinfoApi.getOwnerList().then((res)=>{
+				materialApi.getOwnerList().then((res)=>{
 					if(res.data&&res.data.length>0){
 						if(props.notAll!="isNotAll"){
 							res.data.push({"id":"","name":"全部负责人"})
@@ -51,7 +64,7 @@
 			}
 			 
 			return{
-				 ownerid,ownerList,ownerChange,getOwnerData
+				 ownerid,ownerList,ownerChange,getOwnerData,reset,
 			}
 		}
 	}

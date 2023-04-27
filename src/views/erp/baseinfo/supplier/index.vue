@@ -8,9 +8,9 @@
 			  <span>添加供应商</span>
 			</el-button>
 			<el-button @click.stop="uploadFile">导入</el-button>
-			<el-button @click.stop="download">导出</el-button>
+			<el-button @click.stop="download" v-hasPerm="'erp:customer:download'">导出</el-button>
 			<el-button @click.stop="removes">删除</el-button>
-		<el-input  v-model="searchKeywords" @input="loadTable" placeholder="请输入名称,联系人,电话或编码" style="width: 250px;" class="input-with-select" >
+		<el-input  v-model="searchKeywords" @input="loadTable" clearable placeholder="请输入名称,联系人,电话或编码" style="width: 250px;" class="input-with-select" >
 		   <template #append>
 		     <el-button @click="loadTable" >
 		        <el-icon class="ic-cen font-medium">

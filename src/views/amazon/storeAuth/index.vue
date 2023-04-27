@@ -47,8 +47,6 @@
 	      <span class="dialog-footer">
 	        <el-button @click="dialogVisible = false">取消</el-button>
 	        <el-button type="primary" @click="saveStore"  >确认</el-button >
-	        
-	       
 	      </span>
 	    </template>
 	  </el-dialog>
@@ -82,7 +80,14 @@
 			function saveStore(){
 				let params ={}
 				params.id=storeid.value;
-				params.name =storename.value
+				params.name =storename.value;
+				if(!params.name){
+					ElMessage({
+						type:'error',
+						message:'店铺名称不能为空！'
+					});
+					return;
+				}
 				groupApi.AmazonGroupSave(params).then((res)=>{
 					if(res.code==201){
 						ElMessage({

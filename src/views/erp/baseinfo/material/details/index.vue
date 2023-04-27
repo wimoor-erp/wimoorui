@@ -2,13 +2,13 @@
 	<div class="main-sty gary-bg">
 		<el-row>
 			 <el-col :xl="4" :lg="2"  class="ri-tabs">
-				<el-tabs tab-position="left"  v-model="activeName">
+				<el-tabs v-if="data.assemblyList"  tab-position="left"  v-model="activeName">
 				    <el-tab-pane label="基本信息" name="1">
 						<template #label>
 							 <el-link :underline="false"  href="#base">基本信息</el-link>
 						</template>
 					</el-tab-pane>
-					<el-tab-pane  label="组合信息" name="2">
+					<el-tab-pane  v-if="(data.assemblyList&&data.assemblyList.length>0)||(data.parentList&&data.parentList.length>0)" label="组合信息" name="2">
 						<template #label>
 							 <el-link v-if="issfg=='1'" :underline="false"  href="#children">组合信息</el-link>
 							 <el-link v-else-if="issfg=='2'" :underline="false"  href="#parent">组合信息</el-link>
@@ -25,12 +25,12 @@
 							 <el-link :underline="false" href="#specs">规格信息</el-link>
 						</template>
 					</el-tab-pane>
-					<el-tab-pane label="辅料关联" name="5">
+					<el-tab-pane v-if="data.consumableList&&data.consumableList.length>0" label="辅料关联" name="5">
 						<template #label>
 							 <el-link :underline="false" href="#consumables">辅料关联</el-link>
 						</template>
 					</el-tab-pane>
-				    <el-tab-pane label="物流信息" name="6">
+				    <el-tab-pane v-if="data.customs" label="物流信息" name="6">
 						<template #label>
 							 <el-link :underline="false" href="#logistics">物流信息</el-link>
 						</template>
@@ -51,7 +51,8 @@
 							<el-space>
 								<el-button @click="closeTab" >关闭</el-button>
 								<el-button @click.stop="copyinfo" type="primary">复制</el-button>
-								<el-button @click.stop="editinfo" type="primary">编辑</el-button>
+								<el-button v-if="isdelete=='false'"  @click.stop="editinfo" type="primary">编辑</el-button>
+								<el-button v-else @click.stop="recoverRows(data)" type="primary">启用</el-button>
 							</el-space>
 						</div>
 						
@@ -66,25 +67,36 @@ import { ref,reactive,onMounted,watch,onUnmounted,inject} from 'vue'
 import tabScroll from"@/utils/tab_scroll"
 import Listinfo from"./components/listinfo"
 import {useRouter } from 'vue-router'
+import {redirectToList} from '@/utils/page_helper.js';
 import { ElMessage } from 'element-plus'
 import materialApi from '@/api/erp/material/materialApi.js';
 	    const emitter = inject("emitter"); // Inject `emitter`
 		let activeName =ref('1')
 		const infoRef=ref({});
 		let router = useRouter()
+		let data=ref({});
 		let issfg=ref("0");
+		let isdelete=ref("false");
 		const mid=router.currentRoute.value.query.details;
 		function scroll(obj){
 			activeName.value = tabScroll(obj,"tab-scroll")
 		}
 		 function closeTab(){
-		 	emitter.emit("removeTab", 100);
+			 redirectToList(router,"/erp/product/localproduct",'产品管理');
+		 	//emitter.emit("removeTab", 100);
 		 }
 		 function loadData(){
 		 	materialApi.getMaterialInfo({"id":mid}).then((res)=>{
 				if(res.data){
 					infoRef.value.loadData(res.data);
+					data.value=res.data;
 					issfg.value=res.data.material.issfg;
+					console.log(res.data.material);
+					if(res.data.material.delete==true){
+						isdelete.value="true";
+					}else{
+						isdelete.value="false";
+					}
 				}
 			})
 		}
@@ -95,6 +107,7 @@ import materialApi from '@/api/erp/material/materialApi.js';
 				  title:"编辑产品",
 				  path:'/localproduct/editinfo',
 				  details:mid,
+				  replace:true,
 				}
 			}) 
 		}
@@ -108,6 +121,19 @@ import materialApi from '@/api/erp/material/materialApi.js';
 				  iscopy:'ok'
 				}
 			}) 
+		}
+		function recoverRows(row){
+			materialApi.recoverData({"id":mid,"sku":row.material.sku}).then((res)=>{
+				if(res.data){
+					ElMessage({
+						  message: res.data,
+						  type: 'success'
+					})
+					isdelete.value="false";
+					loadData();
+				}
+			})
+				 
 		}
 		onMounted(()=>{
 			loadData();

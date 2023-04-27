@@ -23,7 +23,7 @@
 <script>
 import * as echarts from 'echarts'
 import { ref,reactive,onMounted,watch } from 'vue'
-import reportApi from '@/api/amazon_adv/report/reportApi'
+import reportApi from '@/api/amazon/advertisement/report/reportApi'
 import {formatFloat} from '@/utils/index';
 export default{
 	 name: 'Adchart',
@@ -84,7 +84,7 @@ export default{
 	  			},
 	  			grid:{
 	  				right:32,
-	  				left:32,
+	  				left:45,
 	                bottom:32
 	  			},
 	            yAxis: {

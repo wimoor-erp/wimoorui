@@ -72,9 +72,20 @@ import { onMounted, reactive, ref, toRefs, watch } from 'vue';
 		  function handleClick(){
 			  
 		  }
+		  function sortTree(list){
+			  list.sort(function (m, n) {
+			   if (m.sort < n.sort) return -1
+			   else if (m.sort > n.sort) return 1
+			   else return 0
+			  });
+			  if(list.children){
+				  sortTree(list.children);
+			  }
+		  }
 		   onMounted(()=>{
 			   state.loading=true;
 			   listCompanyMenuTree().then(res=>{
+				   sortTree(res.data);
 				   state.treeMenu=res.data;
 				   state.loading=false;
 			   })

@@ -1,6 +1,6 @@
 <template>
 	<el-row>
-	<GlobalTable  ref="globalTable" :tableData="tableData"   height="calc(100vh - 220px)" @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+	<GlobalTable  ref="globalTable" :tableData="tableData"   height="calc(100vh - 220px)" @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		 <template #field>
 		  <el-table-column prop="groupname"  label="店铺" width="120"  />
 		  <el-table-column prop="marketname" label="国家"  width="70" />
@@ -73,17 +73,7 @@
 				})
 			}
 			function downloadList(){
-				var data={};
-				data.groupid=queryparams.value.groupid;
-				data.marketplaceid=queryparams.value.marketplaceid;
-				data.searchtype=queryparams.value.searchtype;
-				data.startDate=queryparams.value.startDate;
-				data.endDate=queryparams.value.endDate;
-				data.search=queryparams.value.search;
-				if(data.search==undefined){
-					data.search==null;
-				}
-				orderListApi.downloadReturnlist(data); 
+				orderListApi.downloadReturnlist(queryparams.value); 
 			}
 			return{
 				toDate,fromDate,loadData,tableData,globalTable,dateFormat,loadTableData,queryparams,downloadList

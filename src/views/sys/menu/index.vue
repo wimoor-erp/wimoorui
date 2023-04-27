@@ -67,4 +67,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+	.app-container{
+		padding:20px;
+	}
+</style>

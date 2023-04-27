@@ -1,7 +1,9 @@
 <template>
 	<div class="height-screen">
 		<div class="con-header ">
-		<el-button type="primary" @click="submitForm">FBA发货</el-button>
+			
+		<el-button type="primary" v-if="planData.overseaid"  @click="submitOverseaForm">海外仓发货</el-button>
+		<el-button type="primary" v-else @click="submitForm">FBA发货</el-button>
 	<!-- 	<el-button @click="marketSplit" v-if="summary.marketplaceid=='EU'">分配站点</el-button> -->
 		</div>
 		<el-row :gutter="16" class="m-t-16">
@@ -82,7 +84,7 @@
 			</el-col>
 		</el-row>
 		<p class="font-extraSmall m-t-16 m-b-8">去掉勾选的产品，可分批次或部分发货</p>
-		<el-table :data="planData.list" @selection-change="handleSummary"  border ref="tableRef">
+		<el-table :data="planData.list" height="calc(100vh - 410px)" @selection-change="handleSummary"  border ref="tableRef">
 			<el-table-column type="selection"></el-table-column>
 			<el-table-column label="图片"  width="65">
 				<template #default="scope">
@@ -96,10 +98,10 @@
 				</template>
 			</el-table-column>
 			<el-table-column label="平台sku" prop="sku">
+			</el-table-column>
+			<el-table-column label="采购成本" prop="price" width="80">
 				<template #default="scope">
-					<div class="sku">{{scope.row.sku}}</div>
-					<div ><span class="font-extraSmall">采购成本：</span>
-					<span class="text-orange">￥</span>{{scope.row.price}}</div>
+					<span >￥{{scope.row.price}}</span>
 				</template>
 			</el-table-column>
 			<el-table-column label="库存" prop="quantity" width="80"></el-table-column>
@@ -111,6 +113,7 @@
 </template>
 
 <script setup>
+import {Local,Help,DataSheet,BookmarkOne} from '@icon-park/vue-next';
 import { ref ,nextTick ,reactive,onMounted,toRefs,watch} from 'vue'
 import {tranStatus,tranStatusType} from "@/hooks/erp/shipment/shipment_status.js"
 import shipmentApi from "@/api/amazon/inbound/shipmentApi.js";
@@ -177,7 +180,7 @@ function marketSplit(){
 			}
 		});
 		if(props.planData.overseaid){
-			await warehouseApi.detail({id:props.planData.overseaid}).then(res=>{
+			await warehouseApi.detail(props.planData.overseaid).then(res=>{
 				state.summary.oversea=res.data.name;
 			});
 		}
@@ -199,19 +202,38 @@ function marketSplit(){
 			}) 
 		})
 	}
+	function submitOverseaForm(){
+		var param={};
+	    var rows=tableRef.value.getSelectionRows();
+		planApi.batch(rows).then(res=>{
+			router.push({
+				path:'/e/w/os/s',
+				query:{
+					batchnumber:res.data,
+					warehouse:props.warehouseid,
+					group:props.groupid,
+					marketplaceid:props.planData.marketplaceid,
+					overseaid:props.planData.overseaid,
+					title:'海外仓备货单',
+					path:'/e/w/os/s',
+				}
+			}) 
+		})
+	}
 	onMounted(async()=>{
-		await shipmentApi.getShipRecordByMarket({groupid:props.groupid,
-		 marketplaceid:props.planData.marketplaceid}).then(res=>{
-			state.shiplist=res.data;
-		});
+		await shipmentApi.getShipRecordByMarket(
+		             {groupid:props.groupid,marketplaceid:props.planData.marketplaceid}
+				 ).then(res=>{
+					 state.shiplist=res.data;
+				});
 		setTimeout(function(){
-		         tableRef.value.toggleAllSelection();
+		    tableRef.value.toggleAllSelection();
 		},500);
 	})
   
 </script>
 
-<style scoped="scoped">
+<style scoped>
 	.text-gray{
 		color:var(--el-text-color-secondary)
 	}

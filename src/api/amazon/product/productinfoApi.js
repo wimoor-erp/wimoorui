@@ -1,10 +1,7 @@
 import request from "@/utils/request";
-import axios from 'axios';
+
  function productList(data){
  	 return request.post("/amazon/api/v1/report/product/productInfo/productList",data)
- }
- function getOwnerList(data){
-	 return request.get("/amazon/api/v1/report/product/productInfo/getOwnerList",{params:data})
  }
  function getProStatusList(data){
 	 return request.get("/amazon/api/v1/report/product/productInfo/getProStatusList",{params:data})
@@ -27,9 +24,20 @@ import axios from 'axios';
  function getDim(data){
  	  return request.get("/amazon/api/v1/report/product/productInfo/getDim",{params:data})
  }
- 
+ function disable(data){
+	 return request.get("/amazon/api/v1/report/product/productInfo/disable",{params:data})
+ }
+ function undisable(data){
+ 	 return request.get("/amazon/api/v1/report/product/productInfo/undisable",{params:data})
+ }
+ function getInfoByMsku(data){
+ 	 return request.get('/amazon/api/v1/report/product/productInfo/getInfoByMsku',{params:data});
+ }
+ function follow(followid){
+ 	 return request.get('/amazon/api/v1/report/product/productInfo/follow',{params:{"followid":followid}});
+ }
  
  export default{
- 	productList,getOwnerList,getProStatusList,changeProPrice,updateRemark,ProductPriceLocked,
-	cancelProductPriceLocked,priceQueue,getDim
+ 	productList,getProStatusList,changeProPrice,updateRemark,ProductPriceLocked,follow,
+	cancelProductPriceLocked,priceQueue,getDim,disable,undisable,getInfoByMsku
  }

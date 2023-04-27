@@ -5,7 +5,7 @@
 		<el-dialog
 		    v-model="suplierVisible"
 		    title="选择供应商"
-		    width="40%"
+			top="2vh"
 		    :before-close="handleClose"
 		  >
 		  <div class="con-header">
@@ -17,16 +17,21 @@
 			</el-input>
 			</el-row>
 			</div>
-		   <GlobalTable ref="globalTable" :tableData="tableData" @loadTable="loadTableData" @selectionChange="selectRows" border >
+		   <GlobalTable ref="globalTable" :tableData="tableData" 
+		   :inDialog="true" 
+		   @row-click="rowClick" @loadTable="loadTableData" 
+		   @currentChange="selectRows" 	 :highlightCurrentRow="true" :stripe="false"  >
 			    <template #field>
-			<el-table-column  type="selection" width="38" />
-		   	<el-table-column prop="number" label="编码" width="120"/> 
-		   	<el-table-column prop="product" label="名称" width="400" show-overflow-tooltip>
+		   	<el-table-column prop="number" label="编码" width="140" show-overflow-tooltip/> 
+		   	<el-table-column prop="product" label="名称"   show-overflow-tooltip>
 		   		<template #default="scope">
-		   			<div class='name'>{{scope.row.name}}</div>
+		   			<div class='name'>{{scope.row.name}}
+					<el-tag v-if="scope.row.isdefault">默认供应商</el-tag>
+					<el-tag v-else-if="scope.row.isbackup" type="success">备选供应商</el-tag>
+					</div>
 		   		</template>
 		   	</el-table-column>
-		   	<el-table-column prop="operator2" label="操作人"     />
+		   	<el-table-column prop="operator2" label="操作人"   width="120"  />
 			</template>
 		   </GlobalTable>
 		    <template #footer>
@@ -51,14 +56,23 @@
 	 
 	let state = reactive({
 		search:'',
+		materialid:"",
 		tableData:{records:[],total:0},
 		suplierVisible:false,
-		selectRows:[],
+		selectRow:null,
 	})    
 	 let {search,tableData,suplierVisible}=toRefs(state)
+     function rowClick(row){
+		  globalTable.value.toggleRowSelection(row,true);
+	 }
 
-
-	function show(){
+	function show(materialid){
+		if(materialid){
+			state.materialid=materialid;
+		}else{
+			state.materialid="";
+		}
+		
 		state.suplierVisible=true;
 		setTimeout(()=>{
 			loadData();
@@ -66,21 +80,21 @@
 	}
 	
 	function loadData(){
-		globalTable.value.loadTable({"search":state.search});
+		globalTable.value.loadTable({"search":state.search,"materialid":state.materialid});
 	}
 	function submit(){
-		if(state.selectRows.length!=1){
+		if(!state.selectRow){
 			ElMessage({
 			     message: '请提交1个供应商！',
 			     type: 'error'
 			})
 		}else{
 			state.suplierVisible=false;
-			emit('getdata',state.selectRows);
+			emit('getdata',state.selectRow);
 		}
 	}
 	function selectRows(rows){
-		 state.selectRows=rows;
+		 state.selectRow=rows;
 	}
 	function loadTableData(data){
 		 //根据 params去查

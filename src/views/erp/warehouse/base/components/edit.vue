@@ -20,7 +20,7 @@
 	    <el-form-item label="仓位名称"  prop="name">
 	      <el-input v-model="formData.name" :disabled="formData.disabled"/>
 	    </el-form-item>
-		<el-form-item label="地址">
+		<el-form-item v-if="props.ftype!='oversea'" label="地址">
 			<el-space>
 		  <el-select v-model="formData.addressid" :disabled="formData.disabled" placeholder="请选择仓位地址">
 		     <el-option v-for="address in addressOptions" :label="address.name" :value="address.id" />
@@ -127,8 +127,8 @@
 	  warehouseOptions,
 	} = toRefs(state);
     async function loadSerialNumber(){
-		await  serialnumberApi.getSerialNumber({"ftype":"M",isfind:"true"}).then(({data})=>{
-			state.formData.number=data;
+		await  serialnumberApi.getSerialNumber({"ftype":"M",isfind:"true"}).then(res=>{
+			state.formData.number=res.data;
 		});
 	}
 	async function loadAddress(){
@@ -143,7 +143,6 @@
 	}
 	
     onMounted(()=>{
-		loadSerialNumber();
 		loadAddress();
 		loadWarehouse();
 	})
@@ -159,6 +158,20 @@
 	}
 	function submitForm(){
 		 dataFormRef.value.validate((isValid) => {if(isValid){
+			  console.log(state.formData);
+			 if(state.formData.ftype
+			 &&state.formData.ftype.indexOf("oversea")>-1
+			 && (state.formData.country==null
+			    ||state.formData.country==undefined
+			    ||state.formData.country=="")
+			 ){
+				  ElMessage.error('国家不能为空');
+				  return ;
+			 }
+			 if(!state.formData.parentid){
+				 ElMessage.error('父级仓库不能为空');
+				 return ;
+			 }
 			 if(state.formData.id){
 			 	warehouseApi.updateData(state.formData.id,state.formData).then(res=>{
 			 		ElMessage.success('更新成功');
@@ -184,6 +197,7 @@
 	function show(parentid,ftype,id){
 		state.dialog.visiable=true;
 		state.dialog.loading=false;
+		loadSerialNumber();
 		loadWarehouse();
 		if(id){
 				detail(id);

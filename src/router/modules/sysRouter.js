@@ -5,6 +5,7 @@ import ResetPassword from '@/views/sys/userCenter/resetPassword.vue'
 import SSOLogin from '@/views/sys/SSOLogin.vue'
 import OrderBlank from '@/views/erp/ship/orderblank/index.vue'
 import AuthResult from '@/views/amazon/storeAuth/authResult/index.vue'
+import AdvResult from '@/views/amazon/storeAuth/advResult/index.vue'
 export default [
   {
 	 path: '/ssologin',
@@ -35,5 +36,10 @@ export default [
     path: '/authresult',
     name: 'AuthResult',
     component:AuthResult
+  },
+  {
+    path: '/advresult',
+    name: 'AdvResult',
+    component:AdvResult
   },
 ]

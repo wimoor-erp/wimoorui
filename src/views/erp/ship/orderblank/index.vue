@@ -11,7 +11,7 @@
 				    <label>货件ID:</label><span>{{shipFormData.list.shipmentid}}</span>
 				  </div> 
 				  <div class="grid-content" >
-				    <label>创建日期:</label><span>{{shipFormData.list.createdate}}</span> 
+				    <label>创建日期:</label><span>{{dateFormat(shipFormData.list.createdate)}}</span> 
 				  </div>
 				  <div class="grid-content" >
 					   <label>SKU数量:</label><span>{{shipFormData.list.skuamount}}</span> 
@@ -135,7 +135,6 @@ export default {
 	.head-list .el-row{flex:1}
 	.el-divider--horizontal{margin:8px 0 !important}
 	.card-body .name{line-height: 1;}
-	.el-table td.el-table__cell .sku span{color:#999;margin-left: 8px;}
 	.card-body .el-table {
 		--el-table-border-color: #2c2c2c;
 	}

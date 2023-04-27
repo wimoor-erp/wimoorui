@@ -1,9 +1,9 @@
 <template>
 <div>
-	<el-button v-if="shipDatas.status!='6'"  @click="deleteShipment" >删除货件</el-button>
+	<el-button v-if="shipDatas.status!='6'"  @click="deleteShipment"  v-hasPerm="'amz:ship:delete'">删除货件</el-button>
 	<el-button @click="copyshipment" >复制货件</el-button>
-	<el-button v-if="shipDatas.status=='5' || shipDatas.status=='-1' || shipDatas.status=='0'" disabled >本地完成</el-button>
-	<el-button v-else  @click="amazondoneShipmentFunc">本地完成</el-button>
+	<el-button v-if="shipDatas.status=='5' || shipDatas.status=='-1' || shipDatas.status=='0'" v-hasPerm="'amz:ship:localdone'">本地完成</el-button>
+	<el-button v-else  @click="amazondoneShipmentFunc" v-hasPerm="'amz:ship:localdone'">本地完成</el-button>
 	
 	<el-dialog
 	  v-model="dialogVisible"
@@ -16,7 +16,7 @@
 	    <span class="dialog-footer">
 		  <el-button @click="confirmDelete('local')" :style="{ display: visibleBtn }">仅删除本地</el-button>
 	      <el-button @click="dialogVisible = false">取消</el-button>
-	      <el-button type="primary" @click="confirmDelete('')"
+	      <el-button type="primary" @click="confirmDelete('')" :loading="confirmCancelLoading"
 	        >确认</el-button
 	      >
 	    </span>
@@ -25,29 +25,27 @@
 </div>
 </template>
 
-<script>
+<script setup>
 	
 	import {TakeOff,TransactionOrder,Local} from '@icon-park/vue-next';
-	import { ref,reactive,onMounted } from 'vue';
+	import { ref,reactive,onMounted,defineEmits } from 'vue';
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
 	import shipmentApi from '@/api/amazon/inbound/shipmentApi.js';
 	import { useRoute,useRouter } from 'vue-router'
 	import { ElMessageBox ,ElMessage } from 'element-plus'
-	export default{
-		name:'ShipmentOpt',
-		components:{
-			TakeOff,TransactionOrder,Local,
-		},
-		emits: ["change"],
-		setup(props,context){
-			let router = useRouter()
-			const shipmentid = router.currentRoute.value.query.shipmentid;
-			let canceltitle=ref("亚马逊后台货件状态为,请确认是否同步删除亚马逊货件？")
-			let shipstatus=ref("")
-			let dialogVisible = ref(false)
-			let visibleBtn=ref("none")
-			let statusLoading=ref(false);
-			let shipDatas=ref({})
+	const emit = defineEmits(['change']);
+	let router = useRouter()
+	const shipmentid = router.currentRoute.value.query.shipmentid;
+	let canceltitle=ref("亚马逊后台货件状态为,请确认是否同步删除亚马逊货件？")
+	let shipstatus=ref("")
+	let dialogVisible = ref(false)
+	let confirmCancelLoading=ref(false);
+	let visibleBtn=ref("none")
+	let statusLoading=ref(false);
+	let shipDatas=ref({})
+	        function loadOptData(shipmentAll){
+				shipDatas.value=shipmentAll;
+			}
 			function deleteShipment(){
 					//先弹窗打开modal 获取最新的货件状态
 					dialogVisible.value=true;
@@ -58,6 +56,7 @@
 					}).then(res=>{
 						if(res.data!="fail"){
 							status=res.data;
+							shipstatus.value=res.data;
 						}
 						statusLoading.value=false;
 						if(status!="CANCELLED"){
@@ -66,8 +65,6 @@
 						}else{
 							canceltitle.value="亚马逊后台货件状态为"+status+",请确认是否删除本地货件？";
 						}
-						
-						shipstatus.value=status;
 						context.emit("change");
 					})
 					
@@ -80,6 +77,7 @@
 				}else{
 					nowstatus=shipstatus.value;
 				}
+				confirmCancelLoading.value=true;
 				shipmenthandlingApi.disableShipment({
 					"shipmentid":shipmentid,
 					"shipmentStatus":nowstatus,
@@ -89,8 +87,11 @@
 					    message: '操作成功！',
 					    type: 'success',
 					  });
+					  confirmCancelLoading.value=false;
 					  dialogVisible.value=false;
 					  context.emit("change");
+				}).catch(error=>{
+					 confirmCancelLoading.value=false;
 				})
 			}
 			function copyshipment(){
@@ -112,7 +113,7 @@
 					  type: 'warning',
 					  callback:(action)=>{
 						 if(action=="confirm"){
-							  shipmentApi.refreshShipmentRec({'shipmentid':shipmentid}).then(res=>{
+							  //shipmentApi.refreshShipmentRec({'shipmentid':shipmentid}).then(res=>{
 									 shipmenthandlingApi.amazondoneShipment({
 									 	  "shipmentid":shipmentid
 									  }).then(res=>{
@@ -122,22 +123,14 @@
 										  });
 										  context.emit("change");
 								 })
-							 })
+							// })
 						 }
 					  }
 					}
 				  )
 				
 			}	
-			return{
-				deleteShipment,confirmDelete,statusLoading,
-				amazondoneShipmentFunc,canceltitle,shipstatus,
-				dialogVisible,visibleBtn,shipDatas,copyshipment
-				
-			}
-		}
-	}
-	
+		   defineExpose({loadOptData})
 </script>
 
 <style>

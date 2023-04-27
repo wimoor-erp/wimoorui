@@ -4,6 +4,7 @@
 	 custom-class="chart-tabs-dialog"
 	  :modal="false" :lock-scroll="false"    draggable>
 		  <template #header>
+		   <div style="padding-right: 20px; padding-top: 4px;">
 			<el-tabs
 			   v-model="activeMarket"
 			   @tab-change="handleClick"
@@ -12,6 +13,7 @@
 			   				  
 			   </el-tab-pane>
 			 </el-tabs>
+			 </div>
 		  </template>
 			<div class="flex-center-between">
 						   <el-space :size="0" direction="vertical">
@@ -230,7 +232,7 @@
 				}
 			  
 		 
-				 myChart.setOption(option);
+				 myChart.setOption(option,true);
 				 window.addEventListener('resize',()=>{
 						   myChart.resize();
 				 })
@@ -256,6 +258,13 @@
 				if(sku==null||sku==""){
 					marketApi.getByMSku({"msku":msku,"groupid":groupid}).then((res)=>{
 						marketList.value=res.data;
+						for(var i=0;i<res.data.length;i++){
+							var market=res.data[i];
+							if(market.region=='EU'){
+								marketList.value.splice(i,0,{"name":'欧洲',marketplaceid:"EU",region:"EU"});
+								break;
+							}
+						}
 						if(marketplaceid==null||marketplaceid==""){
 							activeMarket.value=res.data[0].marketplaceid;
 							productData.marketplaceid=res.data[0].marketplaceid;

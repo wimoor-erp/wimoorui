@@ -27,7 +27,7 @@
     </draggable>
 			<template #footer>
 				<span class="dialog-footer">
-					<el-button @click="dialogVisible = false">取消</el-button>
+					<el-button @click="dialog.visible = false">取消</el-button>
 					<el-button type="primary" @click="submitFunc">保存</el-button>
 				</span>
 			</template>

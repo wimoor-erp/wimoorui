@@ -67,43 +67,45 @@ export default{
 	  }
 	  function chartLineLabelShowHide(label){
 	  	   var myChart=echarts.getInstanceByDom(document.getElementById('salechart'));
-	      var option=myChart.getOption();
-		
-	       option.series.forEach((series,index)=>{
-			   	      	  if(option.legend[0].selected[label]&&label==series.name){
-			   	      		  series.itemStyle={
-			   	      	    			normal : {
-			   	      	    				label : {
-			   	      	    					show : true,
-			   	      	    					textStyle : {
-			   	      	    						color : '#333',
-			   	      	    					},
-			   	      	    					formatter:function(params){return params.value}
-			   	      	    				},
-			   	      	    				lineStyle:{
-			    						width:5
-			    					},
-			   	      	    		
-			   	      	    		}};
-			   	      	  }else{
-			   	      		  series.itemStyle={
-			   	    	    			normal : {
-			   	    	    				label : {
-			   	    	    					show : false,
-			   	    	    					textStyle : {
-			   	    	    						color : '#333',
-			   	    	    					},
-			   	    	    					formatter:function(params){  return params.value}
-			   	    	    				},
-			   	    	    				lineStyle:{
-			   	      						width:2
-			   	      					},
-			   	    	    		
-			   	    	    		}};
-			   	      	  }
-			    
-		   })
-	  	myChart.setOption(option);
+	       if(myChart&&myChart.getOption){
+			   var option=myChart.getOption();
+			   
+			      option.series.forEach((series,index)=>{
+			   	   	      	  if(option.legend[0].selected[label]&&label==series.name){
+			   	   	      		  series.itemStyle={
+			   	   	      	    			normal : {
+			   	   	      	    				label : {
+			   	   	      	    					show : true,
+			   	   	      	    					textStyle : {
+			   	   	      	    						color : '#333',
+			   	   	      	    					},
+			   	   	      	    					formatter:function(params){return params.value}
+			   	   	      	    				},
+			   	   	      	    				lineStyle:{
+			   	    						width:5
+			   	    					},
+			   	   	      	    		
+			   	   	      	    		}};
+			   	   	      	  }else{
+			   	   	      		  series.itemStyle={
+			   	   	    	    			normal : {
+			   	   	    	    				label : {
+			   	   	    	    					show : false,
+			   	   	    	    					textStyle : {
+			   	   	    	    						color : '#333',
+			   	   	    	    					},
+			   	   	    	    					formatter:function(params){  return params.value}
+			   	   	    	    				},
+			   	   	    	    				lineStyle:{
+			   	   	      						width:2
+			   	   	      					},
+			   	   	    	    		
+			   	   	    	    		}};
+			   	   	      	  }
+			   	    
+			      })
+			   myChart.setOption(option);
+		   }
 	  }
 	  function generalChart(series,label,titles){
 		  var myChart = echarts.init(document.getElementById('salechart'));
@@ -137,7 +139,7 @@ export default{
 	  			},
 	  			grid:{
 	  				right:32,
-	  				left:32,
+	  				left:45,
 	                bottom:32
 	  			},
 	            yAxis: {

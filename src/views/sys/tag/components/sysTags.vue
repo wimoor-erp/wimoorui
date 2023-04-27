@@ -6,13 +6,14 @@
           :icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
-          >批量删除</el-button
+          >批量停用</el-button
         >
 		<el-input
 		  v-model="queryParams.name"
 		  placeholder="标签名称" 
+		  @clear="handleQuery()"
+		  @input="handleQuery()"
 		  clearable
-		  @input="handleQuery"
 		/>
 </el-space>
 
@@ -20,7 +21,7 @@
     <el-table
       :data="dictItemList"
       v-loading="loading"
-      border
+      :stripe="true" 
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection"   />
@@ -32,12 +33,6 @@
 		   </el-tag>
 	  </template>
 	  </el-table-column>
-      <el-table-column label="状态" align="center">
-        <template #default="scope">
-          <span v-if="scope.row.status === 1" >启用</span>
-          <span v-else>禁用</span>
-        </template>
-      </el-table-column>
       <el-table-column label="操作" align="center">
         <template #default="scope">
           <el-button
@@ -46,11 +41,11 @@
             link
             @click.stop="handleUpdate(scope.row)"
            >编辑</el-button>
-          <el-button
+          <!-- <el-button
             type="primary"
             link
             @click.stop="handleDelete(scope.row)"
-          >删除</el-button>
+          >删除</el-button> -->
         </template>
       </el-table-column>
     </el-table>
@@ -60,7 +55,7 @@
       :total="total"
       v-model:page="queryParams.page"
       v-model:limit="queryParams.limit"
-      @pagination="handleQuery"
+      @pagination="handleQuery()"
     />
 
     <!-- 表单弹窗 -->
@@ -112,7 +107,7 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
-            <el-radio :label="1">正常</el-radio>
+            <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">停用</el-radio>
           </el-radio-group>
         </el-form-item>
@@ -150,7 +145,7 @@ export default {
 		  // 非多个禁用
 		  multiple: true,
 		  total: 0,
-		  queryParams: { page: 1, limit: 10 } ,
+		  queryParams: { page: 1, limit: 50 } ,
 		  dictItemList: [] ,
 		  dialog: { visible: false },
 		  formData: {
@@ -186,7 +181,7 @@ export default {
 			  state.queryParams.groupid=state.queryParams.groupid;
 			  listPageDictItems(state.queryParams).then(res => {
 				  state.dictItemList = res.data;
-				  state.total = res.data.length;
+				  state.total = res.total;
 				  state.loading = false;
 			});
 		  } else {
@@ -254,22 +249,23 @@ export default {
 
 		function handleDelete(row) {
 		  const ids = [row.id || state.ids].join(',');
-		  ElMessageBox.confirm('确认删除已选中的数据项?', '警告', {
+		  ElMessageBox.confirm('确认停用已选中的数据项?', '警告', {
 			confirmButtonText: '确定',
 			cancelButtonText: '取消',
 			type: 'warning',
 		  })
 			.then(() => {
 			  deleteDictItems(ids).then(() => {
-				ElMessage.success('删除成功');
+				ElMessage.success('批量停用成功');
 				handleQuery();
 			  });
 			})
-			.catch(() => ElMessage.info('已取消删除'));
+			.catch(() => ElMessage.info('已取消停用'));
 		}
 		onMounted(() => {
 		  handleQuery();
 		});
+		
 		return{handleQuery,handleDelete,cancel,submitForm,handleUpdate,handleAdd,
 		       handleSelectionChange,
 		       //function

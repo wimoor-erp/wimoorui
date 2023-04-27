@@ -34,7 +34,7 @@
 			//获取店铺列表
 			function getGroupData(){
 				groupApi.getAmazonGroup().then((res)=>{
-					 if(props.defaultValue!="only"){
+					 if(props.defaultValue!="only"&&props.defaultValue!="onlyEU"){
 						 res.data.push({"id":"","name":"全部店铺"})
 					 }
 					groupList.value=res.data;
@@ -73,7 +73,7 @@
 						}
 					
 					} 
-					if(props.defaultValue!="only"){
+					if(props.defaultValue!="only"&&props.defaultValue!="onlyEU"){
 						res.data.push({"id":"","name":"全部国家","marketplaceid":""})
 					}
 					marketList.value=res.data;

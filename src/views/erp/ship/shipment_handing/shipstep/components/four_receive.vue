@@ -28,17 +28,13 @@
 	</div>
 </template>
 
-<script>
+<script setup>
 	import {h, ref ,watch,reactive,onMounted,computed} from 'vue'
-	export default{
-		name:"four_picking",
-		setup(){
 			let productData=reactive({list:[]})
-			return{
-				productData
+			function loadOptData(datas){
+				productData.list=datas;
 			}
-		  }
-		}
+	 	    defineExpose({loadOptData})
 </script>
 
 <style>

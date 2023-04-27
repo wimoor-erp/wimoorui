@@ -3,10 +3,10 @@
 		<div class="con-header">
 					
 			<el-row>
-				<Group @change="getGroup" isproduct="ok" />
+				<Group @change="getGroup" isproduct="ok"  ref="groupRef" />
 				<el-space>
-					<Status @status="getStatus" />
-					<Owner @owner="getOwner" />
+					<Status @status="getStatus" ref="statusRef" />
+					<Owner @owner="getOwner" ref="ownerRef" />
 					<el-select v-model="disabletype" @change='disabletypeChange' placeholder="全部显示状态"
 						style="width: 110px">
 						<el-option label="未隐藏" value="false">未隐藏</el-option>
@@ -14,7 +14,7 @@
 						<el-option label="失效" value="invalid">失效</el-option>
 						<el-option label="不限" value="all">不限</el-option>
 					</el-select>
-					<el-input v-model="searchKeywords"  @input="changeKeywords"  placeholder="请输入" class="input-with-select">
+					<el-input v-model="searchKeywords" clearable @input="changeKeywords"  placeholder="请输入" class="input-with-select">
 						<template #prepend>
 							<el-select v-model="searchtype" @change='searchTypeChange' placeholder="SKU"
 								style="width: 110px">
@@ -36,16 +36,20 @@
 					</el-input>
 					<el-popover   :popper-append-to-body="false" v-model:visible="moreSearchVisible" :width="400" trigger="click">
 						<template #reference>
-							<el-button title='高级筛选' class='ic-btn'>
-								<menu-unfold theme="outline" size="16" :strokeWidth="3" />
-							</el-button>
+						
+							      <el-button :color="filterBtnColor" plain class='ic-btn'>
+							      	<i>
+							      	<svg width="16" height="16" fill="none" viewBox="0 0 48 48"  xmlns="http://www.w3.org/2000/svg">
+							      		<path d="M6 9L20.4 25.8178V38.4444L27.6 42V25.8178L42 9H6Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg>
+							         </i>
+							      </el-button>
 						</template>
 						 <el-form :model="form"  label-width="auto"  label-position="left">
 							<el-form-item label="产品标签">
-							     <Tags @change="changeTag"  />
+							     <Tags ref="tagsRef" @change="changeTag"  />
 							   </el-form-item>
 						    <el-form-item label="产品分类">
-								 <Category @change="getCategory" />
+								 <Category ref="cateRef" @change="getCategory" />
 							 </el-form-item>
 							<el-form-item label="销量">
 							     <el-select  v-model="salerangecheck"  :teleported="false" placeholder="请选择" >
@@ -88,7 +92,7 @@
 					
 					<el-popover    v-model:visible="dataSearchVisible" :width="400" trigger="click">
 						<template #reference>
-							<el-button>筛选器</el-button>
+							<el-button>指数过滤</el-button>
 						</template>
 						 <el-form :model="form" label-width="auto"   >
 							<el-form-item label="数据字段">
@@ -122,7 +126,7 @@
 								    </el-form-item>
 						</el-form>
 					  </el-popover>
-					<el-button>重置</el-button>
+					<el-button @click.stop="clearSearch" >重置</el-button>
 				</el-space>
 			</el-row>
 			<!--功能区域 -->
@@ -134,17 +138,6 @@
 					</el-button>
 					<el-button @click.stop="refreshFBAInv">批量同步FBA库存</el-button>
 					<!-- <el-button @click="modifyPrice">批量调价</el-button> -->
-					<!-- <el-dropdown trigger="click">
-					  <el-button>
-					             配对操作<el-icon class="el-icon--right"><arrow-down /></el-icon>
-					  </el-button>
-					  <template #dropdown>
-					    <el-dropdown-menu >
-					      <el-dropdown-item>配对</el-dropdown-item>
-					      <el-dropdown-item>解除配对</el-dropdown-item>
-					    </el-dropdown-menu>
-					  </template>
-					</el-dropdown> -->
 					<el-dropdown trigger="click">
 					  <el-button>
 					             导入<el-icon class="el-icon--right"><arrow-down /></el-icon>
@@ -158,7 +151,7 @@
 				</el-space>
 				<div class='rt-btn-group'>
 					<el-space>
-					<el-dropdown :hide-on-click="false"   @command="handleCommand">
+					<el-dropdown :hide-on-click="false" trigger="click"  @command="handleCommand">
 					    <el-button class='ic-btn'  title='排序'>
 					       <sort-one theme="outline" size="16"  :strokeWidth="3"/>
 					    </el-button>
@@ -177,7 +170,12 @@
 					    </template>
 					  </el-dropdown>
 					  <el-button class='ic-btn' title="日均销量公式" @click="EditSaleFormula">
-						  <el-icon class="font-medium"><Operation /></el-icon>
+						  <formula theme="outline" size="14"  :strokewidth="3"/>
+					  </el-button>
+					  <el-button class='ic-btn' title="店外商品搜索" @click="handleToOutSearch">
+					  			 <el-icon style="font-size: 16px;align-itmes:center">
+					  			 	<search />
+					  			 </el-icon>
 					  </el-button>
 					</el-space>
 					<el-button class='ic-btn' title='帮助文档'>
@@ -206,20 +204,22 @@
 
 <script>
 	import {ref,reactive,onMounted,watch,h} from 'vue';
-	import {Help,Plus,MenuUnfold,SettingTwo,SortOne} from '@icon-park/vue-next';
+	import {Help,Plus,MenuUnfold,SettingTwo,SortOne,Formula} from '@icon-park/vue-next';
 	import {ElMessage,ElDivider} from 'element-plus';
-	import {Search,ArrowDown,Check,Operation} from '@element-plus/icons-vue';
+	import {Search,ArrowDown,Check,Find} from '@element-plus/icons-vue';
 	import Table from"./components/table"
 	import BatchModifypriceDialog from"./components/batchmodifypriceDialog.vue"
 	import SaleFormula from"./components/sale_formula"
 	import Group from './components/group.vue';
+	import {useRouter } from 'vue-router'
 	import Owner from '@/components/header/owner.vue';
 	import Tags from '@/components/header/tags.vue';
 	import Category from '@/components/header/category.vue';
 	import Status from './components/prostatus.vue';
 	import RefreshProDialog from './components/refreshProduct.vue';
 	import productRefreshApi from '@/api/amazon/product/productRefreshApi.js';
-
+	import {percentInput} from '@/utils/index';
+	
 	export default {
 		name:'Index',
 		components: {
@@ -227,8 +227,8 @@
 			Search,MenuUnfold,Check,
 			Plus, SettingTwo,Table,
 			BatchModifypriceDialog,Group,Owner,Status,Tags,Category,
-			Operation,
 			SaleFormula,
+			Formula,
 			RefreshProDialog,
 		},
 		emits:["getdata"],
@@ -236,21 +236,27 @@
 			onMounted(()=>{
 
 			})
+			const filterBtnColor = ref()
+			let cateRef=ref();
+			let tagsRef=ref();
+			let groupRef=ref();
+			let ownerRef=ref();
+			let statusRef=ref();
 			let refreshRef=ref();
 			let priceDialogRef =ref()
 			let radio2 = ref('ASIN')
 			let salerangecheck =ref("")
 			let trantype=ref()
 			let currentRank =ref('sku')
-			let currentSolt =ref("asc")
+			let currentSolt =ref("desc")
 			let isload=ref(true)
 			let searchtype=ref("sku")
 			let disabletype=ref("false")
 			let isfba=ref("")
 			let tableRef=ref();
 			let searchKeywords=ref();
-			let remark=ref();
-			let proname=ref();
+			let remark=ref("");
+			let proname=ref("");
 			let SaleFormulaRef =ref()
 			let moreSearchVisible=ref(false);
 			let dataSearchVisible=ref(false);
@@ -268,7 +274,8 @@
 			let dataColumn=ref("v.advacos");
 	    let props = { multiple: true }
 		let soltData=reactive([{name:'从高到低',value:'desc'},{name:'从低到高',value:"asc"}])
-		var queryParam={};
+		var queryParam=reactive({});
+		let router=useRouter();
 		let rankData =reactive([
 			{
 				name:'SKU',
@@ -332,11 +339,11 @@
 			value:'parentAsin',
 		},
 		])
-		let salerange =[
+		let salerange =reactive([
 			{label:'不限',value:""},{label:'销量小幅下降',value:"-3"},
 			{label:'销量大幅下降',value:"-25"},{label:'销量小幅上升',value:"3"},
-			{label:'销量大幅下降',value:"25"}
-		]
+			{label:'销量大幅上升',value:"25"}
+		])
 		let options =ref([]);
 		let selection = ref([])
 		function checkRows(rows){
@@ -432,6 +439,19 @@
 		    queryParam.remark=remark.value;
 			queryParam.isbadreview=isbadreview.value;
 			queryParam.name=proname.value;
+			if(queryParam.changeRate!=""||
+			   queryParam.isfba!=""||
+			   queryParam.name!=""||
+			   queryParam.remark!=""
+			){
+				filterBtnColor.value="#ff6700"
+			}else if(queryParam.category!=""&&queryParam.category!=undefined){
+				filterBtnColor.value="#ff6700"
+			}else if(queryParam.taglist!=''&&queryParam.taglist!=undefined){
+				filterBtnColor.value="#ff6700"
+			}else{
+				filterBtnColor.value=""
+			}
 			refreshTable();
 			moreSearchVisible.value=false;
 		}
@@ -442,7 +462,7 @@
 			tableRef.value.loadData(queryParam);
 		}
 		function EditSaleFormula(){
-			SaleFormulaRef.value.saleFormulaVisable = true
+			SaleFormulaRef.value.show();
 		}
 	 
 		function submitDataForm(){
@@ -455,6 +475,13 @@
 		}
 		function addColumn(){
 			var data1="";var data2="";var data3=dataValue.value;
+			if(data3=="" || data3==undefined ||data3==null || data3=="undefined"){
+				ElMessage({
+					 message: '请输入正确的值！',
+					 type: 'error'
+				})
+				return;
+			}
 			if(dataColumn.value=="v.advacos"){
 				data1="ACOS";
 			}
@@ -538,21 +565,57 @@
 					 }
 				})
 			}
-			 
 			
-			
+		}
+		function handleToOutSearch(){
+			router.push({
+				path:'/amazon/listing/catalog',
+				query:{
+				  title:"商品搜索",
+				  path:'/amazon/listing/catalog',
+				}
+			})
+		}
+		function clearSearch(){
+			disabletype.value="false";
+			salerangecheck.value="";
+			isfba.value="";
+			proname.value="";
+			remark.value="";
+			searchtype.value="sku";
+			searchKeywords.value="";
+			statusRef.value.reset();
+			ownerRef.value.reset();
+			tagsRef.value.reset();
+			cateRef.value.reset();
+			isbadreview.value=false;
+			groupRef.value.getGroupData();
+			queryParam.paralist=null;
+			queryParam.searchtype="sku";
+			queryParam.isfba="";
+			queryParam.remark="";
+			queryParam.isparent=null;
+			queryParam.disable="false";
+			queryParam.name=null;
+			queryParam.search="";
+			queryParam.taglist=null;
+			queryParam.category=null;
+			queryParam.ownerid=null;
+			queryParam.owner=null;
+			submitSearch();
 		}
 			return {
 				options,props,salerange,salerangecheck,
+				filterBtnColor,
 				radio2,modifyPrice,checkRows,selection,
-				priceDialogRef,rankData,currentRank,rankChange,
+				priceDialogRef,rankData,currentRank,rankChange,handleToOutSearch,
 				currentSolt,soltData,soltChange,getGroup,getOwner,getStatus,searchtype,
 				searchTypeChange,isfba,saleslist,tableRef,refreshTable,changeKeywords,searchKeywords,
 				searchConfirm,remark,submitSearch,resetSearch,moreSearchVisible,dataSearchVisible,
-				SaleFormulaRef,EditSaleFormula,disabletype,disabletypeChange,
+				SaleFormulaRef,EditSaleFormula,disabletype,disabletypeChange,percentInput,
 				isbadreview,proname,columnList,dataColumn,mark,dataValue,submitDataForm,resetDataForm,
 				addColumn,clearColumn,columntext,columnval,showRefreshDialog,refreshRef,refreshFBAInv,
-				changeTag,getCategory,
+				changeTag,getCategory,clearSearch,groupRef,statusRef,ownerRef,tagsRef,cateRef
 			}
 		},
 	}

@@ -1,6 +1,6 @@
 <template>
 	<el-row>
-		<GlobalTable ref="globalTable" :tableData="tableData" @loadTable="loadtableData"  height="calc(100vh - 270px)" :defaultSort="{ prop: 'createdate2', order: 'descending' }"  
+		<GlobalTable ref="globalTable" :tableData="tableData" :stripe="true"  @loadTable="loadtableData"  height="calc(100vh - 270px)" :defaultSort="{ prop: 'createdate2', order: 'descending' }"  
 			style="width: 100%;margin-bottom:16px;">
 			<template #field>
 			 <el-table-column type="selection" width="38" />
@@ -13,7 +13,7 @@
 				<el-table-column prop="country" label="收货站点" width="120" />
 				<el-table-column prop="createdate2" label="申请日期" width="120" sortable="custom"  />
 				<el-table-column prop="remark" label="备注" />
-				<el-table-column prop="remark" label="操作" width="120">
+				<el-table-column prop="remark" label="操作" width="120"  fixed="right" >
 					<template #default="scope">
 						<el-space>
 							<el-button class='el-button--blue' @click="shipmentDetails(scope.row)">详情</el-button>

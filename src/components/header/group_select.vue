@@ -25,11 +25,17 @@
 		 	function loadData(){
 			 	groupApi.getAmazonGroup().then((res)=>{
 					if(props.defaultValue!='only'){
-					   res.data.push({"id":"","name":"全部"})
+					   res.data.push({"id":"","name":"全部店铺"})
 					}
 					groupList.value=res.data;
 					if(res.data&&res.data.length>0){
-							groupid.value = res.data[0].id;
+						    if(props.defaultValue=='all'){
+								groupid.value="";
+							}else if(props.defaultValue&&props.defaultValue!='all'&&props.defaultValue!='only'){
+								groupid.value=props.defaultValue;
+							}else{
+								groupid.value = res.data[0].id;
+							}
 			                context.emit("change",groupid.value,true);
 					}
 				})

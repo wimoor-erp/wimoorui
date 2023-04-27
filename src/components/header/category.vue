@@ -1,5 +1,5 @@
 <template>
-	<el-select v-model="category"  :popper-append-to-body="false" :teleported="false" @change="changeData"  placeholder="全部品类" clearable>
+	<el-select v-model="category" filterable :popper-append-to-body="false" :teleported="false" @change="changeData"  placeholder="品类" clearable>
 	      <el-option  
 			  v-for="item in categoryList"   
 			  :key="item.id"  
@@ -23,8 +23,8 @@
 	});
 	function loadcategoryList(){
 		materialApi.getCategory().then((res)=>{
+			res.data.push({"id":"","name":"全部分类"})
 			if(res.data && res.data.length>0){
-				res.data.push({"id":"","name":"全部"});
 				state.categoryList=res.data;
 			}
 		});
@@ -32,6 +32,12 @@
 	function changeData(value){
 		emit("change",value);
 	}
+	function reset(){
+		state.category="";
+	}
+	defineExpose({
+	  state,reset
+	})
 </script>
 
 <style>

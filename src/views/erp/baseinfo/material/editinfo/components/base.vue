@@ -26,12 +26,13 @@
 		</el-upload>
 	</el-form-item>
 	<el-form-item prop="baseforms.name" :rules="{ required: true,  message: '名称不能为空',  }" label="产品名称" >
-		  <el-input v-model="dataForms.name" placeholder="产品名称"> </el-input>
+		  <el-input v-model="dataForms.name"  placeholder="产品名称"> </el-input>
 	</el-form-item>
 	<el-form-item label="SKU" prop="baseforms.sku"
 	:rules="{ required: true,  message: 'SKU不能为空',  }"
-	>
-		<el-input class="in-wi-24" v-model="dataForms.sku" placeholder="建议用字母加数字，禁止用“空格、*、×、#”这类特殊符号"> </el-input>
+	>	
+		<el-input v-if="!dataForms.id" class="in-wi-24" v-model="dataForms.sku" @input="dataForms.sku=spaceCharInput(dataForms.sku)"   placeholder="建议用字母加数字，禁止用“空格、*、×、#”这类特殊符号"> </el-input>
+		<el-input v-else class="in-wi-24" v-model="dataForms.sku" disabled="true" placeholder="建议用字母加数字，禁止用“空格、*、×、#”这类特殊符号"> </el-input>
 	</el-form-item>
 	<el-form-item label="品牌" class="grid-row">
 		<el-select class="in-wi-24" v-model="dataForms.brandid" placeholder="选择品牌">
@@ -53,28 +54,27 @@
 			</el-icon>
 			编辑</el-button>
 	</el-form-item>
-	<el-form-item label="税率" width="100">
-		<el-input v-model="dataForms.vatrate"  placeholder="为空不含税">
+	<el-form-item label="退税率" width="100">
+		<el-input v-model="dataForms.vatrate" @input="dataForms.vatrate=CheckInputFloat(dataForms.vatrate)"  placeholder="为空不含税">
 			  <template #append>%</template>
 		</el-input>
 	</el-form-item>
 	<el-form-item label="产品标签" class="grid-row">
+		<el-space>
+		<span class='tag-mr' v-if='dataForms.tagNameList && dataForms.tagNameList.length>0'  v-for='(s,index) in dataForms.tagNameList' :key='index'>
+		     <el-tag    :title="s.name" type="info">  {{s.name}}</el-tag>
+		</span>
+		</el-space>
 		  <el-button  class="im-but-one" @click="editTags" >
-		    <plus theme="outline" size="18"  :strokeWidth="4"/>
-		    <span>编辑标签</span>
+			<plus theme="outline" size="18"  :strokeWidth="4"/>
+			<span>编辑标签</span>
 		  </el-button>
 	</el-form-item>
 	<el-form-item label="负责人">
-		<Owner @owner="changeOwner" notAll="isNotAll" :defaultValue="dataForms.owner" ></Owner>
+		<OwnerAll @owner="changeOwner" notAll="isNotAll" :isInForm="true" :defaultValue="dataForms.owner" ></OwnerAll>
 	</el-form-item>
 	<el-form-item label="生效日期">
 		<el-date-picker v-model="dataForms.effectivedate" :default-value="dataForms.effectivedate" type="date" placeholder="选择日期" :size="size" />
-	</el-form-item>
-	<el-form-item label="采购成本">
-		<el-input v-model="dataForms.price" type="text" placeholder="请输入采购成本"></el-input>
-	</el-form-item>
-	<el-form-item label="备货周期">
-		<el-input v-model="dataForms.deliveryCycle" type="text" placeholder="请输入备货周期"></el-input>
 	</el-form-item>
 	<el-form-item label="备注">
 		<el-input v-model="dataForms.remark" maxlength="300" placeholder="产品备注" show-word-limit type="textarea" />
@@ -83,7 +83,7 @@
 	<el-dialog v-model="markVisable" title="编辑标签" width="600px">
 		  <el-space>
 		  <span>标签</span>
-		  <el-cascader v-model="tagsValue" placeholder="请选择标签" :options="tagsList"  @change="changeTags" :popper-append-to-body="false" :props="markprops" clearable />
+		  <el-cascader ref="tagsRef" v-model="tagsValue" placeholder="请选择标签" :options="tagsList"  @change="changeTags" :popper-append-to-body="false" :props="markprops" clearable />
 		 </el-space>
 		  <template #footer>
 		  	<span class="dialog-footer">
@@ -105,14 +105,17 @@
 	import materialApi from '@/api/erp/material/materialApi.js';
 	import { genFileId } from 'element-plus'
 	import {getAllTags} from '@/api/sys/admin/tag.js';
-	import Owner from '@/components/header/owner.vue';
-	import { ElMessage } from 'element-plus'
+	import OwnerAll from '@/components/header/ownerAll.vue';
+	import { ElMessage } from 'element-plus';
+	import {CheckInputFloat,CheckInputInt,spaceCharInput} from '@/utils/index';
 	let headers=ref({"Content-Type": "multipart/form-data" });
+	let tagsRef=ref();
 	        onMounted(()=>{
 	        	   
 	        })
 			let uploadRef=ref();
 			let router = useRouter()
+			const iscopy=router.currentRoute.value.query.iscopy;
 	        let props = defineProps({
 	          dataForms:Object
 	        })
@@ -125,6 +128,8 @@
 				 tagsValue:[],
 				 markprops:{ multiple: true },
 				 checktags:'',
+				 tagsNodes:[],
+				 copypage:iscopy
 			});
 			defineExpose({
 			  loadBrandCateList
@@ -133,7 +138,7 @@
 			 let {
 				tags,brandlist,catelist,
 			    imgfile,tagsList,tagsValue,
-			    markVisable,markprops,checktags,
+			    markVisable,markprops,checktags,tagsNodes,copypage
 				} =toRefs(state);
 			//选中标签
 			function openPopover(){
@@ -250,10 +255,19 @@
 				 items="";
 			 }
 			 state.checktags=items;
-			 // props.dataForms.taglist=items;				 
 		}
 		function submitTags(){
 			props.dataForms.taglist=state.checktags;
+			state.tagsNodes=[];
+			if(tagsRef.value.getCheckedNodes() && tagsRef.value.getCheckedNodes().length>0){
+				 tagsRef.value.getCheckedNodes().forEach(function(item){
+					 if(item.level==2){
+						 state.tagsNodes.push({"name":item.label});
+					 }
+				 });
+				 props.dataForms.tagNameList=state.tagsNodes;
+				 console.log(props.dataForms.tagNameList);
+			}
 			state.markVisable=false;
 		}
 		function editTags(){

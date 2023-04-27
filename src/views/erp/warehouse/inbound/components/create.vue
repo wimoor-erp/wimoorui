@@ -57,7 +57,7 @@
 							 </el-table-column>
 							 <el-table-column label="入库数量">
 								  <template #default="scope">
-									  <el-input v-model="scope.row.inamount">
+									  <el-input v-model="scope.row.inamount" @input="scope.row.inamount=CheckInputInt(scope.row.inamount)">
 									  </el-input>
 								  </template>  
 							 </el-table-column>
@@ -78,7 +78,7 @@
 							</div>
 						</div>
 	</div>
-	<MaterialDialog  ref = "MaterialRef" @getdata="getRows" />
+	<MaterialDialog  ref = "MaterialRef"   :warehouseid="form.warehouseid"   @getdata="getRows" />
 	<SupplierDialog ref='supDiaRef' @getdata="getSupplierRows" />
 </template>
 
@@ -89,6 +89,7 @@
 	import {ElMessage } from 'element-plus';
 	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog";
 	import { useRoute,useRouter } from 'vue-router';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	import serialnumberApi from '@/api/erp/common/serialnumberApi.js';
 	import inApi from '@/api/erp/inventory/inApi.js';
 	import Warehouse from '@/components/header/warehouse.vue';
@@ -122,10 +123,11 @@
 		load();
 	});
     function handleAdd(){
-		MaterialRef.value.show()
+		MaterialRef.value.show();
+		MaterialRef.value.loadData();
 	}
 	function load(){
-		serialnumberApi.getSerialNumber({"ftype":"O","isfind":"true"}).then((res)=>{
+		serialnumberApi.getSerialNumber({"ftype":"IN","isfind":"true"}).then((res)=>{
 			if(res.data){
 				state.form.number=res.data;
 			}
@@ -135,7 +137,21 @@
 		state.form.warehouseid=wid;
 	}
 	function getRows(rows){
-		state.tableData=rows;
+		if(rows && rows.length>0){
+			if(state.tableData && state.tableData.length>0){
+				var skus="";
+				state.tableData.forEach(function(datas){
+					 skus+=(datas.sku)+(",");
+				});
+				rows.forEach(function(item){
+					if(skus.indexOf((item.sku+","))<0){
+						state.tableData.push(item);
+					}
+				});
+			}else{
+				state.tableData=rows;
+			}
+		}
 	}
 	 function getSKUList() {
 		    state.skulist={};
@@ -165,6 +181,13 @@
 			data.remark=state.form.remark;
 			data.warehouseid=state.form.warehouseid;
 			data.id="";
+			if(data.skumapstr=="{}"){
+				ElMessage({
+				  type: 'error',
+				  message: "至少添加一行数据！ ",
+				})
+				return;
+			}
 			inApi.saveData(data).then((res)=>{
 				isok=true;
 				if(res.data){
@@ -172,18 +195,16 @@
 					  type: 'success',
 					  message: "添加成功！",
 					});
-					closeTab();
 					if(res.data && res.data.id && res.data.id!=null && res.data.id!="" && res.data.id!=undefined){
-						setTimeout(function(){
 							router.push({
 								path:"/e/w/i/d",
 								query:{
 									title:'入库单详情',
 									path:"/e/w/i/d",
-									id:res.data.id
+									id:res.data.id,
+									replace:true
 								},
 							})
-						},1000)
 					}
 				}else{
 					ElMessage({
@@ -200,10 +221,10 @@
 	function showSupplier(){
 		supDiaRef.value.show();
 	}
-	function getSupplierRows(rows){
-		if(rows && rows[0] && rows[0].id){
-			state.form.customer=rows[0].id;
-			state.form.customername=rows[0].name;
+	function getSupplierRows(row){
+		if(row && row.id){
+			state.form.customer=row.id;
+			state.form.customername=row.name;
 		}
 	}
 </script>

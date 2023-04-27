@@ -78,6 +78,10 @@ export default {
   background-color: #fef0f0;
   border-color: #ffbfbf;
 }
+.dark .danger {
+  background-color: #534f4f;
+  border-color: #705454;
+}
 .st-list .st-label .title {
   font-size: 14px;
   color: var(--el-text-color-primary);

@@ -7,7 +7,7 @@
 					<Group @change="getGroup" isproduct="ok" />
 					<Owner @owner="getOwner" />
 					<Datepicker ref="datepickers" :days="1"  @changedate="changeDate" />
-					<el-input v-model="queryParam.search"   placeholder="请输入SKU" class="input-with-select">
+					<el-input v-model="queryParam.search" clearable  placeholder="请输入SKU" class="input-with-select">
 						<template #append>
 							<el-button @click.stop="searchConfirm">
 								<el-icon style="font-size: 16px;align-itmes:center">

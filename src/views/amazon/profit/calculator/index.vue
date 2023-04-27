@@ -361,7 +361,7 @@ function changeLength() {//改变尺寸
 				if(res.data.material){
 					 state.formData.cost=res.data.material.price;
 				}else{
-					ElMessage.success('未找到对应产品信息');
+					ElMessage.error('未找到对应产品信息');
 					return;
 				}
 				if(res.data.pkgDim){
@@ -370,7 +370,7 @@ function changeLength() {//改变尺寸
 					state.formData.height=res.data.pkgDim.height;
 					state.formData.weight=res.data.pkgDim.weight;
 				}else{
-					ElMessage.success('未找到对应尺寸信息');
+					ElMessage.error('未找到对应尺寸信息');
 					return;
 				}
 				
@@ -477,7 +477,9 @@ tbody .red-text{
     margin-bottom: 3px;
     line-height: 22px;
 }
-
+.dark .gary-bg{
+	background-color:#1e1e1e;
+}
 .gird-line-left .el-form-item--default {
     margin-bottom: 10px;
 }

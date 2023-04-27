@@ -30,7 +30,7 @@
 	</div>
 	<el-dialog
 	   v-model="uploadVisible"
-	   title="导入供应商"
+	   title="导入出库单"
 	   width="400px"
 	 >
 	 <el-upload
@@ -183,11 +183,11 @@
 			    //截取文件的后缀，判断文件类型
 				const FileExt = file.name.replace(/.+\./, "").toLowerCase();
 				//计算文件的大小
-				const isLt5M = file.size / 1024  < 5000; //这里做文件大小限制
+				const isLt5M = file.size / 1024  < 50000; //这里做文件大小限制
 				//如果大于50M
 				if (!isLt5M) {
 					ElMessage({
-					    message: '上传文件大小不能超过 5MB!!',
+					    message: '上传文件大小不能超过 50MB!!',
 					    type: 'error'
 					  })
 					return false;

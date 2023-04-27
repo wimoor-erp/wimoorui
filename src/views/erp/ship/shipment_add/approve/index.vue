@@ -130,7 +130,7 @@
 				closeTab();
 				var query= { title: "发货单",
 						    path: '/erp/ship/shipment_add/list', 
-							refreshSF:new Date().getTime()}
+							refresh:new Date().getTime()}
 				router.push({
 					path: '/erp/ship/shipment_add/list',
 					query:query,
@@ -175,9 +175,10 @@
 					});
 				}
 			}
-			function submitplan(){
+			async function submitplan(){
 				confirmloading.value=true;
-				shipmentList.value.forEach(async function(item){
+				for(var i=0;i<shipmentList.value.length;i++){
+					var item=shipmentList.value[i];
 					if(item.approve==true){
 						await shipmentplanApi.createShipment({"shipmentid":item.shipmentId}).then(res=>{
 							ElMessage({
@@ -203,8 +204,7 @@
 							 confirmloading.value=false;
 						});
 					}
-				})
-				
+				}
 				//最后更新一下plan的状态
 			}
 			return {

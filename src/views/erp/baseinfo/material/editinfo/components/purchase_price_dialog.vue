@@ -9,7 +9,7 @@
 			<el-table-column label="采购量">
 				<template #default="scope">
 					<el-space>
-						<el-input v-model="scope.row.amount" placeholder="起订量" ></el-input>
+						<el-input v-model="scope.row.amount" @input="scope.row.amount=CheckInputInt(scope.row.amount)" placeholder="起订量" ></el-input>
 						<!-- <span>-</span> :disabled="scope.$index!==0"
 						<el-input v-model="scope.row.endnum" @change="putval(scope.row,scope.$index)"></el-input> -->
 					</el-space>
@@ -19,13 +19,13 @@
 				<template #default="scope">
 					<el-select  v-model="scope.row.currency" placeholder="币别" >
 					  <el-option  label="CNY" value="0" />
-					  <el-option  label="USD" value="1" />
+					 <!-- <el-option  label="USD" value="1" /> -->
 					 </el-select>
 				</template>
 			</el-table-column>
 			<el-table-column label="采购单价">
 				<template #default="scope">
-					<el-input v-model="scope.row.price"></el-input>
+					<el-input v-model="scope.row.price" @input="scope.row.price=CheckInputFloat(scope.row.price)"></el-input>
 				</template>	
 			</el-table-column>
 			<el-table-column label="操作">
@@ -52,6 +52,7 @@
 	import {ref,reactive,defineEmits,toRefs,onMounted} from 'vue'
 	import {Plus,Minus} from '@icon-park/vue-next';
 	import {ElMessage} from 'element-plus';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	const emit = defineEmits(['getprice']);
 	 
 	let state=reactive({
@@ -74,7 +75,7 @@
 			currency:'0',
 			price:'',
 		})
-		putval(row,index)
+		//putval(row,index)
 	}
 	function removePrice(){
 		state.tableData.pop()
@@ -99,9 +100,18 @@
 	
 	function submitprice(){
 		var isok=true;
+		var localamount=0;
 		state.tableData.forEach((item)=>{
 			if(item.amount==""|| item.price==""){
 				isok=false;  
+			}else{
+				if(localamount==0){
+					localamount=item.amount;
+				}else if(localamount<item.amount){
+					localamount=item.amount;
+				}else if(localamount>=item.amount){
+					isok=false;
+				}
 			}
 		})
 		if(isok==true){
@@ -109,9 +119,10 @@
 			emit("getprice",state.tableData);
 		}else{
 			ElMessage({
-				message:'数据行不能为空',
+				message:'数据行不能为空或者采购量填入有误，请重新输入！',
 				type:"error",
 			})
+			emit("getprice",[]);
 		}
 		
 	}

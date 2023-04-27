@@ -1,10 +1,11 @@
 <template>
 	<div class="gird-line-head">
 		<div class="flex-center">
-		<Group @change="getGroup" isproduct="ok" />
+			<el-space>
+		<Group @change="getGroup" defaultValue="only" />
 		<el-input v-model="searchKeywords"  @input="changeKeywords"  placeholder="请输入" class="input-with-select">
 			<template #prepend>
-				<el-select v-model="searchtype" @change='searchTypeChange' placeholder="SKU">
+				<el-select v-model="searchtype" @change='searchTypeChange' style="width:80px;" placeholder="SKU">
 					<el-option label="SKU" value="sku">SKU</el-option>
 					<el-option label="ASIN" value="asin">ASIN</el-option>
 				</el-select>
@@ -17,10 +18,12 @@
 			 </el-button>
 				</template>
 			</el-input>
+			</el-space>
 		</div>
 		<el-button class='ic-btn' title='帮助文档'>
 			<help theme="outline" size="16" :strokeWidth="3" />
 		</el-button>
+		
 	</div>
 	<div class="grid-content">
 	<div class="left-content">

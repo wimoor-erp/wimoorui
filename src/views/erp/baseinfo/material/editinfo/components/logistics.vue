@@ -1,7 +1,7 @@
 <template>
 	<h3 id="logistics" class="tab-scroll">物流信息</h3>
 	<el-form-item label="申报单价" >
-		<el-input class="in-wi-24" v-model="dataForms.unitprice" placeholder="申报单价">
+		<el-input class="in-wi-24" v-model="dataForms.unitprice" @input="dataForms.unitprice=CheckInputFloat(dataForms.unitprice)" placeholder="申报单价">
 			 <template #append>
 			      <el-select class='wi-100'  v-model="dataForms.currency" placeholder="CNY" >
 					        <el-option label="CNY" value="CNY" />
@@ -30,7 +30,7 @@
 		<el-input class="in-wi-24" v-model="dataForms.brand" placeholder="产品品牌"> </el-input>
 	</el-form-item>
 	<el-form-item label=" 附加费用" >
-		<el-input class="in-wi-24" v-model="dataForms.addfee" placeholder="附加费用"> </el-input>
+		<el-input class="in-wi-24" v-model="dataForms.addfee" @input="dataForms.addfee=CheckInputFloat(dataForms.addfee)" placeholder="附加费用"> </el-input>
 	</el-form-item>
 	<el-form-item label="特殊属性" >
 	    <el-checkbox  v-model="dataForms.iselectricity" >带电/磁</el-checkbox>
@@ -54,7 +54,7 @@
 		 </el-table-column>
 		 <el-table-column label="默认头程费用" prop="fee">
 			 <template #default="scope">
-				 <el-input v-model="scope.row.fee">
+				 <el-input v-model="scope.row.fee" @input="scope.row.fee=CheckInputFloat(scope.row.fee)">
 					 <template #append>
 						<el-select v-model="scope.row.currency" class="wi-100" placeholder="CNY">
 							<el-option label="CNY" value="CNY" />
@@ -72,7 +72,7 @@
 		 </el-table-column>
 		 <el-table-column label="税率">
 			  <template #default="scope">
-			 <el-input v-model="scope.row.taxrate">
+			 <el-input v-model="scope.row.taxrate" @input="scope.row.taxrate=CheckInputFloat(scope.row.taxrate)" >
 					 <template #append>
 						%
 					 </template>
@@ -93,7 +93,8 @@
 
 <script setup>
 	import {Plus,Minus} from '@icon-park/vue-next';
-	import { ref,reactive,onMounted,watch,defineProps,toRefs } from 'vue'
+	import { ref,reactive,onMounted,watch,defineProps,toRefs } from 'vue';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	import marketApi from '@/api/amazon/market/marketApi'
 	let props = defineProps({
 	  dataForms:Object,

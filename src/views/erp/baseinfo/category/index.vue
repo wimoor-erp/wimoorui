@@ -44,11 +44,11 @@
         </div>
         <!--表单-->
         <el-row>
-            <GlobalTable ref="globalTable" :tableData="tableData" @selectionChange='handleSelect' :defaultSort="{ prop: 'opttime', order: 'descending' }"  @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+            <GlobalTable ref="globalTable" :tableData="tableData" @selectionChange='handleSelect' :defaultSort="{ prop: 'opttime', order: 'descending' }"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
             	<template #field>
                <!-- <el-table-column type="selection" width="38" /> -->
                 <el-table-column prop="name"  label="品类名称" sortable />
-                <el-table-column prop="number"  label="编码"   />
+              <!--  <el-table-column prop="number"  label="编码"   /> -->
 				<el-table-column prop="remark"  label="备注"   />
                 <el-table-column prop="opttime"  label="操作时间" sortable />
                 <el-table-column prop="operate"  label="操作" width="140" sortable >
@@ -75,7 +75,7 @@
 	    <el-form-item label="品类名称" prop="name">
 	      <el-input v-model="formData.name" placeholder="请输入品类名称" />
 	    </el-form-item>
-		<el-form-item label="品类 备 注" prop="remark">
+		<el-form-item label="品类备注" prop="remark">
 		  <el-input v-model="formData.remark" :rows="5" placeholder="请输入备注..." type="textarea" />
 		</el-form-item>
 	  </el-form>

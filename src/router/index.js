@@ -1,10 +1,12 @@
-import { createRouter, createWebHistory ,addRoutes} from 'vue-router'
-import Layout from '@/layout'
+import { createRouter, createWebHistory ,addRoutes} from 'vue-router';
+import Layout from '@/layout';
 import {menuApi} from '@/api/sys/admin/menuApi';
-import store from '@/store/index'
-import sysRouter from './modules/sysRouter'
-import erp from './modules/erp'
-import amazon from './modules/amazon'
+import store from '@/store/index';
+import sysRouter from './modules/sysRouter';
+import erp from './modules/erp';
+import amazon from './modules/amazon';
+import finance from './modules/finance';
+import axios from 'axios';
 const routes = [
   {
     path: '/',
@@ -19,12 +21,19 @@ const routes = [
         component: ()=>import("@/views/dashboard")
       },
 	  {
+	    path: 'blank',
+	    name: 'blank',
+	  		meta:{ keepAlive: true },
+	    component: ()=>import("@/views/sys/blank/index")
+	  },
+	  {
 	  	  path:"usercenter",
 	  	  name:"UserCenter",
 	  	  component: ()=>import("@/views/sys/userCenter/index")
 	  },
 	...erp,
 	...amazon,
+	...finance,
     ]
   },
 ...sysRouter
@@ -46,22 +55,39 @@ router.beforeEach(async(to,from,next)=>{
 	   }
 	   next(); 
    }else{
-	   let jsessionid = sessionStorage.getItem("jsessionid");
 		if(loadflog.hasload) {
 			next(); 
 		}else if(store&&store.state.routerStore.router.length==0){
+			 let jsessionid = localStorage.getItem("jsessionid");
 			    loadflog.hasload=true;
-	   	       let result=await menuApi.getRoute();
-			   if (result==undefined || result.code == 'A0231'||result.code == 'A0200'||result.code == 'S0003'||result.code == 'S0002'||result.code == 'S0001') {
+	   	         await axios({
+					method:"get",
+					headers:{'Content-Type':'application/json;charset=utf-8','jsessionid':jsessionid},
+					url: '/api/admin/api/v1/menus/route'
+				}).then(res=>{
+					var result=res.data;
+					if (result==undefined || result.code == 'A0231'||result.code == 'A0200'||result.code == 'S0003'||result.code == 'S0002'||result.code == 'S0001') {
+							localStorage.removeItem("jsessionid");
+							if(!sessionStorage.getItem("old_url_before_login")){
+							   sessionStorage.setItem("old_url_before_login",window.location.pathname+window.location.search);
+							}
+							 router.push("/ssologin");
+					} 
+				    else{
+							store.dispatch("routerStore/setRouter",result.data);
+							if(result.data&&result.data.length>0){
+								var permission=new Set(result.data[0].meta.permissions);
+								store.dispatch("permissionStore/setPermission",permission);
+							}
+							addRoute(router,result.data);
+                        }  
+				}).catch(error=>{
 					localStorage.removeItem("jsessionid");
-					if(!sessionStorage.getItem("old_url_before_login")){
-					   sessionStorage.setItem("old_url_before_login",window.location.pathname+window.location.search);
-					}
-				    router.push("/ssologin");
-				} else{
-					store.dispatch("routerStore/setRouter",result.data);
-					addRoute(router,result.data);
-				}  
+					sessionStorage.setItem("old_url_before_login",window.location.pathname+window.location.search);
+				    setTimeout(function(){
+						window.location=window.location.origin+"/ssologin";
+				    },1000);
+			   });
 	   	   next({...to,replace:true});  
 	   }else{
 	   	  next(); 

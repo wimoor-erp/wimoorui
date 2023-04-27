@@ -17,7 +17,7 @@
         </div>
         <!--表单-->
         <el-row>
-            <el-table :data="tableData.list" border style="width: 100%;margin-bottom:16px;">
+            <el-table :data="tableData.list" :stripe="true"  style="width: 100%;margin-bottom:16px;">
                 <el-table-column type="selection" width="38" />
                 <el-table-column prop="name"  label="采购账号" sortable >
 				<template #default="scope">
@@ -37,12 +37,12 @@
 				   <span >{{scope.row.resourceOwner}}</span>
 				</template>
 				</el-table-column>
-				
-                <el-table-column prop="createtime"  label="创建时间" sortable >
+				<el-table-column prop="createtime"  label="到期时间" sortable >
 				<template #default="scope">
-				   <span >{{dateFormat(scope.row.createtime)}}</span>
+				   <span >{{dateFormat(scope.row.refreshTokenTimeout)}}</span>
 				</template>
 				</el-table-column>
+				
                 <el-table-column   label="状态"  sortable >
 				 <template #default="scope">
 				 	 <el-tag type="success" v-if="scope.row.refreshToken">已绑定</el-tag>
@@ -52,7 +52,7 @@
                 <el-table-column prop="operate"  label="操作" width="140" sortable >
                     <template #default="scope">
                         <el-button  v-if="!scope.row.refreshToken"  class='el-button--blue' @click="goUrl(scope.row.id)">绑定</el-button>
-						<el-button class='el-button--blue' v-if="scope.row.refreshToken"  @click="goUrl(scope.row.id)">刷新授权</el-button>
+						<el-button class='el-button--blue' v-if="scope.row.refreshToken"  @click="goUrl(scope.row.id)">延期授权</el-button>
 						<el-button class='el-button--blue' @click="removeBind(scope.row.id)">删除</el-button>
                     </template>
                 </el-table-column>
@@ -75,19 +75,34 @@
 				<el-input v-model="purchId" placeholder="ID" />
 				</el-col>
 			</el-row>
+
 			<el-row>
 				<el-col class="text-ve-center"  :span="6"><span class="ness-input">*</span>名称</el-col>
 				<el-col :span="16">
 				<el-input v-model="purchName" placeholder="采购账号名称" />
 				</el-col>
 			</el-row>
-			<el-row>
+			<el-row >
+				<el-col class="text-ve-center"  :span="6"><span class="ness-input">*</span>授权类型</el-col>
+				<el-col :span="16" >
+					<el-switch
+					    v-model="isdeveloper"
+					    class="ml-2"
+					    :width="60"
+						 style="--el-switch-on-color: #ff4949; --el-switch-off-color:  #13ce66"
+					    inline-prompt
+					    active-text="高级"
+					    inactive-text="常规"
+					  />
+				</el-col>
+			</el-row>
+			<el-row v-if="isdeveloper">
 				<el-col class="text-ve-center"  :span="6">AppKey</el-col>
 				<el-col :span="16">
 				<el-input v-model="purchAppkey"  type="password" placeholder="Open1688 开发者ID" />
 				</el-col>
 			</el-row>
-			<el-row>
+			<el-row  v-if="isdeveloper">
 				<el-col class="text-ve-center"  :span="6">AppSecret</el-col>
 				<el-col :span="16">
 				<el-input v-model="purchAppSecret"  type="password" placeholder="Open1688 开发者密码" />
@@ -127,6 +142,7 @@
 			let purchAppSecret = ref("");
             let bindVisible =ref(false)
 			let isauth=ref(true);
+			let isdeveloper=ref(false);
             let tableData=reactive({list:[]})
             //方法
 			onMounted(()=>{
@@ -150,14 +166,12 @@
 				 purchName.value=row.name;
 				 purchAppkey.value=row.appkey;
 				 purchAppSecret.value=row.appsecret;
-				 console.log("showDialog---row",row);
 				 isauth.value=false;
 			 }else{
 				 isauth.value=true;
 				 purchName.value='';
 				 purchAppkey.value='';
 				 purchAppSecret.value='';
-				console.log("showDialog---init",row);
 			  }
 			   bindVisible.value = true	
 			}
@@ -189,12 +203,12 @@
 			    var object = {};
 			    if(url.indexOf("?") != -1)//url中存在问号，也就说有参数。  
 			    {   
-			      var str = url.substr(1);  //得到?后面的字符串
+			      var str = url.split("?")[1];  //得到?后面的字符串
 			      var strs = str.split("&");  //将得到的参数分隔成数组[id="123456",Name="bicycle"];
 			      for(var i = 0; i < strs.length; i ++)  
 			        {   
 			　　　　　　　　object[strs[i].split("=")[0]]=strs[i].split("=")[1]
-			　　　　　　}
+			　　　　}
 			　　}
 			    
 			   if(object.code){
@@ -246,13 +260,7 @@
  
 			//获取1688链接
 			function goUrl(countid){
-				let obj={}
-				let url = location.href;
-				obj.redirectUrl = url
-				obj.id = countid
-				purchasealibabaApi.get1688Url(obj).then((res)=>{
-					window.open(res.data)
-				})
+				purchasealibabaApi.get1688Url(countid) ;
 			}
 			//授权
 			function bindAuth(){
@@ -279,7 +287,7 @@
 				getauthList,
 				goUrl,
 				refreshAuthData,
-				
+				isdeveloper,
             }
         }
 

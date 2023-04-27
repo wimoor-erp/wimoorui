@@ -2,19 +2,19 @@
 	<div >
 					 <el-scrollbar class="he-scr-car" @scroll="scroll">
 						 <div class="gird-line-head">
-						 <h3>产品互调详情</h3>
+						 <h3>产品代料单详情</h3>
 						 <el-button   class='ic-btn' title='帮助文档'>
 						   <help theme="outline" size="16" :strokeWidth="3"/>
 						 </el-button>
 						 </div>
 						 <div class="fill-from-body">
 							<el-descriptions :column="2">
-							    <el-descriptions-item label="单据编码">O202211170002</el-descriptions-item>
-							    <el-descriptions-item label="操作仓库">xx仓</el-descriptions-item>
-								<el-descriptions-item label="操作人">张三</el-descriptions-item>
-								<el-descriptions-item label="操作时间">2023-01-01</el-descriptions-item>
+							    <el-descriptions-item label="单据编码">{{warehouseform.number}}</el-descriptions-item>
+							    <el-descriptions-item label="操作仓库">{{warehouseform.warehouse}}</el-descriptions-item>
+								<el-descriptions-item label="申请人">{{warehouseform.creator}}</el-descriptions-item>
+								<el-descriptions-item label="申请时间">{{dateTimesFormat(warehouseform.createdate)}}</el-descriptions-item>
 								<el-descriptions-item label="备注">
-								 发货单耗材出库
+								 {{warehouseform.remark}}
 								</el-descriptions-item>
 							  </el-descriptions>
 						 <el-divider></el-divider>
@@ -23,7 +23,7 @@
 						   <h5 >商品列表</h5>
 						   </div>
 						 </div>
-					<el-table border :data="TableData">
+					<el-table border :data="formEntryList">
 												 <el-table-column label="序号" type="index" width="60"/> 
 												 <el-table-column label="调入产品信息"  show-overflow-tooltip>
 												    <template #default="scope">
@@ -39,7 +39,7 @@
 													   </el-space>
 												   </template>
 												 </el-table-column>
-												 <el-table-column label="可用库存" prop="fulfillable"/>
+												 <el-table-column label="调入产品库存" prop="fulfillable"/>
 												 <el-table-column label="调出产品信息"  show-overflow-tooltip>
 												    <template #default="scope">
 														<el-space>
@@ -48,18 +48,14 @@
 																<el-image v-else :src="require('@/assets/image/empty/noimage40.png')"  class="product-img"  ></el-image>
 															</div>
 														<div>
-												         <div class='name'>{{scope.row.name2}}</div>
-												         <div class='sku'>{{scope.row.sku2}} </div>
+												         <div class='name'>{{scope.row.fromname}}</div>
+												         <div class='sku'>{{scope.row.fromsku}} </div>
 													   </div>
 													   </el-space>
 												   </template>
 												 </el-table-column>
-												 <el-table-column label="可用库存" prop="fulfillable2"/>
-												 <el-table-column label="调库数量">
-													  <template #default="scope">
-														  <el-input v-model="scope.row.num">
-														  </el-input>
-													  </template>  
+												 <el-table-column label="调出产品库存" prop="fromfulfillable"/>
+												 <el-table-column label="调库数量" prop="amount">
 												 </el-table-column>
 					</el-table>
 						</div>
@@ -67,7 +63,7 @@
 						<div class='text-center mar-top-16'>
 							 <div style="padding-top:10px;">
 								<el-space>
-									<el-button type="" @click="closeTab">关闭</el-button>
+									<el-button type="" @click="closePage">关闭</el-button>
 								</el-space>
 							</div>
 						</div>
@@ -75,23 +71,43 @@
 </template>
 
 <script setup>
-	import {ArrowDown,Edit} from '@element-plus/icons-vue'
-	import {Plus,Minus,Help} from '@icon-park/vue-next';
-	import { ref,reactive,onMounted,watch,inject,toRefs } from 'vue'
-	import {ElMessage } from 'element-plus'
-	import { useRoute,useRouter } from 'vue-router'
-	const MaterialRef = ref()
+	import {ArrowDown,Edit,View,Upload,Download} from '@element-plus/icons-vue';
+	import { ref,reactive,onMounted,watch,defineExpose,toRefs,inject } from 'vue';
+	import { ElMessage, ElMessageBox } from 'element-plus';
+	import {dateFormat,dateTimesFormat} from '@/utils/index.js';
+	import changeApi from '@/api/erp/inventory/changeApi.js';
+	import {useRouter } from 'vue-router';
+	import {redirectToList} from '@/utils/page_helper.js';
 	const emitter = inject("emitter"); // Inject `emitter`
-	function closeTab(){
-		emitter.emit("removeTab", 100);
-	};
-	const state = reactive({
-	})
-	const {
-	}=toRefs(state)
-			onMounted(()=>{
 	
-			});
+	const router = useRouter();
+	const id = router.currentRoute.value.query.id;
+	const state = reactive({
+		warehouseform:{},
+		formEntryList:[],
+	})
+	const{
+		warehouseform,
+		formEntryList,
+	}=toRefs(state)
+	function load(){
+		changeApi.getData({"id":id}).then((res)=>{
+			if(res.data){
+				state.warehouseform=res.data.warehouseform;
+				state.formEntryList=res.data.formEntryList;
+			}
+		});
+	}
+	function closePage(){
+		redirectToList(router,"/erp/warehouse/exchange",'代料单');
+	}
+	
+	defineExpose({
+		
+	})
+	onMounted(()=>{
+		load();
+	});
 </script>
 
 <style>

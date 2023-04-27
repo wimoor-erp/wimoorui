@@ -1,4 +1,5 @@
 export function tranStatus(row){
+	   console.log(row);
 				let val = row.status;
 				if(val==0){
 					return "已取消";
@@ -16,7 +17,7 @@ export function tranStatus(row){
 				}else if(val==2){
 					return "配货";
 				}else if(val==4){
-					return "物流";
+					return "发货出库";
 				}else if(val==3){
 					return "装箱";
 				}else if(val==-1){

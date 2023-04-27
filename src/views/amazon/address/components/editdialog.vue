@@ -33,6 +33,7 @@
 		           v-model="ruleForm.countrycode"
 		           placeholder="国家"
 		           :options="options"
+				   filterable
 		         >
 				 		
 				 </el-select-v2>

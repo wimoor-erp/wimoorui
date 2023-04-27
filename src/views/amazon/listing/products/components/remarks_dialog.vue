@@ -89,6 +89,9 @@
 		.remark-history h4{
 			margin-bottom:16px;
 		}
+		.remark-history {
+			height: calc(60vh);
+		}
 		.el-timeline-item__node--normal{
 			width: 10px;
 			height:10px;

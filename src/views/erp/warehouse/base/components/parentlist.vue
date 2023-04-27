@@ -32,7 +32,7 @@
     <!-- 数据表格 -->
 		<el-scrollbar style="height: calc(100vh - 120px);">
 	  <el-menu
-	        :default-active="0"
+	        :default-active="defaultActive"
 	         class="m-t-8"
 	      >
 	        <el-menu-item  v-for="(item,index) in list" :index="item.findex"   @click="handleRowClick(item.id)" >
@@ -75,8 +75,8 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
+		  <el-button @click="cancel">取 消</el-button>
           <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -146,6 +146,7 @@ import warehouseApi from "@/api/erp/warehouse/warehouseApi"
 	  SearchShow:true,
 	  list: [],
 	  total: 0,
+	  defaultActive:1,
 	  dialog: { visible: false } ,
 	  dialogRank:{visiable:false},
 	  formData: {
@@ -156,13 +157,26 @@ import warehouseApi from "@/api/erp/warehouse/warehouseApi"
 	  },
 	});
 
-	const { total, dialog, loading, list, formData, rules, queryParams,SearchShow,dialogRank} =
+	const { total, dialog, loading,defaultActive, list, formData, rules, queryParams,SearchShow,dialogRank} =
 	  toRefs(state);
 	
 	function handleQuery() {
 	  state.loading = true;
 	  state.queryParams.ftype=props.ftype;
 	  warehouseApi.getWarehouseListPage(state.queryParams).then(res=>{
+		  var listindex=[];
+		  res.data.records.forEach((row,index)=>{
+			  if(!row.findex){
+				  row.findex=index;
+			  }
+			  while(listindex.includes(row.findex)){
+			  					  row.findex=row.findex+1;
+			  }
+			  listindex.push(row.findex);
+			  if(index==0){
+				  state.defaultActive=row.findex;
+			  }
+		  })
 		  state.list = res.data.records;
 		  state.total = res.data.total;
 		  state.loading = false;

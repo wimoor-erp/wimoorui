@@ -3,7 +3,9 @@
  export function screenToTop(){
 	  nextTick(() => {document.documentElement.scrollTop=0;});
  }
- 
+ export function checkVisiable(id){
+	 return $("#"+id).is(":visible")
+ }
  export function tableHeaderFloat(id){
 	  nextTick(() => {
 	  								function scrollHandler() {

@@ -1,6 +1,6 @@
 <template>
 	<el-row>
-	   <GlobalTable ref="globalTable" :tableData="tableData"  height="calc(100vh - 220px)" @loadTable="loadtableData" :defaultSort="{ prop: 'buydate', order: 'descending' }"  border style="width: 100%;margin-bottom:16px;">
+	   <GlobalTable ref="globalTable" :tableData="tableData"  height="calc(100vh - 220px)" @loadTable="loadtableData" :defaultSort="{ prop: 'buydate', order: 'descending' }"  :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		   <template #field>
 	  		 <el-table-column type="selection" width="38" />
 	  		  <el-table-column prop="groupname"  label="店铺" width="120"  />
@@ -272,7 +272,7 @@
 		
 	</el-dialog>	
 	<!-- 预览发票信息 -->
-	<el-dialog v-model="lookvatVisible"   title="预览发票详情"  @close='closeDialog'>
+	<el-dialog v-model="lookvatVisible"   title="预览发票详情" width="80%"  @close='closeDialog'>
 		<div style="border: 1px solid #5A5E66;" v-if="invoiceData1" v-loading="orderloading">
 			<el-descriptions :column="2">
 				<el-descriptions-item :span="1">
@@ -342,7 +342,14 @@
 			<el-table-column prop="quantity" label="Quantity" width="80"   />
 		  	<el-table-column prop="itemprice" label="Price" width="80" >
 				<template #default="scope">
-					<div>{{currencyFunc(scope.row.currency)}}{{scope.row.itemprice}}</div>
+					<div>{{currencyFunc(scope.row.currency)}}
+					<span v-if="vattype=='Vat'">
+						{{scope.row.itemprice- scope.row.vat}}
+					</span>
+					<span v-else>
+					   {{scope.row.itemprice}}
+					</span>
+					</div>
 				</template>
 			</el-table-column>
 		  	<el-table-column prop="itemdiscount" label="Promotional Discount" width="120" >
@@ -355,6 +362,17 @@
 		  				<div>{{currencyFunc(scope.row.currency)}}{{scope.row.shipprice}}</div>
 		  			</template>
 		  	</el-table-column>
+			<el-table-column prop="vatRate" v-if="vattype=='Vat'" label="VAT Rate" width="100"  >
+					<template #default="scope">
+						<div> {{scope.row.vatRate}}%</div>
+					</template>
+			</el-table-column>
+			<el-table-column prop="vatRate" v-if="vattype=='Vat'" label="VAT" width="100"  >
+					<template #default="scope">
+						<div>{{currencyFunc(scope.row.currency)}} {{scope.row.vat}}
+						</div>
+					</template>
+			</el-table-column>
 		  	<el-table-column prop="shipprice" label="Total Price" width="100"    >
 				<template #default="scope">
 					<div>{{totalRowFunc(scope.row)}}
@@ -377,7 +395,7 @@
 		  				 <span style="padding-right: 20px;">{{discounttotal}} </span>
 		  				</el-descriptions-item>  
 		  </el-descriptions>
-		  <el-descriptions :column="1"  :class="vathidden" >
+		  <el-descriptions :column="1"  v-if="vattype=='Vat'" >
 		  			   <el-descriptions-item :span="1" align="right" label="VAT Total:" >
 		  				 <span   style="padding-right: 20px;">{{vattotal}} </span>
 		  				</el-descriptions-item>  
@@ -403,7 +421,7 @@
 	import {ref ,watch,reactive,onMounted,onUpdated} from 'vue'
 	import orderListApi from '@/api/amazon/order/orderListApi';
 	import groupApi from '@/api/amazon/group/groupApi';
-	import {format,dateFormat,dateTimesFormat} from '@/utils/index';
+	import {format,formatFloat,dateFormat,dateTimesFormat} from '@/utils/index';
 	import {ElMessage,ElLoading} from 'element-plus';
 	import {View} from '@element-plus/icons-vue'
     import myUtil from "@/hooks/amazon/order/financial";
@@ -579,25 +597,33 @@
 			function vatotalPriceAmount(){
 				if(productData.list){
 					var subtotals=0;var shippingfee=0;
-					var promotionaldiscount=0;var vattotals=0;
+					var promotionaldiscount=0;var vatsummarytotals=0;
 					var total=0;
 					productData.list.forEach(function(item,index){
 						var price = 0;var nums=0;
-						var rate=vatRates.value;
-						if (rate > 0) {
-							var rates = (rate / 100);
-							nums = (parseFloat(item.itemprice) * rates) / (1 + rates);
-						}
-						subtotals+=  parseFloat(item.itemprice) * parseInt(item.quantity);
+						item.total= parseFloat(item.itemprice) * parseInt(item.quantity);
+						item.total=item.total.toFixed(2);
+					
 						promotionaldiscount+=(parseFloat(item.itemdiscount) + parseFloat(item.shipdiscount));
 						shippingfee+=(parseFloat(item.shipprice));
-						vattotals += parseFloat(nums) * parseInt(item.quantity);
 						total+=(item.quantity*item.itemprice)+(item.shipprice)-(item.itemdiscount+item.shipdiscount);
+						if(vattype.value=='Vat'){
+							var rate=item.vatRate;
+							if (rate > 0) {
+								var rates = (rate / 100);
+								nums = (parseFloat(item.itemprice) * rates) / (1 + rates);
+							}
+							item.vat=parseFloat(nums) ;
+							item.vat=item.vat.toFixed(2);
+							vatsummarytotals =parseFloat(vatsummarytotals)+parseFloat(item.vat)* parseInt(item.quantity) ;
+							subtotals+= ( parseFloat(item.itemprice)-item.vat)*parseInt(item.quantity);
+						}
+						
 					})
 					totalAmount.value=total.toFixed(2);
-					subtotal.value=subtotals.toFixed(2);
+					subtotal.value=parseFloat(subtotals);
 					discounttotal.value=promotionaldiscount.toFixed(2);
-					vattotal.value=vattotals.toFixed(2);
+					vattotal.value=vatsummarytotals;
 					shiptotal.value=shippingfee.toFixed(2);
 				}
 				
@@ -912,7 +938,7 @@
 				handlerVatRate,downloadVatInfo,submitFBAVat,currencyFunc,totalRowFunc,vathidden,vatotalPriceAmount,totalAmount,vatRates,
 				shiptotal,vattotal,discounttotal,subtotal,backLookInfo,backEditInfo,handlerMarket,fileList,fileSize,headers,
 				beforeUpload,handleRemove,handleClose,handleExceed,uploadFile,handleSuccess,logofile,finlist,finfee,downloadOrderXlsx,
-				vatloading,orderloading,globalTable,showVatField,reloadOrderDailog,feedid,
+				vatloading,orderloading,globalTable,showVatField,reloadOrderDailog,feedid,formatFloat
 			}
 		}
 	}

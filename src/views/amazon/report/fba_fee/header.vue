@@ -1,5 +1,5 @@
 <template>
-		<div class="con-header" >
+	 <div class="con-header" >
 	  <el-row>
 	    <el-space >
 	  <Group @change="groupChange" defaultValue="only"/>
@@ -7,7 +7,7 @@
 	        <el-option  v-for="item in fbasizeList"   :key="item.id"  :label="item.name" :value="item.id"   >
 	        </el-option>
 	  </el-select>
-	   <el-input  v-model="searchKeywords" @input="searchConfirm" placeholder="请输入" class="input-with-select" >
+	   <el-input  v-model="searchKeywords" clearable @input="searchConfirm" placeholder="请输入" class="input-with-select" >
 	      <template #prepend>
 	        <el-select v-model="searchtype" @change='searchTypeChange' placeholder="SKU" style="width: 110px">
 	          <el-option label="SKU" value="sku"></el-option>

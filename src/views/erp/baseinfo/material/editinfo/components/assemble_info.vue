@@ -38,7 +38,7 @@
 			</el-table-column>
 			<el-table-column label="单位数量" prop="subnumber" width="120" >
 				<template #default="scope">
-					<el-input v-model="scope.row.subnumber" ></el-input>
+					<el-input v-model="scope.row.subnumber" @input="scope.row.subnumber=CheckInputInt(scope.row.subnumber)"  ></el-input>
 				</template>
 			</el-table-column>
 			<el-table-column label="可用库存" prop="fulfillable"  width="150" />
@@ -52,7 +52,7 @@
 		</el-table>
 	</el-form-item>
 	<el-form-item label="组装周期(天)" class="grid-row">
-		<el-input type="number" v-model="dataForms.assemblyTime"     style="width: 150px;" placeholder="组装周期天数"></el-input>
+		<el-input  v-model="dataForms.assemblyTime" @input="dataForms.assemblyTime=CheckInputInt(dataForms.assemblyTime)"    style="width: 150px;" placeholder="组装周期天数"></el-input>
 	</el-form-item>	
 	<!-- 子产品选择弹窗 -->
 	 <MaterialDialog ref="materialDailogRef" @getdata="getRows" :isAssemblyItem="true" ></MaterialDialog>
@@ -61,9 +61,10 @@
 <script setup>
 	import {ArrowDown,Edit} from '@element-plus/icons-vue'
 	import {Plus,Minus} from '@icon-park/vue-next';
-	import { ref,reactive,onMounted,watch,defineProps,toRefs } from 'vue'
-	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog.vue"
-	import {useRouter } from 'vue-router'
+	import { ref,reactive,onMounted,watch,defineProps,toRefs } from 'vue';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
+	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog.vue";
+	import {useRouter } from 'vue-router';
 	let props = defineProps({
 	  dataForms:Object,
 	}) 

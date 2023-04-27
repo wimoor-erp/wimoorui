@@ -6,6 +6,9 @@ import downloadhandler from "@/utils/download-handler";
 function getMaterialList(data){
 	 return request.post('/erp/api/v1/material/list', data);
 }
+ function getOwnerList(data){
+	 return request.get("/erp/api/v1/material/getOwnerList",{params:data})
+ }
 function uploadImage(FormData){
 	return request({'method':'POST',
 	                'url':"/erp/api/v1/material/uploadimg",
@@ -114,6 +117,16 @@ function uploadAssemblyFile(FormData){
 				
 	});
 }
+function downExcelRecords(data){
+	return request({url:"/erp/api/v1/material/downExcelRecords",
+				                    responseType:"blob",
+									data:data,
+									method:'post'}).then(res => {
+											downloadhandler.downloadSuccess(res,data.downtype+"Records.xlsx")
+									}).catch(e=>{
+											downloadhandler.downloadFail(e);
+									}); 
+}
 
 
 
@@ -126,5 +139,5 @@ export default{
 	getMaterialList,uploadImage,getMaterialInventoryInfo,getMaterialInfo,getCategory,getMaterialByInfo,saveMaterialTags,
 	findMaterialTags,getWisePriceList,saveData,deleteData,uploadBaseInfoFile,downloadMaterialList,uploadSupplierFile,
 	uploadConsumableFile,uploadCustomsFile,uploadAssemblyFile,findSKUImageForProduct,copyImageForProduct,copyDimsForProduct,
-	recoverData
+	recoverData,downExcelRecords,getOwnerList
 }

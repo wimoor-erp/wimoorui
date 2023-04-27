@@ -43,7 +43,7 @@
 					:size="size"
 					:teleported="false"
 				  />
-				      <el-button size="small" type="primary" @click="submitTime" >提交</el-button  >
+				      <el-button size="small" type="primary" style="margin-top:10px" @click="submitTime" >提交</el-button  >
 					  </div>
 					  <div v-else>
 						  <el-button size="small" type="primary" @click="cancelTime" >确认取消</el-button  >
@@ -68,7 +68,7 @@
 					<el-col :span="12">
 				<el-form :model="form" label-width="120px"  label-position="top">
 					 <el-form-item label="产品售价">
-					      <el-input v-model="localData.changeprice" >
+					      <el-input type="number"  v-model="localData.changeprice" >
 							  <template #prepend>
 								  {{localData.landedCurrency}}
 							  </template>
@@ -127,7 +127,34 @@
 						 </el-col>
 						 <el-col :span="24">
 						<el-form-item label="折扣类型">
-							<table>
+							<el-table :data="bussinessPrice">
+								<el-table-column  label="销售数量"> 
+								  <template #default="scope">
+									   <el-input @input="changeBusPrice(scope.row)" v-model="scope.row.amount"></el-input>
+								  </template>
+								</el-table-column>
+								<el-table-column :label="bussinesstype=='percent'?'优惠折扣':'售价'"> 
+								<template #default="scope">
+									<el-input @input="changeBusPrice(scope.row)" v-model="scope.row.discount">
+										<template #append>
+												<span v-if="bussinesstype=='percent'">%</span>
+												<span v-else>{{localData.landedCurrency}}</span>
+										</template>
+									</el-input>
+								</template>
+								</el-table-column>
+								<el-table-column v-if="bussinesstype=='percent'" label="售价">
+									<template #default="scope">
+										{{scope.row.price}}
+									</template>
+								</el-table-column>
+								<el-table-column label="操作">
+									<template #default="scope">
+									  <el-button type="primary" @click="deleteBusPrice(scope.$index)" link>删除</el-button>
+									  </template>
+								</el-table-column>
+							</el-table>
+				<!-- 			<table >
 								<tr><th>销售数量</th><th>优惠折扣/价格</th><th>售价</th><th>操作</th></tr>
 								<tr v-for="(row,index) in bussinessPrice">
 									<td>
@@ -146,11 +173,10 @@
 										{{row.price}}
 									</td>
 									<td>
-											<el-button type="primary" @click="deleteBusPrice(index)" link>删除</el-button>
+											
 									</td>
 								</tr>
-								
-							</table>
+							</table> -->
 							 
 							 <el-button @click="addBussRow"  class="add-table-row">
 								 <el-icon>

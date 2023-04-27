@@ -1,16 +1,17 @@
 <template>
+ <div class="main-sty">
 	<div class="con-header" >
 	  <el-row>
 	    <el-space >
 		<Group ref="groups" @change="changeGroup" defaultValue="only"/>
 		<Datepicker ref="datepickers" @changedate="changedate" />
-	    <el-input  v-model="searchKeywords" @input="searchConfirm" placeholder="请输入SKU" class="input-with-select" >
+	    <el-input  v-model="searchKeywords" clearable @input="searchConfirm" placeholder="请输入SKU" class="input-with-select" >
         </el-input>
 	 </el-space>
 	 </el-row>
 	 </div>
 	 <div class="con-body" >
-	 <global-table  ref="globalTable" :tableData="tableData"  height="calc(100vh - 170px)" @loadTable="loadTableData" border >
+	 <global-table  ref="globalTable" :tableData="tableData"  height="calc(100vh - 170px)" @loadTable="loadTableData" :stripe="true"  >
 	 	 <template #field>
 			<el-table-column prop="image" label="图片" width="60" >
 			    <template #default="scope">
@@ -28,21 +29,33 @@
 			     <div>{{dateFormat(scope.row.byday)}}</div>
 			   </template>
 			</el-table-column>
-			<el-table-column prop="sessions"  label="会话" width="90"  sortable="custom"/>
-			<el-table-column prop="sessionPercentage"  label="会话比例" width="110" sortable="custom"/>
-			<el-table-column prop="pageViews"  label="曝光量" width="90" sortable="custom"/>
-			<el-table-column prop="pageViewsPercentage" label="曝光量比例"  width="130" sortable="custom"/>
-	 	    <el-table-column prop="buyBoxPercentage" label="购物车比例" width='130'   sortable="custom"/>
+			<el-table-column prop="sessions"  label="访问次数" width="110"  sortable="custom"/>
+			<el-table-column prop="sessionPercentage"  label="访问转化率" width="110" sortable="custom">
+				<template #default="scope">
+					  <div>{{scope.row.sessionPercentage}}%</div>
+					</template>
+			   </el-table-column>
+			<el-table-column prop="pageViews"  label="浏览次数" width="110" sortable="custom"/>
+			<el-table-column prop="pageViewsPercentage" label="浏览转化率"  width="140" sortable="custom">
+				<template #default="scope">
+				  <div>{{scope.row.pageViewsPercentage}}%</div>
+				</template>
+			</el-table-column>
+	 	    <el-table-column prop="buyBoxPercentage" label="购物车比例" width='130'   sortable="custom">
+				<template #default="scope">
+				  <div>{{scope.row.buyBoxPercentage}}%</div>
+				</template>
+			</el-table-column>
 	      	<el-table-column prop="unitsOrdered" label="销量" width='100'   sortable="custom" >
 				<template #default="scope">
 				  <div>{{scope.row.unitsOrdered}}</div>
 				  <div v-if="scope.row.unitsOrderedB2B">B2B:{{scope.row.unitsOrderedB2B}}</div>
 				</template>
 	      	</el-table-column>
-			<el-table-column prop="unitSessionPercentage" label="会话比例" width='120'   sortable="custom" >
+			<el-table-column prop="unitSessionPercentage" label="商品转化率" width='120'   sortable="custom" >
 				<template #default="scope">
-					  <div>{{scope.row.unitSessionPercentage}}</div>
-					  <div v-if="scope.row.unitSessionPercentageB2B">B2B:{{scope.row.unitSessionPercentageB2B}}</div>
+					  <div>{{scope.row.unitSessionPercentage}}%</div>
+					  <div v-if="scope.row.unitSessionPercentageB2B">B2B:{{scope.row.unitSessionPercentageB2B}}%</div>
 					</template>
 			</el-table-column>
 			<el-table-column prop="orderedProductSales" label="销售额" width='100' sortable="custom" >
@@ -60,6 +73,7 @@
 		 </template>
 		</global-table>
 		</div>
+	</div>
 </template>
 
 <script>
@@ -116,11 +130,5 @@
 </script>
 
 <style>
-	.con-header{
-		margin:20px;
-	}
-	.con-body{
-		margin-left:20px;
-		margin-right:20px;
-	}
+ 
 </style>

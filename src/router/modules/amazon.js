@@ -16,4 +16,9 @@ export default [
   	name:'edit_calcuiation_plan',
   	component:()=>import("@/views/amazon/profit/config/components/edit_plan")  
   },
+  {
+  	path:"amazon/listing/catalog",
+  	name:'amz_lst_catalog',
+  	component:()=>import("@/views/amazon/listing/catalog/index")  
+  },
 ]

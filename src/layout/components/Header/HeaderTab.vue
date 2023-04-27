@@ -10,18 +10,19 @@
     >
 	<template #label> 
 		<span>{{item.title}}</span>
-		<el-dropdown trigger="click" class="closeTab">
+	    <el-dropdown trigger="click" size="small" class="closeTab">
 		        <span >
 		         <el-icon><arrow-down /></el-icon>
 		        </span>
 		        <template #dropdown>
 		          <el-dropdown-menu>
-		            <el-dropdown-item @click="closeOther()">关闭其他页签</el-dropdown-item>
+					<el-dropdown-item @click="handleRefresh()">刷新页面</el-dropdown-item>
+		            <el-dropdown-item divided @click="closeOther()">关闭其他页签</el-dropdown-item>
 		            <el-dropdown-item @click="closeRight()">关闭右边</el-dropdown-item>
 		            <el-dropdown-item @click="closeLeft()">关闭左边</el-dropdown-item>
 		          </el-dropdown-menu>
 		        </template>
-		      </el-dropdown>
+		      </el-dropdown>  
 	</template>
     </el-tab-pane>
   </el-tabs>
@@ -29,11 +30,12 @@
 </template>
 <script>
 import { useRoute,useRouter } from 'vue-router'
-import { defineComponent,ref,reactive,watch,onMounted,inject } from 'vue'
-import {ArrowDown,} from '@element-plus/icons-vue'
+import { defineComponent,ref,reactive,watch,onMounted,inject ,getCurrentInstance} from 'vue'
+import {ArrowDown,Refresh} from '@element-plus/icons-vue'
+
 export default defineComponent({
-	components:{ArrowDown},
-     setup(){
+	 components:{ArrowDown,Refresh},
+     setup(prop,context){
          let editableTabsValue =ref('/home')
          let editableTabs =ref([
              {
@@ -50,22 +52,35 @@ export default defineComponent({
              //如果to.path该页签存在于当前数组中---就执行激活当前页签---否则就新增加页签
              let newarr =[]
 			 let oldname=editableTabsValue.value;
-             editableTabs.value.forEach((item)=>{
-                 newarr.push(item.name)
+			 let indexm=-1;
+			 if(to.path=="/blank"){
+				 return;
+			 }
+             editableTabs.value.forEach((item,index)=>{
+				 if(item.name==route.query.title){
+					 indexm=index;
+				 }
              })
 			 let replace=false;
 			 if(route.query.replace){
-			 	  replace=route.query.replace;
+			 	  replace=route.query.replace==true||route.query.replace=="true"?true:false;
 			 }
-            if(newarr.indexOf(to.path)>-1){
-                editableTabsValue.value =to.path;
-				let tab=route.query;
-				tab.title=route.query.title;
-				tab.name=route.query.path;
-				tab.closable=true;
-				tab.meta=route.meta;
-				var tabquery=editableTabs.value[newarr.indexOf(to.path)] ;
-				editableTabs.value[newarr.indexOf(to.path)]=Object.assign(tabquery, tab);
+            if(indexm>-1){
+				if(route.query.path=="/home"){
+					editableTabsValue.value='/home';
+				}else{
+					let tab=JSON.parse(JSON.stringify(route.query));
+					editableTabsValue.value =route.query.title;
+					tab.title=route.query.title;
+					tab.name=route.query.title;
+					tab.meta=route.meta;
+					var tabquery=editableTabs.value[indexm] ;
+						delete tabquery.refresh;
+					    delete tabquery.replace;
+						delete tab.refresh;
+					    delete tab.replace;
+					editableTabs.value[indexm]=Object.assign(tabquery, tab);
+				}
             }else{
                 addTab()
             }
@@ -82,6 +97,10 @@ export default defineComponent({
 		 function closeOther(){
 			 closeRight();
 			 closeLeft();
+		 }
+		 function handleRefresh(){
+			  let activeName = editableTabsValue.value;
+			  context.emit("clear",activeName);
 		 }
 		 function closeRight(){
 			 let tabs = editableTabs.value
@@ -122,7 +141,7 @@ export default defineComponent({
 		 emitter.on("removeTab", (value) => { // 监听事件
 		    removeTab(editableTabsValue.value);
 		 });
-		 function showTab(activeName){
+		 function showTab(activeName,refresh){
 			 let tabs = editableTabs.value;
 			 let query=null;
 			 if(tabs){
@@ -133,8 +152,12 @@ export default defineComponent({
 			          query=tab;
 			     }
 			 });
-			 let meta=query.meta;
-			 query.meta="";
+			 query=JSON.parse(JSON.stringify(query));
+			 delete query.refresh;
+			 delete query.replace;
+			 delete query.meta;
+			 delete query.name;
+			 var meta=query.meta;
 			 router.push({
 						 //删除自己时路由切换到隔壁
 						'path':query.path,
@@ -142,17 +165,24 @@ export default defineComponent({
 						'meta':meta,
 					 })
 		 }
+	 
          function addTab(){
-			 let tab=route.query;
+			 let tab=JSON.parse(JSON.stringify(route.query));
 			 if(route.query.path=="/home"){
 				 return;
 			 }
 			 tab.title=route.query.title;
-			 tab.name=route.query.path;
+			 tab.name=route.query.title;
 			 tab.closable=true;
 			 tab.meta=route.meta;
+			 if(tab.refresh){
+				delete tab.refresh;
+			 }
+			 if(tab.replace){
+			    delete tab.replace;
+			 }
              editableTabs.value.push(tab)
-             editableTabsValue.value = route.query.path;
+             editableTabsValue.value = route.query.title;
          }
          function removeTab(targetName){
              let tabs = editableTabs.value
@@ -177,8 +207,8 @@ export default defineComponent({
          return{
              pushShow,
              removeTab,
-             editableTabsValue,
-             editableTabs,
+             editableTabsValue,showTab,
+             editableTabs,handleRefresh,
 			 closeOther,closeLeft,closeRight
          }
      },
@@ -204,6 +234,9 @@ export default defineComponent({
 	line-height:28px !important;
 	font-size: 12px;
    }
+  .dark .tab-head .el-tabs__item{
+   	border-bottom: 1px solid transparent !important;
+     }
  .tab-head .el-tabs--card>.el-tabs__header{
      border-bottom: 0px  !important;
    }

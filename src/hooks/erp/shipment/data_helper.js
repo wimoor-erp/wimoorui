@@ -1,18 +1,29 @@
 import materialApi from '@/api/erp/material/materialApi.js';
 import shipmentplanApi from '@/api/erp/ship/shipmentplanApi.js';
 import planApi from '@/api/erp/ship/planApi.js';
+import PrepInstruction from '@/model/amazon/ship/PrepInstruction.json';
 export function loadInventory(productlist,warehouseid){
 	 productlist.forEach(item=>{
-	    materialApi.getMaterialInventoryInfo({"sku":item.msku,"warehouseid":warehouseid}).then(res=>{
+		 var msku="";
+		 if(item.msku){
+			 msku=item.msku;
+		 }else if(item.sku){
+			 msku=item.sku;
+		 }
+	    materialApi.getMaterialInventoryInfo({"sku":msku,"warehouseid":warehouseid}).then(res=>{
 	     											if(res.data){
 														var data=res.data;
 														productlist.forEach(skuitem=>{
 															if(skuitem.msku==data.material.sku){
-																console.log(skuitem);
 																if(data.canAssembly){
 																	skuitem.canAssembly=data.canAssembly;
 																}
-																skuitem.fulfillable=data.fulfillable.quantity;
+																if(data.fulfillable){
+																	skuitem.fulfillable=data.fulfillable.quantity;
+																}else{
+																	skuitem.fulfillable=0;
+																}
+																
 																if(data.pkgDim){
 																	skuitem.length=data.pkgDim.length;
 																	skuitem.width=data.pkgDim.width;
@@ -32,13 +43,23 @@ export function validSkuList(state,skulist){
  					 shipmentplanApi.guidance({"groupid":state.formData.groupid,
 					                           "marketplaceid":state.formData.marketplaceid,
 											   "skulist":skulist}).then((res)=>{
- 								 var data=res.data;
-								 
+ 								 var data=res.data.guidance;
+								 var prepInstructions=res.data.prepInstructions;
  								 state.productlist.forEach(function(item){
+									 if(prepInstructions[item.sku]){
+													 var prepInstructionList=prepInstructions[item.sku].prepInstructionList;
+													 item.prep=[];
+													 prepInstructionList.forEach(prepitem=>{
+														 if(PrepInstruction[prepitem]){
+															 item.prep.push(PrepInstruction[prepitem]) ;
+														 }
+													 })
+									 }
 									 if(data&&data.skUInboundGuidanceList){
 										 data.skUInboundGuidanceList.forEach(function(items){
 											 if(items.sellerSKU==item.sku){
-												item.asin=items.asin;												  item.guidance="error";
+												item.asin=items.asin;												  
+												item.guidance="error";
 											 }
 										 })
 									 }

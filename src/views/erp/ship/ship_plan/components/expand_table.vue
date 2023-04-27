@@ -1,5 +1,9 @@
 <template>
-	<el-table v-loading="status.loading" :row-class-name="handleRowClassName" :data="tableData"  size="small">
+	<el-table  
+	:row-class-name="handleRowClassName" 
+	:data="tableData" 
+	:empty-text="status.loading?'加载中...':'平台SKU皆已失效或隐藏 , 请在计划中忽略或者隐藏此本地SKU'"
+	 size="small">
 		<el-table-column label="FBA仓库" prop="marketname"   header-align="center" align="center" >
 			<template #default="scope">
 				<el-link >{{scope.row.marketname}}</el-link>
@@ -95,16 +99,20 @@
 				<span v-if="scope.row.iseu">{{scope.row.quantity}}</span>
 				<el-popover v-else  trigger="click"  placement="top" width="240px"  >
 				<template  #reference>	
-				 <div class="text-center pointer">{{scope.row.quantity}}</div>
+				 <div class="text-center pointer">{{scope.row.quantity}} 
+				   <span class="font-extraSmall" v-if="scope.row.overseaqty">+{{getZeroValue(scope.row.overseaqty)}}</span>  
+				 </div>
 				</template>
 				 <ul class="border-line">
-					<li class="flex-center-between "><span>可用库存</span><el-tag type="success">{{getZeroValue(scope.row.afn_fulfillable_quantity)}}</el-tag></li>
-					 <li class="flex-center-between"><span>预留库存<span class="font-extraSmall"> (买家订单)</span></span><el-tag >{{getZeroValue(scope.row.afn_reserved_quantity)}}</el-tag></li>
+					 <li class="flex-center-between "><span>可用库存</span><el-tag type="success">{{getZeroValue(scope.row.afn_fulfillable_quantity)}}</el-tag></li>
+					 <li class="flex-center-between"><span class="font-extraSmall">预留库存<span  >(汇总)</span></span><el-tag type="info">{{getZeroValue(scope.row.reserved_qty)}}</el-tag></li>
+					 <li class="flex-center-between"><span class="font-extraSmall">预留库存<span > (买家订单)</span></span><el-tag type="info">{{getZeroValue(scope.row.reserved_customerorders)}}</el-tag></li>
 					 <li class="flex-center-between"><span>预留库存<span class="font-extraSmall"> (运营中心转运)</span></span><el-tag type="warning">{{getZeroValue(scope.row.reserved_fc_transfers)}}</el-tag></li>
 					 <li class="flex-center-between"><span>预留库存<span class="font-extraSmall"> (运营中心处理中)</span></span><el-tag type="warning">{{getZeroValue(scope.row.reserved_fc_processing)}}</el-tag></li>
-					 <li class="flex-center-between"><span>待入库库存<span class="font-extraSmall"> (正在发货)</span></span><el-tag type="info">{{getZeroValue(scope.row.afn_inbound_working_quantity)}}</el-tag></li>
-					 <li class="flex-center-between"><span>待入库库存<span class="font-extraSmall"> (待接收)</span></span><el-tag type="info">{{getZeroValue(scope.row.afn_inbound_shipped_quantity)}}</el-tag></li>
-					 <li class="flex-center-between"><span>待入库库存<span class="font-extraSmall"> (正在接收)</span></span><el-tag type="info">{{getZeroValue(scope.row.afn_inbound_receiving_quantity)}}</el-tag></li>
+					 <li class="flex-center-between"><span>待入库库存<span class="font-extraSmall"> (正在发货)</span></span><el-tag >{{getZeroValue(scope.row.afn_inbound_working_quantity)}}</el-tag></li>
+					 <li class="flex-center-between"><span>待入库库存<span class="font-extraSmall"> (待接收)</span></span><el-tag >{{getZeroValue(scope.row.afn_inbound_shipped_quantity)}}</el-tag></li>
+					 <li class="flex-center-between"><span>待入库库存<span class="font-extraSmall"> (正在接收)</span></span><el-tag >{{getZeroValue(scope.row.afn_inbound_receiving_quantity)}}</el-tag></li>
+					 <li class="flex-center-between" v-if="scope.row.overseaqty"><span>海外仓库存<span class="font-extraSmall">  </span></span><el-tag >{{getZeroValue(scope.row.overseaqty)}}</el-tag></li>
 				 </ul>
 				</el-popover>
 			</template>
@@ -118,7 +126,8 @@
 									   <template #content>
 									         <div >含发货频次{{scope.row.mincycle}}天内销量：{{scope.row.ship_min_cycle_sale}}  </div>
 									    </template>
-				   {{scope.row.needship}}
+				  <span v-if="isOversea==true">{{scope.row.needshipfba}}</span> 
+				  <span v-else>{{scope.row.needship}}</span> 
 				</el-tooltip>
 				</span>
 				<span v-else>0</span>
@@ -128,7 +137,11 @@
 		<el-table-column label="实际发货量"  min-width="110" header-align="center" align="center" >
 			<template #default="scope">
 				<el-space>
-				<el-input-number v-if="status.isEdit&&(scope.row.subnum<=1||!scope.row.subnum)" style="width:80px;" :controls="false" size="small" v-model="scope.row.amount"></el-input-number>
+				<el-input-number 
+				v-if="status.isEdit&&(scope.row.subnum<=1||!scope.row.subnum)" 
+				style="width:80px;" :controls="false" size="small" 
+				v-model="scope.row.amount"
+				@input="scope.row.amount=CheckInputInt(scope.row.amount)"></el-input-number>
 				<span v-else>
 				   <span v-if="scope.row.reallyamount">{{scope.row.reallyamount}}</span>
 				   <span v-else>0</span>
@@ -204,7 +217,7 @@
 	import {Calendar,Edit,View,CaretBottom,EditPen} from '@element-plus/icons-vue';
  	import planApi from '@/api/erp/ship/planApi.js';
 	import fbacycleApi from '@/api/amazon/inbound/fbacycleApi.js';
-	import {dateFormat} from "@/utils/index";
+	import {dateFormat,CheckInputInt} from "@/utils/index";
 	import { ElMessage, ElMessageBox } from 'element-plus'
 	const props = defineProps({
 					row:{
@@ -212,10 +225,11 @@
 					},
 					tableData:[],
 					status:{},
+					isOversea:false,
 					transtypeOptions:{}
 	})
 	const {
-	   tableData,status,transtypeOptions,
+	   tableData,status,transtypeOptions,isOversea,
 	} = toRefs(props);
 	const emit = defineEmits(['show-product-detail',
 							  'show-sales-adjust',
@@ -232,6 +246,10 @@
 	}
  
 	function handleSaveCycle(row){
+		if(row.setstockingcycles<0){
+			ElMessage({ message: "备货周期必须大于等于0", type: 'error', });
+			return;
+		}
 		var stockingCycle=row.setstockingcycles;
 		var transtype=row.settranstype;
 		var formData={sku:row.sku,marketplaceid:row.marketplaceid,groupid:row.groupid}

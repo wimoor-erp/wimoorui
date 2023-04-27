@@ -1,6 +1,9 @@
 import request from "@/utils/request";
- function getShipPlanList(data){
- 	 return request.post("/amazon/api/v1/product/salesplan/getShipPlanModel",data)
+ function getPlanList(data){
+ 	 return request.post("/amazon/api/v1/product/salesplan/getPlanModel",data)
+ }
+ function getExpandCountryData(data){
+ 	  return request.post("/amazon/api/v1/product/salesplan/getExpandCountryData",data);
  }
  function refreshDataByGroup(data){
  	 return request.get("/amazon/api/v1/product/salesplan/refreshDataByGroup",{params:data});
@@ -13,9 +16,6 @@ import request from "@/utils/request";
  }
  function remove(data){
  	 return request.delete("/amazon/api/v1/product/salesplan/shipItem/remove",{params:data});
- }
- function getExpandCountryData(data){
-	  return request.get("/amazon/api/v1/product/salesplan/getExpandCountryData",{params:data});
  }
  function getSummary(data){
  	  return request.get("/amazon/api/v1/product/salesplan/shipItem/getSummary",{params:data});
@@ -32,8 +32,12 @@ import request from "@/utils/request";
  function batchList(data){
  	  return request.get("/amazon/api/v1/product/salesplan/shipItem/getBatchList",{params:data});
  }
+ function removeBatchItem(batchnumber){
+ 	 return request.post("/amazon/api/v1/product/salesplan/shipItem/removeBatch?batchnumber="+batchnumber);
+ }
+ 
  export default{
- 	getShipPlanList,
-	refreshDataByGroup,
+ 	getPlanList,
+	refreshDataByGroup,removeBatchItem,
 	getExpandCountryData,save,remove,getSummary,clear,list,batch,batchList,subsplit
  }

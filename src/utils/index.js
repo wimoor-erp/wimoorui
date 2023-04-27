@@ -438,6 +438,7 @@ export function dateFormat(time){
 }
 
 export function dateTimesFormat(time){
+	if(!time)return "-";
 	if (('' + time).length === 10) {
 	  time = parseInt(time) * 1000;
 	} else if(('' + time).indexOf("-")>0||('' + time).indexOf("/")>0){
@@ -446,7 +447,26 @@ export function dateTimesFormat(time){
 	const d = new Date(time);
 	return d.format("yyyy-MM-dd hh:mm:ss");
 }
- 
+ export function dateMonthFormat(time){
+ 	if(!time)return "-";
+ 	if (('' + time).length === 10) {
+ 	  time = parseInt(time) * 1000;
+ 	} else if(('' + time).indexOf("-")>0||('' + time).indexOf("/")>0){
+ 	  return time;
+ 	}
+ 	const d = new Date(time);
+ 	return d.format("yyyy-MM");
+ }
+ export function dateYearFormat(time){
+ 	if(!time)return "-";
+ 	if (('' + time).length === 10) {
+ 	  time = parseInt(time) * 1000;
+ 	} else if(('' + time).indexOf("-")>0||('' + time).indexOf("/")>0){
+ 	  return time;
+ 	}
+ 	const d = new Date(time);
+ 	return d.format("yyyy");
+ }
 export  function deepCopy(obj){
      let target  = null
      if(typeof obj === 'object'){
@@ -654,3 +674,18 @@ export function getCurrencyMark(currency){
 					}
 					return value;
 				}
+export function spaceCharInput(value){
+	value=value+"";
+	if(value){
+		value = value.match(/^[\u4E00-\u9FA5A-Za-z0-9_]+$/); 
+	}
+	return value;
+}
+export function percentInput(value){
+	value=value+"";
+	if(value){
+		value = value.match(/^(0|[1-9][0-9]*)$/); 
+	}
+	return value;
+}	
+			

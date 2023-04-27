@@ -10,7 +10,7 @@
 						 <div class="fill-from-body">
 							  <el-steps :active="active" finish-status="success" align-center class="m-b-t-24">
 							    <el-step title="创建" />
-							    <el-step title="待处理"  />
+							   <!-- <el-step title="待处理"  /> -->
 							    <el-step title="处理中"  />
 							    <el-step title="完成"  />
 							  </el-steps>
@@ -23,20 +23,20 @@
 							  <el-row>
 							 <el-col :span="12">
 							 <el-form-item label="单据编码"   >
-							 	<el-input class="in-wi-24" disabled  v-model="form.name" placeholder="请输入"> </el-input>
+							 	<el-input class="in-wi-24" disabled  v-model="form.number" placeholder="请输入"> </el-input>
 							 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
 							 <el-form-item label="操作类型" >
-							     <el-radio-group v-model="form.radio" >
-							          <el-radio label="1" >组装</el-radio>
-							          <el-radio label="2">拆分</el-radio>
+							     <el-radio-group v-model="form.ftype" >
+							          <el-radio label="ass" >组装</el-radio>
+							          <el-radio label="dis">拆分</el-radio>
 							     </el-radio-group>
 							 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
 								 <el-form-item label="操作仓库" prop="warehouse">
-								 		<Warehouse @changeware="getWarehouse" />
+								 		<Warehouse @changeware="getWarehouse" defaultValue="only" />
 								 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
@@ -54,127 +54,19 @@
 							 </el-col>
 							 <el-col :span="12">
 								  <el-form-item label="备注"  >
-									<el-input class="in-wi-24" type="textarea" v-model="form.name" placeholder="备注"> </el-input>
+									<el-input class="in-wi-24" type="textarea" v-model="form.remark" placeholder="备注"> </el-input>
 								  </el-form-item>
 							 							
 							 </el-col>
 							  </el-row>
 						 </el-form>
-						 <el-row v-else :gutter="32">
-							 <el-col :span="8">
-						<el-descriptions :column="1">
-						    <el-descriptions-item label="单据编码">AS202301040023</el-descriptions-item>
-						    <el-descriptions-item label="操作类型">
-								<el-tag effect="dark" type="warning">组装</el-tag>
-							</el-descriptions-item>
-						    <el-descriptions-item label="单据状态">
-								<el-tag v-if="active==1" effect="light" type="warning">待处理</el-tag>
-								<el-tag v-if="active==2" effect="light" type="success">处理中</el-tag>
-								<el-tag v-if="active==3" effect="light" type="info">已完成</el-tag>
-							</el-descriptions-item>
-							<el-descriptions-item label="操作仓库">清湖仓-正品仓</el-descriptions-item>
-							<el-descriptions-item label="备注">-</el-descriptions-item>
-						 </el-descriptions>
-						 </el-col>
-						<el-col :span="8">
-							<el-space class="pro-content m-b-16">
-							 <el-image src="https://photo.wimoor.com/materialImg/26138972975530085/1651906144437_after.jpeg" class="product-img"></el-image>
-							 <div>
-								 <p class="name font-12">开斋节装饰拉花，
-								 星星月亮纸串3.7米一条星星月亮纸串3.7米一条星星月亮纸串3.7米一条
-								 星星月亮纸串3.7米一条。 A2133TKJJB， 和 A2136TKJJB 共用配件</p>
-								 <p class="sku ">kq005</p>
-							 </div>
-							 </el-space>
-							 <div >
-								 <p class="font-bold">
-									 <el-space>
-								 <span>100</span>
-								  <el-popover
-								     placement="top-start"
-								     title="修改加工数量"
-								     :width="200"
-								   >
-								    <el-input-number v-model="num" :min="1" placeholder="请输入" />
-									<el-button size="small"
-									 class="m-t-8"
-									 type="primary">确认</el-button>
-								     <template #reference>
-								      <el-icon class="ic-cen" v-if="active==1"><Edit /></el-icon>
-								     </template>
-								   </el-popover>
-								 </el-space>
-								 </p>
-								 <span class="font-extraSmall">加工数量</span>
-							 </div>
-						</el-col>
-						<el-col :span="8" v-if="active>1">
-						<el-row class="m-b-24">
-						<el-col :span="12" class="text-center">
-							<div>
-							<p class="font-bold">50</p>
-							<span class="font-extraSmall">已处理</span>
-							</div>
-							<el-popover
-							   placement="bottom"
-							   title="产品组装"
-							   :width="200"
-							   trigger="click"
-							 >
-							 <el-alert class="m-b-16" title="子产品库存不足,最多可组装 1 个" :closable="false" type="error" />
-							  <el-input-number v-model="num" :min="1" placeholder="数量" />
-								<el-button 
-								 class="m-t-8"
-								 type="primary">确认</el-button>
-							   <template #reference>
-							   <el-button v-if="active==2" type="primary" class="m-t-8" @click="handleStart">
-							    <span v-if="form.radio=='1'">组装</span>	
-							    <span v-else>拆分</span>
-							   </el-button>
-							   </template>
-							 </el-popover>
-						</el-col>
-						<el-col :span="12" class="text-center">
-							<div >
-							<p class="font-bold">0</p>
-							<span class="font-extraSmall">已入库</span>
-							</div>
-							<el-popover
-							   placement="bottom"
-							   title="产品入库"
-							   :width="200"
-							   trigger="click"
-							 >
-							  <el-input-number v-model="num" :min="1" placeholder="数量" />
-								<el-button 
-								 class="m-t-8"
-								 type="primary">确认</el-button>
-							   <template #reference>
-							  <el-button v-if="active==2" type="primary" class="m-t-8" @click="handleStart">入库</el-button>
-							   </template>
-							 </el-popover>
-						</el-col>
-						</el-row> 
-						   <el-progress
-							 :text-inside="true"
-							      :stroke-width="8"
-							      :percentage="50"
-							     >
-						       <span></span>
-						    </el-progress>
-							<div class="flex-center-between m-t-8">
-								<span class="font-extraSmall">处理进度</span>
-								<span class="font-extraSmall">50/100</span>
-							</div>
-						</el-col>
-						 </el-row>
 						 <el-divider></el-divider>
 						 <div class="mark-re">
 							<div>
 						   <h5 >子SKU列表</h5>
 						   </div>
 						 </div>
-						 <el-table border :data="TableData">
+						 <el-table border :data="tableData">
 							 <el-table-column label="序号" type="index" width="80"/> 
 							 <el-table-column  prop="image" label="图片" width="80" >
 							    <template #default="scope">
@@ -184,36 +76,43 @@
 							 </el-table-column>
 							 <el-table-column label="名称/SKU"  show-overflow-tooltip>
 							    <template #default="scope">
-							       <div class='name'>{{scope.row.name}}</div>
+							       <div class='name'>{{scope.row.mname}}</div>
 							       <div class='sku'>{{scope.row.sku}}
 							       </div>
 							   </template>
 							 </el-table-column>
-							 <el-table-column label="单位数量" prop="unit"/>
+							 <el-table-column label="单位数量" prop="subnumber"/>
 							 <el-table-column label="需求数量">
 							   <template #default="scope">
 								   <span v-if="form.num">
-								   {{parseInt(scope.row.unit)*form.num}}
+								   {{parseInt(scope.row.subnumber)*form.num}}
 								   </span>
 							   </template>
 							 </el-table-column>
-							 <el-table-column label="仓库" prop="warehouse"/>
-							 <el-table-column label="可用库存" prop="fulfillable">
+							 <el-table-column label="仓库" >
+								  <template #default="scope">
+									  <span v-if="scope.row.submap">
+										  {{scope.row.submap.warehouse}}
+									  </span>
+								  </template>
+							 </el-table-column> 
+							 <el-table-column label="可用库存" >
 							 <template #default="scope">
-								   {{scope.row.fulfillable}}
-								   <span v-if="scope.row.fulfillable+scope.row.d<parseInt(scope.row.unit)*form.num">
+								 <span v-if="scope.row.submap">
+								   {{scope.row.submap.amount}}
+								   <span v-if="scope.row.submap.amount+scope.row.submap.inbound<parseInt(scope.row.subnumber)*form.num">
 								    <el-tag size="small" type="danger">库存不足</el-tag>
 								   </span>
+								</span>
 							 </template>
 							 </el-table-column>
-							 <el-table-column label="待入库" prop="d"/>
-							 <el-table-column label="操作" width="80">
-								  <template #default="scope">
-								    <el-button
-									 v-if="scope.row.fulfillable+scope.row.d<parseInt(scope.row.unit)*form.num"
-									 link type="primary" >采购</el-button>
-					        	  </template>
-							 </el-table-column>
+							 <el-table-column label="待入库" >
+								 <template #default="scope">
+									 <span v-if="scope.row.submap">
+										  {{scope.row.submap.inbound}}
+									 </span>
+								</template>
+							</el-table-column>	 
 						 </el-table>
 						 <el-row v-if="active==2">
 						 	<div class="mark-re">
@@ -239,7 +138,7 @@
 						<div class='text-center mar-top-16'>
 							 <div style="padding-top:10px;">
 								<el-space>
-									<el-button @click="closeTab">取消</el-button>
+									<el-button @click="closeTab">关闭</el-button>
 									<el-button v-if="active==2">终止单据</el-button>
 									<el-button v-if="active==0" type="primary" @click="submitForm">提交</el-button>
 									<el-button v-if="active==1" type="primary" @click="handleStart">开始加工</el-button>
@@ -247,7 +146,7 @@
 							</div>
 						</div>
 	</div>
-	<MaterialDialog @getdata="getdata" ref = "MaterialRef"/>
+	<MaterialDialog  :isAssemblySKU="true" @getdata="getdata" ref = "MaterialRef"/>
 </template>
 
 <script setup>
@@ -257,60 +156,133 @@
 	import {ElMessage } from 'element-plus'
 	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog"
 	import Warehouse from '@/components/header/warehouse.vue';
-	import { useRoute,useRouter } from 'vue-router'
-	const MaterialRef = ref()
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
+	import { useRoute,useRouter } from 'vue-router';
+	import serialnumberApi from '@/api/erp/common/serialnumberApi.js';
+	import {getSubForm,saveData } from '@/api/erp/assembly/assemblyApi.js';
+	const MaterialRef = ref();
+	const router = useRouter();
 	const emitter = inject("emitter"); // Inject `emitter`
 	function closeTab(){
 		emitter.emit("removeTab", 100);
 	};
 	const state = reactive({
 		form:{
-			name:'',
-			radio:'1',
+			number:'',
+			ftype:'ass',
+			warehouseid:'',
+			num:1,
+			materialid:"",
+			id:"",
 		},
 		rules: {
 			warehouse: [{ required: true, message: '操作仓库不能为空', trigger: 'blur' }],
 			sku: [{ required: true, message: '组合SKU不能为空', trigger: 'blur' }],
 			num:[{ required: true, message: '不能为空', trigger: 'blur' }, { type:'number', message: '请输入数字',},]
 		},
-		TableData:[],
+		tableData:[],
 		active:0,
 	})
 	const {
 		form,
 		rules,
-		TableData,
+		tableData,
 		active,
 	}=toRefs(state)
-			onMounted(()=>{
-	
-			});
+	onMounted(()=>{
+		load();
+	});
     function handleAdd(){
 		MaterialRef.value.show()
 	}
 	function getdata(row){
-		state.form.sku = row[0].sku
-		state.TableData = []
-		state.TableData.push({
-			img:'',
-			name:'星星月亮纸串3.7米一条星星月亮纸串3.7米一条星星月亮纸串3.7米一条',
-			sku:'a3dwdw32',
-			unit:1,
-			warehouse:'龙华正品仓',
-			fulfillable:1,
-			d:0,
-		})
+		if(row && row.length==1){
+			state.form.sku = row[0].sku;
+			state.form.materialid=row[0].id;
+			state.tableData = [];
+			//通过主SKUid 仓库id去查找子产品信息
+			var materialid=row[0].id;
+			var warehouseid=state.form.warehouseid;
+			getSubForm({"materialid":materialid,"warehouseid":warehouseid}).then((res)=>{
+				if(res.data.msg){
+					ElMessage({
+					  type: 'error',
+					  message: res.data.msg,
+					})
+				}else{
+					state.tableData=res.data.sublist;
+				}
+			});
+			 
+		}else{
+			ElMessage({
+			  type: 'error',
+			  message: "只能选择一个主SKU！ ",
+			})
+		}
 	}
-	function handleDelete(row,index){
-		state.TableData.splice(index,1)
-	}
-	//
+	//保存单据
 	function submitForm(){
-		state.active = 1
+		var data={};
+		var subAssList=[];
+		state.tableData.forEach(function(item){
+			var subitem = {};
+			subitem.sku = item.sku;
+			subitem.formid = "";
+			subitem.warehouseid = item.submap.warehouseid;
+			data.warehouseid=item.submap.warehouseid;
+			subitem.amount =  parseInt(item.subnumber)*state.form.num;
+			subitem.whamount = item.submap.amount;
+			if (subitem.amount == 0 || subitem.amount == "" || subitem.amount < 0) {
+				ElMessage({
+				  type: 'error',
+				  message: "请输入正确数量！",
+				})
+				return;
+			}
+			if (typeof(subitem.sku) != "undefined" && subitem.sku != "") {
+				subAssList.push(JSON.stringify(subitem));
+			}
+		});
+		data.subAssList=subAssList.toString();
+		data.ftype=state.form.ftype;
+		data.remark=state.form.remark;
+		data.materialid=state.form.materialid;
+		data.amount=state.form.num;
+		data.id="";
+		saveData(data).then((res)=>{
+			if(res.data){
+				ElMessage({
+				  type: 'success',
+				  message: res.data.msg,
+				})
+				state.form.id=res.data.id;
+				router.push({
+					path:"/e/p/p/d",
+					query:{
+						title:'加工单详情',
+						path:"/e/p/p/d",
+						id:res.data.id
+					},
+				})
+				//state.active = 1;
+			}
+		})
+		
 	}
 	//开始加工
-	function handleStart(){
-		state.active = 2
+	// function handleStart(){
+	// 	state.active = 2
+	// }
+	function getWarehouse(wid){
+		state.form.warehouseid=wid;
+	}
+	function load(){
+		serialnumberApi.getSerialNumber({"ftype":"MO","isfind":"true"}).then((res)=>{
+			if(res.data){
+				state.form.number=res.data;
+			}
+		});
 	}
 </script>
 

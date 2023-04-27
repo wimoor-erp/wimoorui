@@ -1,7 +1,7 @@
 <!-- 添加产品时，共用的产品弹窗 -->
 <template>
   <div>
-  	<el-dialog v-model="dialog.visible" title="添加产品" width="80%" top="6vh" :before-close="handleClose">
+  	<el-dialog v-model="dialog.visible" title="添加产品"  width="80%" top="6vh" :before-close="handleClose">
   		<div class="con-header">
   			<el-row>
   				<el-input v-model="queryParams.search" @input="loadData" placeholder="搜索产品SKU">
@@ -19,6 +19,7 @@
   		    :tableData="tableData" 
   			@loadTable="loadTableData"
   			@selectionChange='selectChange' 
+			@row-click="rowClick" 
   			border 
   			style="width: 100%;">
   			<template #field>
@@ -35,7 +36,7 @@
   	 				<div class='sku'>{{scope.row.sku}} </div>
   					</template>
   				</el-table-column>
-  				<el-table-column prop="fulfillable" label="可用库存" width="100">
+  				<el-table-column prop="fulfillable" label="可用库存" width="100"  sortable="custom">
   					<template #default="scope">
   						<div class='name'>{{scope.row.fulfillable}}</div>
   						<span v-if="scope.row.willfulfillable>0">
@@ -62,7 +63,7 @@
   		<template #footer>
   			<span class="dialog-footer">
   				<el-button @click="dialog.visible = false">取消</el-button>
-  				<el-button type="primary" @click="submitFunc">提交</el-button>
+  				<el-button type="primary" @click="submitFunc">确认</el-button>
   			</span>
   		</template>
   	</el-dialog>
@@ -80,6 +81,7 @@
 		ids:[],
 		dialog:{visible:false},
 		loading:false,
+		supplierid:"",
 		queryParams:{ftype:'shipment',search:"",searchtype:"sku",issfg:""}
 	});
 	const { loading,
@@ -88,9 +90,10 @@
 			dialog,
 			search,
 			ids,
+			 supplierid
 		  } = toRefs(state);
-	let props = defineProps({hasInput:false,isAssemblyItem:false});
-	const { hasInput,isAssemblyItem } = toRefs(props);
+	let props = defineProps({hasInput:false,isAssemblyItem:false,isAssemblySKU:false,isfulfillable:false,warehouseid:""});
+	const { hasInput,isAssemblyItem,isfulfillable,warehouseid,isAssemblySKU } = toRefs(props);
 	let globalTableRef = ref(GlobalTable);
 	const emit = defineEmits(['getdata']);
 	function handleClose(){
@@ -101,11 +104,31 @@
 		if (globalTableRef.value && globalTableRef.value["loadTable"]) {
 			   state.queryParams.searchtype="sku";
 			   globalTableRef.value.loadTable(state.queryParams);
-		} 
+		} else{
+			setTimeout(function() {   globalTableRef.value.loadTable(state.queryParams);}, 100); 
+		}
 	}
+	
+	function rowClick(row){
+			  globalTableRef.value.toggleRowSelection(row,true);
+	}
+	
 	function loadTableData(data) {
 		if(props.isAssemblyItem==true){
 			data.issfg="0,2";
+		}
+		if(props.isAssemblySKU==true){
+			data.issfg="1";
+		}
+		if(props.isfulfillable==true ){
+			data.ftype="shipment";
+		}else{
+			data.ftype=undefined;
+		}
+		if(props.warehouseid!=undefined && props.warehouseid!=null && props.warehouseid!=""){
+				data.warehouseid=props.warehouseid;
+		}else{
+				data.warehouseid=undefined;
 		}
 		materialApi.getMaterialList(data).then((res) => {
 				state.tableData.records = res.data.records;
@@ -125,10 +148,14 @@
 		state.ids = selection;
 	}
 	function show(params){
+		console.log(params);
 		if(params){
 			state.queryParams=params;
+		}else{
+			state.queryParams.supplier="";
 		}
 		state.dialog.visible=true;
+		loadData();
 	}
 	function optQuantityChange(row){
 		globalTableRef.value.toggleRowSelection(row,true);
@@ -136,9 +163,6 @@
 	defineExpose({
 	  show,
 	})
-    onMounted(()=>{
-		loadData();
-	})  
 </script>
 
 <style>

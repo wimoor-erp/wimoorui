@@ -44,7 +44,7 @@
         </div>
         <!--表单-->
         <el-row>
-            <GlobalTable ref="globalTable" :tableData="tableData" @selectionChange='handleSelect' :defaultSort="{ prop: 'opttime', order: 'descending' }"  @loadTable="loadTableData" border style="width: 100%;margin-bottom:16px;">
+            <GlobalTable ref="globalTable" :tableData="tableData" @selectionChange='handleSelect' :defaultSort="{ prop: 'opttime', order: 'descending' }"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
             	<template #field>
                <!-- <el-table-column type="selection" width="38" /> -->
                 <el-table-column prop="name"  label="品牌名称" sortable />
@@ -74,7 +74,7 @@
 	    <el-form-item label="品牌名称" prop="name">
 	      <el-input v-model="formData.name" placeholder="请输入品牌名称" />
 	    </el-form-item>
-		<el-form-item label="品牌 备 注" prop="remark">
+		<el-form-item label="品牌备注" prop="remark">
 		  <el-input v-model="formData.remark" :rows="5" placeholder="请输入备注..." type="textarea" />
 		</el-form-item>
 	  </el-form>

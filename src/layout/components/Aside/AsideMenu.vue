@@ -1,5 +1,5 @@
 <template>
-    <div id="menubar" >
+    <div id="menubar" :class="theme" >
 		 <el-scrollbar height="calc(100vh)" >
 			 <div class="aside-flex" style="height:calc(100vh)">
 			 <div>
@@ -19,11 +19,19 @@
 				   @click="changeDrawer(item)" 
 				   v-for="(item,index) in menuData.list" 
 				   :key="item.id" :index='index+""' >
+				   
 		                     <icon-park 
+							    v-if="theme=='themeLight'"
 							    :type="item.iconName" 
 				                 theme="outline" 
-							     size="18" 
+							     :size="18" 
 							    :strokeWidth="3"/>
+								<icon-park
+								   v-else
+								   :type="item.iconName" 
+								    theme="outline" 
+								    :size="18" 
+								   :strokeWidth="4"/>
 		           <span>{{item.name}}</span>
 		       </el-menu-item>
 		      
@@ -35,7 +43,7 @@
 		    </div>
 		  </el-scrollbar>
        <!--弹出层!-->
-       <el-drawer v-model="drawer"  size="" direction="ltr" title="I am the title" :with-header="false" destroy-on-close='true'>
+       <el-drawer v-model="drawer"  size="" direction="ltr" title="子菜单列表" :with-header="false" destroy-on-close='true'>
 		  <el-scrollbar height="calc(100vh - 80px)" >   
             <div v-show='submenu.isShow' v-for="submenu in submenus.list" :key="submenu.id">
                  <div class="item" v-for="subgroup in submenu.menugroup" :key="subgroup.id" style="margin-bottom:20px;">
@@ -86,6 +94,7 @@ export default defineComponent({
 		   let timer = ''
            let drawer = ref(false);
 		   let activeIndex=ref();
+		   let theme=ref("themeLight");
            let menuData=reactive({list:menuDataModel});
            let submenus=reactive({list:submenulistModel});
         	   menuApi.getMenuALL(response=>{
@@ -105,9 +114,29 @@ export default defineComponent({
 				}
 			}
         //方法
+		if( localStorage.getItem("theme")){
+			theme.value=localStorage.getItem("theme");
+		}
 		 function goHome(){
+			 if(theme.value=="themeBlack"){
+				  theme.value="themeLight";
+				  localStorage.setItem("theme","themeLight");
+			 }else{
+				 theme.value="themeBlack";
+			     localStorage.setItem("theme","themeBlack");
+			 }
 			 router.push({ 'path':'/home',
-			 			   'query': '/home' });
+							 query: {
+								title: "首页",
+								path: "/home",
+								name: 'Home',
+								closable:false,
+								replace:false
+							 },
+							 closable:false,
+							 replace:false,
+							 meta:{ keepAlive: true }
+						   });
 						   drawer.value = false
 		 }
          function changeMenu(id,currentIndex){
@@ -162,16 +191,69 @@ export default defineComponent({
            submenus,
            drawer,
 		   goHome,
+		   theme
     }
   },
 
 })
  
 </script>
-
+<style>
+.dark .el-drawer{
+	 background-color: #363636 !important;
+}
+</style>
 <style scoped>
 .meun-hide{display:none;}
- .text{
+.themeBlack,.themeBlack  #menubar,.themeBlack .el-menu-vertical{
+		background:#131921 !important;
+	}
+.themeBlack	 .el-menu-item:hover{
+    background-color:  #37475a;
+}	
+.themeBlack .el-menu-item{
+	color:#dedede !important;
+	opacity: 0.8;
+}
+.themeBlack	.el-menu-item.is-active{
+	 background-color: #07090c;
+	 color:#ff6700 !important;
+}
+.themeBlack	 .text{
+      text-decoration:none;
+	  color:#fff;
+	  font-size:14px;
+	  padding:8px 16px;
+	  border-radius: 4px;
+	  cursor: pointer;
+	  transition: background-color var(--el-text-color-primary),color var(--el-text-color-primary);
+	  color: var(--el-text-color-primary);
+      display:flex;
+  }
+.themeBlack	 .text:hover{
+     background-color:var(--el-bg-color);
+	}
+.themeBlack	 .item .active{
+		 background-color:var(--el-color-primary-light-9);
+		 color: var(--el-color-primary);
+	}
+
+/* ---------------------白色主题-------------------------------*/
+.themeLight,.themeLight .el-menu{
+	    background: var(--el-bg-color);
+}
+ 
+.themeLight	 .el-menu-item:hover{
+    background-color: var(--el-border-color-light);
+}	
+.themeLight	.el-menu-item.is-active{
+	 background-color: var(--el-border-color-light);
+}
+
+.el-menu-vertical{
+	 padding-top:16px;
+}
+.themeLight	 .text{
       text-decoration:none;
 	  color:var(--el-text-color-primary);
 	  font-size:14px;
@@ -181,27 +263,62 @@ export default defineComponent({
 	  transition: background-color var(--el-transition-duration),color var(--el-transition-duration);
       display:flex;
   }
-    .text:hover{
+.themeLight	 .text:hover{
      background-color: var(--el-bg-color);
 	}
- .item .active{
+.themeLight	 .item .active{
          color:var(--el-color-primary);
-		  background-color: var(--el-color-primary-light-9);
+		 background-color: var(--el-color-primary-light-9);
+	}
+/*-----------------dark主题------------------------*/
+.dark .themeBlack,.dark .themeBlack  #menubar,.dark .themeBlack .el-menu-vertical,
+.dark .themeLight,.dark .themeLight  #menubar,.dark .themeLight .el-menu-vertical
+{
+		background:#000000 !important;
+}
+.dark .themeBlack .el-menu-item:hover,.dark .themeLight .el-menu-item:hover{
+    background-color:  #000000;
+}	
+.dark .themeBlack .el-menu-item,.dark .themeLight .el-menu-item{
+	color:#dedede !important;
+	opacity: 0.8;
+}
+.dark .themeBlack	.el-menu-item.is-active,.dark .themeLight .el-menu-item.is-active{
+	 background-color: #000000;
+	 color:#ff6700 !important;
+}
+
+.dark .themeBlack .text,.dark .themeLight .text{
+      text-decoration:none;
+	  color:#fff;
+	  font-size:14px;
+	  padding:8px 16px;
+	  border-radius: 4px;
+	  cursor: pointer;
+	  transition: background-color var(--el-text-color-primary),color var(--el-text-color-primary);
+	  color: var(--el-text-color-primary);
+      display:flex;
+  }
+.dark .themeBlack .text:hover,.dark .themeLight	.text:hover{
+     background-color:var(--el-bg-color);
+	}
+.dark .themeBlack	 .item .active,.dark .themeLight	 .item .active{
+		 background-color:#272727;
+		 color: var(--el-color-primary);
 	}
 #menubar{
 width:64px;
-background:var( --el-bg-color);
 }
 #menubar {
 	z-index:1999;
 }
 .el-menu{
-    background-color: var(--el-bg-color);
 	border-right: 0;
 }
 .el-menu-item{
     flex-direction: column;
     justify-content: center;
+	
 }
 .el-menu-item .i-icon{
   margin-bottom:2px;
@@ -212,14 +329,16 @@ background:var( --el-bg-color);
 .el-menu-item{
     height:64px;
 }
-.el-menu-item:hover{
-    background-color: var(--el-border-color-light);
-}
 .el-menu-item .i-icon{
     display:  none;
 }
+
 .el-menu-item {
      height: 30px;
+ }
+ .el-menu-item.is-active {
+     color: var(--el-menu-active-color);
+	 font-weight: 700;
  }
 @media(min-height:300px) {
  .el-menu-item {
@@ -228,12 +347,18 @@ background:var( --el-bg-color);
   }
  }
 @media(min-height:500px) {
+ .el-menu-item {
+      height: 30px;
+	  font-size:12px;
+  }
+ }
+ @media(min-height:600px) {
  .el-menu-item .i-icon{
      display:inherit;
  }
  .el-menu-item {
-      height: 44px;
-	  font-size:12px;
+      height: 48px;
+ 	  font-size:12px;
   }
  }
  @media(min-height:700px) {
@@ -241,7 +366,7 @@ background:var( --el-bg-color);
      display:inherit;
  }
  .el-menu-item {
-      height: 50px;
+      height: 53px;
 	  font-size:12px;
   }
  }
@@ -260,17 +385,12 @@ background:var( --el-bg-color);
 }
 
  .el-menu-item {
-      height:60px;
+      height:65px;
 	  font-size:14px;
   }
  }
- .el-menu-vertical{
-      padding-top:16px;
- }
 
-.el-menu-item.is-active{
-     background-color: var(--el-border-color-light);
-}
+
 /*过渡动画*/
 
 .logo{
@@ -278,6 +398,7 @@ background:var( --el-bg-color);
 	justify-content: center;
 	align-items: center;
 }
+
 .logo .el-image{
 	height:28px;
 	width: 28px;
@@ -289,5 +410,15 @@ background:var( --el-bg-color);
 	justify-content: space-between;
 	border-right: solid 1px #e6e6e6;
 }
-   
+.dark .aside-flex {
+ 	border-right: solid 1px #3e3e3e;
+ }
+      
+</style>
+<style>
+	.themeBlack .el-button--primary.is-plain{
+		--el-button-border-color:#37475a;
+		--el-button-bg-color: #1f2936;
+		color: #fff;
+	}
 </style>

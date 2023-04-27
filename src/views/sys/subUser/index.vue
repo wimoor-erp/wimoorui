@@ -49,7 +49,7 @@
 					</el-button>
 					<el-button :disabled="multiple"  @click="handleEnable">启用</el-button>
 					<el-button :disabled="multiple"  @click="handleDisable">停用</el-button>
-					<el-button :disabled="multiple"  @click="handleDelete" type="danger">删除</el-button>
+					<el-button :disabled="multiple"  @click="handleDelete" >删除</el-button>
 				</el-space>
 				</el-form-item>
 				<div class='rt-btn-group'>
@@ -73,7 +73,7 @@
 		  <el-table-column prop="account" label="登录账号" width="160"  />
 		 <el-table-column prop="status" label="状态" width="80"   >
 		     <template #default="scope">
-		         <el-tag  :type="scope.row.status" effect="plain">{{scope.row.statusName}}</el-tag>
+		         <el-tag  :type="scope.row.status==0?'success':'info'" effect="plain">{{scope.row.statusName}}</el-tag>
 		     </template>
 		 </el-table-column>
 		  <el-table-column prop="deptname" label="部门" width="110"  />
@@ -368,6 +368,7 @@
 				listUserPages(param).then(res=>{
 					state.tableData.records = res.data.records
 					state.tableData.total =res.data.total
+					console.log( res.data.records)
 				})
 			}
 			
@@ -396,6 +397,19 @@
 			}
 			//方法
 			function handleAdd() {
+				state.formData= {
+					name:'',
+					account:"",
+					password:'',
+					state:true,
+					losingEffect:'',
+					disable:false,
+					deptid:'',
+					groups:[],
+					roles:[],
+					datalimits:[],
+					
+				 };
 				var date=new Date();
 				 date.setTime(date.getTime() + 3600 * 1000 * 24 * (3000));
 				 state.formData.losingEffect=date.format("yyyy-MM-dd"); ;
@@ -458,28 +472,17 @@
 		 
  
 </script>
-<style>
-	.el-dropdown-link .i-icon svg {
-		vertical-align: text-top;
-	}
-
+<style scoped="scoped">
 	.tag-mr {
 		margin-right: 4px;
 		margin-bottom: 4px;
 		display: inline-block
 	}
 
-	.sku .i-icon-copy {
-		cursor: pointer;
-		opacity: 0;
-	}
-
-	.el-table--enable-row-hover .el-table__body tr:hover>td.el-table__cell .sku .i-icon-copy {
-		opacity: 1;
-		transition: opacity .4s;
-	}
- 
-	.con-header .el-row {
-		margin-bottom: 0px;
-	}
+ .con-header .el-form--inline .el-form-item{
+	 margin-right: 0px;
+ }
+  .con-header .el-form-item--default{
+	 margin-bottom: 0;
+ }
 </style>

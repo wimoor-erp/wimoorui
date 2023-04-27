@@ -2,15 +2,18 @@
 	<div class="saledialog">
 	<el-dialog v-model="saleVisable" :title="productData.sku" :modal="false" :lock-scroll="false"    draggable>
 		  <template #header>
-			<el-tabs
-			   v-model="activeMarket"
-			   class="markets-tabs-dialog"
-			   @tab-change="handleClick"
-			 >
-			  <el-tab-pane  v-for = "(item,index) in marketList" :label="item.name" :name="item.marketplaceid"  >
-				  
-			  </el-tab-pane>
-			 </el-tabs>
+		    <div style="padding-right: 20px; padding-top: 4px;">
+				<el-tabs
+				   v-model="activeMarket"
+				   class="markets-tabs-dialog"
+				   @tab-change="handleClick"
+				   
+				 >
+				  <el-tab-pane  v-for = "(item,index) in marketList" :label="item.name" :name="item.marketplaceid"  >
+					  
+				  </el-tab-pane>
+				 </el-tabs>
+			 </div>
 		  </template>
 			<div class="flex-center">
 				 <div class="font-Small" >  <span class="font-extraSmall">总销量：</span>{{totalsales}} </div>
@@ -46,8 +49,10 @@
 				var myChart = echarts.init(document.getElementById('salechart'));
 				var myseries=[];
 				totalsales.value=0;
-				chart.lines.forEach(line=>{
+				var legends=[];
+				chart.lines.forEach((line,index)=>{
 					skuname.value=line.name;
+					legends.push(line.name);
 					totalsales.value=totalsales.value+line.summary;
 					myseries.push({
 									smooth: 0.5,
@@ -106,6 +111,10 @@
 					  type: "plain",
 					  icon: "circle",
 					  itemWidth: 8,
+					  selected: {
+								legendsfirst: true
+							},
+					  selectedMode:"single"
 				     },  
 				      xAxis: {
 								boundaryGap:false,
@@ -133,7 +142,7 @@
 				      series: myseries
 				}
 				 initVisualMapPieces(option,chart);//此处使用分段红色线条表示连续无货，代替markpoint
-				 myChart.setOption(option);
+				 myChart.setOption(option,true);
 				 window.addEventListener('resize',()=>{
 						   myChart.resize();
 				 })
@@ -150,7 +159,7 @@
 						var p = 0;
 						for(var i = 0; i < chart.labels.length; i++){
 							if(labelsmap[chart.labels[i]]==1&&labelsmap[chart.labels[i+1]]==1) {
-								option.visualMap.pieces[p] = {gte:i,lt:i+1}; 
+								option.visualMap.pieces[p] = {gte:i,lt:i+1,color:"#EB6A79"}; 
 								p++; 
 							}
 						}
@@ -184,6 +193,13 @@
 				if(sku==null||sku==""){
 					marketApi.getByMSku({"msku":msku,"groupid":groupid}).then((res)=>{
 						marketList.value=res.data;
+						for(var i=0;i<res.data.length;i++){
+							var market=res.data[i];
+							if(market.region=='EU'){
+								marketList.value.splice(i,0,{"name":'欧洲',marketplaceid:"EU",region:"EU"});
+								break;
+							}
+						}
 						if(marketplaceid==null||marketplaceid==""){
 							activeMarket.value=res.data[0].marketplaceid;
 							productData.marketplaceid=res.data[0].marketplaceid;

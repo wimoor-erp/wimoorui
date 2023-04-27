@@ -3,7 +3,7 @@
     <el-col :span="4" >
 		<div class="grid-content" >
 			    <div class='gird-head'>
-				<el-button type="primary" v-hasPerm:erp:wh:shelf:add 
+				<el-button type="primary" v-hasPerm="'erp:wh:shelf:add'" 
 				           @click="showCreateDialog(nowNode.data)">添加库位</el-button>	
 				<div class='rt-btn-group'>
 				 <el-button   class='ic-btn' title='帮助文档'>

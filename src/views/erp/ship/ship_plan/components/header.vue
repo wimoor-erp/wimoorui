@@ -5,9 +5,9 @@
 			<span >发货店铺：</span>
 			<GroupSelect @change="handleGroupChange" defaultValue="only"></GroupSelect>
 			</div>
-			<div>
+			<div class="flex-center">
 			<span>发货仓库：</span>
-			 <Warehouse  @change="handleWarehouseChange" defaultValue="only"></Warehouse>
+			 <Warehouse  @change="handleWarehouseChange" :isform="true" defaultValue="only"></Warehouse>
 			</div>
 		</el-space>
 		<el-button @click="clearPlan">清空计划</el-button>
@@ -15,16 +15,14 @@
 	<div class="main-sty con-header" style="padding-bottom: 0px;">
 		<el-row class="no-flex-warp">
 				<el-space>
-				   <Market ref="marketRef" @change="handleMarketChange"></Market>
-				   <Owner @owner="getOwner" />
-				   <Status @status="getStatus" />
-				   <Tags @change="getTags"/>
+				   <Market ref="marketRef" @change="handleMarketChange" :multiple="true"></Market>
+				   <Owner  ref="ownerRef" @owner="getOwner" />
+				   <Status ref="statusRef" @status="getStatus" />
+				   <Tags   ref="tagsRef" @change="getTags"/>
 				<el-input  v-model="queryParams.search" clearable @input="handleQuery"  @clear="handleQuery" placeholder="请输入" class="input-with-select" >
 				   <template #prepend>
 				     <el-select v-model="queryParams.searchtype" placeholder="SKU" style="width: 110px">
 				       <el-option label="SKU" value="sku"></el-option>
-				       <el-option label="产品名称" value="name"></el-option>
-				       <el-option label="备注" value="remark"></el-option>
 					   <el-option label="同级SKU" value="samesku"></el-option>
 					   <el-option label="同级ASIN"  value="sameasin"></el-option>
 				     </el-select>
@@ -40,7 +38,7 @@
 				 <el-popover    v-model:visible="moreSearchVisible" :width="400" trigger="click">
 				 	<template #reference>
 				 	<el-button  title='高级筛选'  class='ic-btn'>
-				 	<menu-unfold theme="outline" size="16"  :strokeWidth="3"/>
+				 	<filtericon></filtericon>
 				 	</el-button>
 				 	</template>
 				 	 <el-form   label-width="80px">
@@ -62,6 +60,20 @@
 				 		      placeholder="逗号分隔批量搜索..."
 				 		    />
 				 		 </el-form-item>
+						 <el-form-item label="产品名称">
+						   <el-input
+						       v-model="queryParams.name"
+						       placeholder="搜索名称"
+						     />
+						  </el-form-item>
+						  <el-form-item label="备注">
+						 							  <el-input
+						 							      v-model="queryParams.remark"
+						 							      :rows="2"
+						 							      type="textarea"
+						 							      placeholder="搜索备注..."
+						 							    />
+						   </el-form-item>
 						 <el-form-item label="断货预警">
 							 <el-row gutter="8">
 								 <el-col :span="12">
@@ -88,8 +100,16 @@
 						       <el-radio label="false">无</el-radio>
 						     </el-radio-group>
 						 </el-form-item>
+						 <el-form-item label="产品状态">
+						   <el-radio-group v-model="queryParams.status2">
+						       <el-radio label="">不限</el-radio>	 
+						       <el-radio label="shownormal">未隐藏</el-radio>
+						       <el-radio label="showhid">隐藏</el-radio>
+						     </el-radio-group>
+						 </el-form-item>
+						 
 				 		 <el-form-item >
-				 			 <el-button type="primary" @click="handleQuery()">搜索</el-button>
+				 			 <el-button type="primary" @click="handleQuery();moreSearchVisible=false">搜索</el-button>
 				 			 <el-button @click="resetForm(formRef)">取消</el-button>	
 				 		</el-form-item>
 				 		 </el-form>
@@ -110,13 +130,14 @@
 					
 				<div class='rt-btn-group'>
 					<div class="flex-center font-small m-r-16">
-						<el-checkbox v-model="queryParams.selected" label="显示已选" size="large" @change="handleQuery"/>
+						<el-checkbox v-model="queryParams.selected" label="显示已选"  @change="handleQuery"/>
 						<el-divider direction="vertical" />
-						<span>已选<span class="font-black"> {{summary.skunum}} </span>个SKU</span>
+						<span>已选 <span class="text-orange font-bold"> {{summary.skunum}} </span>个SKU</span>
 						<el-divider direction="vertical" />
-						<span>发货总数<span class="font-black"> {{summary.amount}}</span></span>
+						<span>发货总数 <span class="text-orange font-bold"> {{summary.amount}}</span></span>
 					</div>
-					<el-space v-if="queryParams.marketplaceid" >
+					<el-space v-if="queryParams.marketplaceids&&queryParams.marketplaceids.length>0" >
+					<el-checkbox v-model="queryParams.plansimple" label="简约计划"  @change="handleQuery"/>
 					<el-dropdown :hide-on-click="false" @command="handleCommand"  trigger="click">
 					    <el-button class='ic-btn'  title='排序'>
 					       <sort-one theme="outline" size="16"  :strokeWidth="3"/>
@@ -139,7 +160,6 @@
 					</el-space>
 				</div>	
 		</el-row>
- 
 	</div>
 	<DeliveryDialog ref="deliverRef" />
 	<ShipmarketRank ref ="shipmarketRankRef"/>
@@ -163,17 +183,21 @@
 	import Status from '@/views/amazon/listing/products/components/prostatus.vue';
 	import CheckDataDialog from "./check_data_dialog";
 	import {downExcelSales} from "@/api/amazon/listing/preSalesApi.js";
+	import filtericon from "@/components/icon/filtericon.vue"
 	// API依赖
 	import planApi from '@/api/erp/ship/planApi';
 	import { useRouter } from 'vue-router'
 	let deliverRef = ref()
 	let marketRef=ref();
+	let ownerRef=ref();
+	let statusRef=ref();
+	let tagsRef=ref();
 	let shipmarketRankRef = ref()
 	const checkDataDialogRef=ref();
 	let router = useRouter()
 	const state = reactive({
-	  queryParams: {groupid:'',warehouseid:'',
-	                searchtype:'sku',selected:false,small:"",currentRank:"",
+	  queryParams: {groupid:'',warehouseid:'',shortdays:'',isOversea:false,
+	                searchtype:'sku',selected:false,small:"",currentRank:"",status2:"shownormal",
 					hasAddFee:"",issfg:"",currentSolt:"desc"} ,
 	  loading:false,
 	  summary:{skunum:0,amount:0},
@@ -246,7 +270,7 @@
 						 	emits("change",state.queryParams);
 						 }
 					 }else{
-						 	state.queryParams.currentRank="";
+						 state.queryParams.currentRank="";
 						 if(state.queryParams.warehouseid&&state.queryParams.groupid){
 						 	emits("change",state.queryParams);
 						 }
@@ -272,7 +296,10 @@
 				handleQuerySummary();
 			}
 			function handleMarketChange(val){
-				state.queryParams.marketplaceid=val;
+				state.queryParams.marketplaceids=val;
+				if(state.queryParams.marketplaceids.length==0){
+					state.queryParams.plansimple=false;
+				}
 				handleQuery();
 			}
 			function getStatus(id){
@@ -290,17 +317,31 @@
 			function getCategory(value){
 				state.queryParams.categoryid=value;
 			}
-			function handleWarehouseChange(value){
+			function handleWarehouseChange(value,ftype,warehouse){
 				state.queryParams.warehouseid=value;
+				if(warehouse.country){
+				   state.queryParams.isOversea=true;	
+				}else{
+					state.queryParams.isOversea=false;
+				}
 				handleQuery();
 				handleQuerySummary();
 			}
 			function resetQuery(){
+				marketRef.value.reset();
+				ownerRef.value.reset();
+				statusRef.value.reset();
+				tagsRef.value.reset();
 				var groupid=state.queryParams.groupid;
 				var warehouseid=state.queryParams.warehouseid;
-				state.queryParams={groupid:groupid,warehouseid:warehouseid,
-				                   searchtype:'sku',selected:false,categoryid:"",
-								   hasAddFee:"",issfg:"",currentSolt:"desc",currentRank:"",skuarray:""} ;
+				state.queryParams={'groupid':groupid,'warehouseid':warehouseid,shortdays:'',
+				                   searchtype:'sku',selected:false,categoryid:"",isOversea:false,
+								   status2:"shownormal",
+								   owner:'',search:"",name:"",remark:"",
+								   tags:[],marketplaceid:'',status:'',
+								   hasAddFee:"",issfg:"",
+								   currentSolt:"desc",
+								   currentRank:"",skuarray:""} ;
 				handleQuery();
 			}
 			function resetForm(){
@@ -360,15 +401,14 @@
 					params.ischeck="true";
 					params.pagesize=1000;
 					params.currentpage=1;
-					planApi.getShipPlanList(params).then(res=>{
+					params.plantype="ship";
+					planApi.getPlanList(params).then(res=>{
 							   if(res.data&&res.data.records&&res.data.records.length>0){
 								  checkDataDialogRef.value.show(state.queryParams.warehouseid,res.data.records);
 							   }else{
 								   goToPlanConfirm();
 							   }
 					}); 
-			
-					
 				}else{
 					ElMessage({
 					  type: 'error',

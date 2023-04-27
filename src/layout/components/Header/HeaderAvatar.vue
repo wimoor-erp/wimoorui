@@ -1,11 +1,18 @@
 <template>
 	<div class="header-right-content">
+	
+		
 		<div class="message">
-			<remind theme="outline" size="16" fill="#333" />
-
+			<remind theme="outline" size="16"  />
 		</div>
 		<div class="phone">
-			<headset-one theme="outline" size="16" fill="#333" />
+			<headset-one theme="outline" size="16"  />
+		</div>
+		<div class="message pointer" @click="changeTheme" v-if="lightSkin">
+			<brightness theme="outline" size="18" />
+		</div>
+		<div class="message pointer" v-else @click="changeTheme">
+			<moon theme="outline" size="16" />
 		</div>
 		<div class="avatar">
 			<el-dropdown>
@@ -29,13 +36,16 @@
 	import request from "@/utils/request"; 
 	import {
 		Remind,
-		HeadsetOne
+		HeadsetOne,
+		Brightness,
+		Moon,
 	} from '@icon-park/vue-next';
 	import userApi from '@/api/sys/admin/userApi';
 	/* 清除缓存 */
 	import {
 		menuApi
 	} from '@/api/sys/admin/menuApi';
+	import { toggleDark } from "@/components/composables";
 	import {
 		ElMessage
 	} from 'element-plus';
@@ -43,19 +53,28 @@
 		name: "HeaderAvatar",
 		components: {
 			Remind,
-			HeadsetOne
+			HeadsetOne,
+			Brightness,
+			Moon,
 		},
+		props:['changeSKin'],
 		data() {
 			return {
 				bindVisible: false,
 				image: "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
-				name:""
+				name:"",
+				lightSkin:false,
 			}
 		},
 		created() {
 			this.getData();
 		},
 		methods: {
+			changeTheme(){
+				this.lightSkin = !this.lightSkin
+				toggleDark();
+			},
+			
 			clearCath() {
 				menuApi.cleanUserCache()
 			},
@@ -147,7 +166,6 @@
 	}
 	.user-name{
 		font-size: 13px;
-		color: #2a2a2a;
 		margin-left: 8px;
 	}
 </style>

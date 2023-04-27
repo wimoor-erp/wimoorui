@@ -15,22 +15,24 @@
 							  <el-row>
 							 <el-col :span="12">
 							 <el-form-item label="单据编码"   >
-							 ad5w4d6d48w
+							   {{form.number}}
 							 </el-form-item>
 							 </el-col>
 							 <el-col :span="12">
 							 <el-form-item label="备注"  >
-								 -
+								  {{form.remark}}
 							 </el-form-item>
 						  </el-col>
 							 <el-col :span="12">
 								 <el-form-item label="库位" prop="warehouse">
-									 清湖仓
+									 {{form.warehouse}}
 								 </el-form-item>
 							 </el-col>
 							 <el-col :span="12" >
 							  <el-form-item label="状态"  >
-							     <el-tag type="info" effect="plain" >盘点完成</el-tag>
+							     <el-tag v-if="form.isworking==true" type="warning" effect="plain" >进行中</el-tag>
+								 <el-tag v-else type="success" effect="plain" >盘点完成</el-tag>
+								 <el-button v-if="form.isworking==true" style="margin-left: 10px;" size="small" type="primary" @click.stop="continueHandle">继续盘点</el-button>
 							  </el-form-item>
 							  </el-col>
 							  </el-row>
@@ -39,8 +41,8 @@
 						 <div class="mark-re">
 						   <h5 >产品列表</h5>
 						 </div>
-						 <el-table border :data="TableData">
-							 <el-table-column  prop="image" label="图片"  >
+						 <el-table border :data="tableData">
+							 <el-table-column  prop="image" label="图片" width="70px" >
 							    <template #default="scope">
 							     <el-image v-if="scope.row.image" :src="scope.row.image"  class="product-img"></el-image>
 							 	<el-image v-else :src="require('@/assets/image/empty/noimage40.png')"    class="product-img"  ></el-image>
@@ -53,38 +55,39 @@
 							       </div>
 							   </template>
 							 </el-table-column>
-							 <el-table-column label="成本价" prop="price"/>
-							 <el-table-column label="可用库存" prop="i"/>
-							 <el-table-column label="待出库" prop="d"/>
-							 <el-table-column label="盘点数量"  prop="num">
+							 <el-table-column label="成本价(¥)" prop="price"/>
+							 <el-table-column label="可用库存" prop="fulfillable"/>
+							 <el-table-column label="待出库" prop="outbound"/>
+							 <el-table-column label="盘点数量"  prop="amount">
 							 </el-table-column>
-							  <el-table-column label="账面数量" sortable  prop="d"/>
-							  <el-table-column label="盘盈数量" prop="d"/>
-							  <el-table-column label="盘亏数量" prop="d"/>
+							  <el-table-column label="账面数量" sortable  prop="amount">
+								  <template #default="scope">
+								  <span v-if="scope.row.isworking==true">
+									  {{scope.row.fulfillable+scope.row.outbound}}
+								  </span>
+								   <span v-else>
+									  {{scope.row.amount-scope.row.overamount+scope.row.lossamount}}
+								   </span>
+								  </template>
+							  </el-table-column>
+							  <el-table-column label="盘盈数量" prop="overamount"/>
+							  <el-table-column label="盘亏数量" prop="lossamount"/>
 						 </el-table>
-						 <el-row :gutter="16" class="m-t-16">
-							 <el-col :span="4">
-						 <el-card shadow="never">
-							 <div class="flex-center-between">
-							  <div>
-							 <div class="font-large font-bold ">¥5.1</div>
-							 <div class="font-extraSmall">盘盈金额</div>
-							 </div>
-							<el-icon class="icon-font text-red"><CirclePlus/></el-icon>
+						 <el-row :gutter="16" class="m-t-16  ">
+							 <el-col :span="24" >
+								 <h5 class="flex-right">合计</h5>
+							 </el-col>
+							 <el-col :span="24" >
+							  <div class="m-t-8 flex-right">
+							 <income-one class="m-r-8 " theme="outline" size="16" fill="#529b2e"/>
+							 <span class="font-small m-r-16 text-height">盘盈金额:</span>
+							 <span class="font-24 font-bold "><span class="font-12">¥</span>{{form.overprice}}</span>
 							</div>
-						 </el-card>
-						 </el-col>
-						  <el-col :span="4">
-						 <el-card  shadow="never">
-							 <div class="flex-center-between">
-							   <div>
-							<div class="font-large font-bold ">¥36.5</div>
-							<div class="font-extraSmall">盘亏金额</div>
-							  </div>
-							 <el-icon class="icon-font text-green"><Remove /></el-icon>
-							 </div>
-							
-						 </el-card>
+							<div class="m-t-8 flex-right">
+							 <expenses-one class="m-r-8 " theme="outline" size="16" fill="#f56c6c"/>
+							 <span class="font-small m-r-16 text-height">盘亏金额:</span>
+							 <span class="font-24 font-bold "><span class="font-12">¥</span>{{form.lossprice}}</span>
+							</div>
 						 </el-col>
 						 </el-row>
 						</div>
@@ -97,76 +100,64 @@
 							</div>
 						</div>
 	</div>
-	<MaterialDialog  ref = "MaterialRef"/>
 </template>
 
 <script setup>
 	import {ArrowDown,Edit,Remove,CirclePlus} from '@element-plus/icons-vue'
-	import {Plus,Minus,Help} from '@icon-park/vue-next';
+	import {Plus,ExpensesOne,IncomeOne,Help} from '@icon-park/vue-next';
 	import { ref,reactive,onMounted,watch,inject,toRefs } from 'vue'
 	import {ElMessage } from 'element-plus'
-	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog"
-	import { useRoute,useRouter } from 'vue-router'
-	const MaterialRef = ref()
+	import { useRoute,useRouter } from 'vue-router';
+	import {redirectToList} from '@/utils/page_helper.js';
+	import stocktakingApi from '@/api/erp/inventory/stocktakingApi.js';
 	const emitter = inject("emitter"); // Inject `emitter`
 	function closeTab(){
-		emitter.emit("removeTab", 100);
+		 redirectToList(router,"/erp/warehouse/stocktake",'库存盘点');
 	};
-	const state = reactive({
+	const router = useRouter()
+	const id = router.currentRoute.value.query.id;
+	let state = reactive({
 		orderState:true,
-		TableData:[{
-			img: require('@/assets/image/testpic.png'),
-			name: '飞机盒 尺寸：40x30x5 cm，拍：KK特硬-空白',
-			sku: 'fe002',
-			price:'$31.35',
-			i:20,
-			num:55,
-			d:50,
-			state:true,
-			statelabel:{label:'未盘点',type:'info'},
-			},{
-			img: require('@/assets/image/testpic.png'),
-			name: '飞机盒 尺寸：40x30x5 cm，拍：KK特硬-空白',
-			sku: 'fe002',
-			price:'$31.35',
-			i:20,
-			num:55,
-			d:50,
-			state:true,
-			statelabel:{label:'未盘点',type:'info'},
-			}
-		],
+		tableData:[],
 		form:{
-			name:'',
-			radio:'1',
-			radio2:'1',
 		},
 		rules: {
 			warehouse: [{ required: true, message: '出库仓库不能为空', trigger: 'blur' }],
 		},
+		summary:{},
 	})
-	const {
+	let {
 		orderState,
 		form,
-		TableData,
+		tableData,
 		rules,
+		summary,
 	}=toRefs(state)
-			onMounted(()=>{
 	
-			});
-    function handleAdd(){
-		MaterialRef.value.show()
-	}
-	function startCheck(){
-		state.orderState = false
-		state.TableData.forEach((item)=>{
-			item.state = false
+	function continueHandle(){
+		//跳到编辑页面 create.vue
+		router.push({
+			path:"/e/w/s",
+			query:{
+				title:'编辑盘点单',
+				path:"/e/w/s",
+				id:id,
+				replace:true
+			},
 		})
 	}
-	function handleInput(row){
-		row.statelabel.label = "已盘点"
-		row.statelabel.type = ""
+	function load(){
+		stocktakingApi.view({"id":id}).then((res)=>{
+			if(res.data){
+				state.tableData=res.data.itemList;
+				state.summary=res.data.sum_map;
+				state.form=res.data;
+			}
+		});
 	}
+	onMounted(()=>{
+		load();
+	});
 </script>
 
 <style>
@@ -206,4 +197,22 @@
 		margin:16px 24px;
 	}
 	.m-t-16{margin-top: 16px;}
+	.m-r-16{
+		margin-right: 16px;
+	}
+	.m-r-8{
+		margin-right:8px;
+	}
+	.font-24{
+		font-size: 24px;
+	}
+	.flex-right{
+		display: flex;
+		justify-content: flex-end;
+		align-items: flex-end;
+	}
+	.text-height{
+		line-height: 24px;
+		display: inline-block;
+	}
 </style>

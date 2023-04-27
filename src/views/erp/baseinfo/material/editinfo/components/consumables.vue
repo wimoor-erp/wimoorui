@@ -23,12 +23,12 @@
 		 </el-table-column>
 		 <el-table-column label="单价">
 			  <template #default="scope">
-			 <el-input v-model="scope.row.price"></el-input>
+			 <el-input v-model="scope.row.price" @input="scope.row.price=CheckInputFloat(scope.row.price)"></el-input>
 			  </template>
 		 </el-table-column>
 		 <el-table-column label="关联数量">
 			 <template #default="scope">
-			 <el-input v-model="scope.row.amount"></el-input>
+			 <el-input v-model="scope.row.amount" @input="scope.row.amount=CheckInputFloat(scope.row.amount)"></el-input>
 			  </template>
 		 </el-table-column>
 		 <el-table-column label="操作">
@@ -47,6 +47,7 @@
 <script setup>
 	import {} from '@element-plus/icons-vue'
 	import {Plus,Minus} from '@icon-park/vue-next';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	import { ref,reactive,onMounted,watch,defineProps,toRefs,defineExpose } from 'vue'
 	import MaterialDialog from "@/views/erp/baseinfo/material/materialDialog.vue"
 	let props = defineProps({

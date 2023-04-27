@@ -120,9 +120,12 @@
 		     });
 			 onUpdated(()=>{
 							  var node=stree.value.getNode(key.value);
-							  node.id=key.value;
-							  stree.value.setCurrentNode(node);
-							   emit("node-click",node.data);
+							  if(node){
+								  node.id=key.value;
+								  stree.value.setCurrentNode(node);
+								  emit("node-click",node.data);
+							  }
+							 
 			 })
 		   function findDefault(value){
 		 	 if(value&&key.value==""){

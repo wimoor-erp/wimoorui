@@ -31,7 +31,7 @@
                     <el-button style="width: 100%;" type="primary" size="large" @click="userLogin">登录</el-button>
                 </el-form-item>
             </el-form>
-			<div class="font-extraSmall text-center m-t-32 flex-center ">
+			<div class="font-extraSmall text-center m-t-64 flex-center ">
 			<span>没有账号吗&nbsp;</span>
 			<el-link type="primary"  :underline="false"  class="font-12">
 			注册新账号
@@ -121,7 +121,7 @@ import {ElMessage} from "element-plus";
 	  padding-top: 10%;
   }
   .login-box{
-	  width:450px;
+	  width:420px;
 	  padding:24px 32px;
 	  border:none;
 	  background-color:rgba(255,255,255,);
@@ -135,8 +135,8 @@ import {ElMessage} from "element-plus";
   .m-t-24{
 	  margin-top: 24px;
   }
-  .m-t-32{
-	  margin-top:32px;
+  .m-t-64{
+	  margin-top:64px;
 	justify-content: center;
   }
   .text-gray{

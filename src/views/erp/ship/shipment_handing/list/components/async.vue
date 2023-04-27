@@ -199,7 +199,7 @@
 	}
 </script>
 
-<style>
+<style scoped>
 	.sku{
 		cursor:pointer;
 	}

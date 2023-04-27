@@ -38,7 +38,7 @@
 	 </div>
 	 <el-row>
 	 <el-col :span="24">
-	 	<GlobalTable ref="globalTable" :tableData="tableData"  height="calc(100vh - 220px)"   @loadTable="loadTableData" border
+	 	<GlobalTable ref="globalTable" :tableData="tableData"  height="calc(100vh - 220px)"   @loadTable="loadTableData" :stripe="true" 
 		 @selectionChange = "selectionChange">
 	 	  <template #field>
 	 	    <el-table-column type="selection" width="38" />

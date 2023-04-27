@@ -4,6 +4,7 @@
 		:id="uuid"
 		ref="globalTableRef"
 	    v-loading="loading" 
+		element-loading-text="加载中..."
 		:default-sort="defaultSort"
 	    :stripe="stripe" 
 		:border="border"
@@ -11,11 +12,14 @@
 		:show-summary="showSummary"
 		:summary-method="summaryMethod"
 	    :row-class-name="rowClassName"
-		@row-click="rowClick"
+		:cell-class-name="cellClassName"
 		:row-key="rowKey"
+		:highlight-current-row="highlightCurrentRow"
+		@row-click="rowClick"
 	    @sort-change="tableSort" 
 		@expand-change="expandChange"
 		@selection-change='selectChange'  
+		@current-change="currentChange"
 	     style="width: 100%;margin-bottom:16px;">
 		  <slot  name="field"></slot>
 	  </el-table>
@@ -25,6 +29,7 @@
 	         :data="mTableData.records" 
 	  		 ref="globalTableRef"
 	         v-loading="loading" 
+			 element-loading-text="加载中..."
 	  		:default-sort="defaultSort"
 	        :stripe="stripe" 
 	  		:border="border"
@@ -33,27 +38,30 @@
 	  		:summary-method="summaryMethod"
 			:row-key="rowKey"
 			:row-class-name="rowClassName"
+			:cell-class-name="cellClassName"
+			:highlight-current-row="highlightCurrentRow"
 			@row-click="rowClick"
 	        @sort-change="tableSort" 
 			@expand-change="expandChange"
 	  		@selection-change='selectChange'  
+			@current-change="currentChange"
 	         style="width: 100%;margin-bottom:16px;">
 	  		<slot  name="field"></slot>
 	  </el-table>
 	  <el-pagination background v-if="inDialog&&tableData"  layout="total, sizes, prev, next, jumper"   :total="tableData.total"
-	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
+	  :page-sizes="[10, 20, 50, 200]"  :page-size="pagesize" style='margin-left:auto' 
 	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
 	  </el-pagination>
 	  <el-pagination background v-else-if="tableData"  layout="total, sizes, prev, pager, next, jumper"   :total="tableData.total"
-	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
+	  :page-sizes="[10, 20, 50, 200]"  :page-size="pagesize" style='margin-left:auto' 
 	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
 	  </el-pagination>
 	  <el-pagination background v-else-if="inDialog"   layout="total, sizes, prev, next, jumper"   :total="mTableData.total"
-	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
+	  :page-sizes="[10, 20, 50, 200]"  :page-size="pagesize" style='margin-left:auto' 
 	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
 	  </el-pagination>
 	  <el-pagination background v-else  layout="total, sizes, prev, pager, next, jumper"   :total="mTableData.total"
-	  :page-sizes="[10, 20, 50, 100]"  :page-size="pagesize" style='margin-left:auto' 
+	  :page-sizes="[10, 20, 50, 200]"  :page-size="pagesize" style='margin-left:auto' 
 	  :current-page="currentPage"  @size-change="handleSizeChange"   @current-change="handleCurrentChange">
 	  </el-pagination>
 </template>
@@ -61,7 +69,7 @@
   import { reactive,ref,watch,onMounted,toRefs,nextTick} from "vue";
   import { ElMessage,ElLoading } from 'element-plus';
   import { useRoute,useRouter } from 'vue-router'
-  import {tableHeaderFloat,screenToTop} from '@/utils/jquery/table/float-header';
+  import {tableHeaderFloat,screenToTop,checkVisiable} from '@/utils/jquery/table/float-header';
   import {guid} from '@/utils/index';
   	let props = defineProps({
   	 	                       tableData:{records:[],total:""},
@@ -77,10 +85,12 @@
 							   summaryMethod:"",
 							   rowKey:undefined,
 							   rowClassName:undefined,
+							   cellClassName:undefined,
+							   highlightCurrentRow:undefined
   	                       });
 	const { tableData,inDialog,inTable,defaultSort,size,queryParams,
-	        stripe,border,height,showSummary,summaryMethod,rowKey,rowClassName} = toRefs(props);
-	const emit = defineEmits(['loadTable',"selectionChange","row-click","expandChange"]);
+	        stripe,border,height,showSummary,summaryMethod,rowKey,rowClassName,cellClassName,highlightCurrentRow} = toRefs(props);
+	const emit = defineEmits(['loadTable',"selectionChange","row-click","expandChange","currentChange"]);
 	let globalTableRef=ref();
 	const state = reactive({
 					  pagesize:10  ,
@@ -98,7 +108,9 @@
 	  mQueryParams,
 	  loading,
 	} = toRefs(state);
+ 
 	 let route = useRoute();
+	 let router = useRouter();
   		function handleSizeChange(size){
 			state.pagesize=size;
 			state.mQueryParams.pagesize=size;
@@ -119,6 +131,9 @@
 			state.mQueryParams.currentpage=page;
 			refreshTable();
   		}
+		function currentChange(currentrow,oldrow){
+			 emit("currentChange",currentrow,oldrow ) ;
+		}
 		const callback =function(res){
 			     if(props.tableData){
 					 if(res&&res["records"]&&res["total"]){
@@ -197,15 +212,26 @@
 			 	state.mQueryParams.order=props.defaultSort.order=="ascending"?"asc":"desc";
 			 }
 		 })
-		 defineExpose({ loadTable,toggleRowExpansion })
+		 defineExpose({ loadTable,toggleRowExpansion,toggleRowSelection })
 		 watch(props.queryParams,(val)=>{
 			loadTable(props.queryParams);
 		 });
 		 watch(route,()=>{ 
-			  tableHeaderFloat(state.uuid);
+			 if(!props.height&&!props.inTable){
+			 	 tableHeaderFloat(state.uuid);
+			  }
 		 })
+		 watch(() =>router.currentRoute.value.query,(newValue,oldValue)=> {
+		       if(newValue&&newValue['refresh']){
+							 setTimeout(()=>{
+								 if(checkVisiable(state.uuid)){
+							 	         loadTable(props.queryParams);
+								 }
+							 },100);
+		 			  }
+		       },{ immediate: true });
 		 watch(props.tableData,(val)=>{
-		 		  state.loading = false;
+		 		   state.loading = false;
 				  if(!props.height&&!props.inTable){
 					  tableHeaderFloat(state.uuid);
 		           }

@@ -3,6 +3,8 @@
 		<div class="con-header">
 	<el-tabs v-model="activeName"  @tab-change="handleClick">
 	  <el-tab-pane v-for="item in orderState" :label="item.label" :name="item.name" :key="item.name">
+		  </el-tab-pane>
+	</el-tabs>
 		    <el-row>
                <el-space>
                	<el-button type="primary" class="im-but-one" @click="handleAdd">
@@ -11,7 +13,7 @@
                	</el-button>
                	<Warehouse @changeware="getWarehouse" />
                	<Datepicker ref="datepickers" @changedate="changedate" />
-               	<el-input v-model="fliterTreetext" placeholder="单据编码"  >
+               	<el-input v-model="searchKeywords" @input="handleQuery" placeholder="单据编码"  >
                		<template #suffix>
                		<el-icon style="font-size:16px;" class="el-input__icon"><search/></el-icon>
                		 </template> 
@@ -23,11 +25,10 @@
 		  	   </el-button>
 		     </div>
 		  </el-row>
-	  </el-tab-pane>
-	</el-tabs>
+	  
 	</div>
 	<div class="con-body">
-		<Table />
+		<Table ref="tableRef"/>
 	</div>	
 	</div>
 </template>
@@ -39,24 +40,32 @@
 	import Warehouse from '@/components/header/warehouse.vue';
 	import Datepicker from '@/components/header/datepicker.vue';
 	import { ref,reactive,onMounted,watch,toRefs,defineEmits } from 'vue'
-	import Table from"./components/table.vue"
+	import Table from"./components/table.vue";
+	import stocktakingApi from '@/api/erp/inventory/stocktakingApi.js';
 	const router = useRouter()
+	let tableRef=ref();
 	const state = reactive({
-		activeName:'1',
+		activeName:'',
 		orderState:[{
-			label:"全部订单",name:'1',
+			label:"全部订单",name:'',
 		},
 		{
-			label:"进行中",name:'2',
+			label:"进行中",name:'1',
 		},
 		{
-			label:"已完成",name:'3',
+			label:"已完成",name:'0',
 		},
 		],
+		queryParam:{},
+		isload:true,
+		searchKeywords:"",
 	})
 	const {
 	activeName,
 	orderState,	
+	queryParam,
+	isload,
+	searchKeywords
 	}= toRefs(state)
 	function handleAdd(){
 		router.push({
@@ -66,6 +75,33 @@
 				path:"/e/w/s",
 			},
 		})
+	}
+	function handleQuery(){
+		state.queryParam.isworking=state.activeName;
+		state.queryParam.search=state.searchKeywords;
+		if(!state.queryParam.warehouseid){
+			state.queryParam.warehouseid="";
+		}
+		tableRef.value.load(state.queryParam);
+		if(state.isload==true){
+			state.isload=false;
+		}
+	}
+	function getWarehouse(wid){
+		state.queryParam.warehouseid=wid;
+		handleQuery();
+	}
+	//日期改变
+	function changedate(dates){
+		state.queryParam.fromDate=dates.start;
+		state.queryParam.toDate=dates.end;
+		if(state.isload==false){
+			handleQuery();
+		}
+	}
+	function handleClick(){
+		state.queryParam.isworking=state.activeName;
+		handleQuery();
 	}
 </script>
 

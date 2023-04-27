@@ -79,7 +79,7 @@
 	</el-dialog>
 </template>
 
-<script>
+<script setup>
 	import {} from '@icon-park/vue-next';
 	import { ref,reactive,onMounted ,h} from 'vue'
 	import { ElDivider} from 'element-plus'
@@ -88,13 +88,7 @@
 	import AccountSafe from"./components/accountSafe.vue"
 	import Wechat from"./components/wechat.vue"
 	import Logoff from"./components/logoff.vue"
-	
-	export default{
-	    name: 'Index',
-	    components:{
-			AccountSafe,Wechat,Logoff,
-	    },
-	    setup(){
+ 
 		    let personVisable = ref(false)
 			let activeName = ref("first")
 			let formInline =reactive({
@@ -116,20 +110,13 @@
 				userApi.userinfo().then((res)=>{
 					console.log(res)
 				})
+				userApi.detail().then((res)=>{
+					console.log(res)
+				})
 			}
 		
 	        //数据接收
-	        return{
-				spacer,activeName,
-				getPersonalmessage,
-				personVisable,
-				editPerson,
-				submitPersoninfo,
-				formInline,
-	        }
-	    }
-	
-	}
+	       
 </script>
 
 <style>

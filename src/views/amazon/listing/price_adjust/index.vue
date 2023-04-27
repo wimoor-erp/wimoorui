@@ -6,7 +6,7 @@
 					<Group ref="groups" @change="changeGroup" />
 					 <Datepicker ref="datepickers" @changedate="changedate" />
 					<Owner   @owner="ownerchange" />
-					<el-input v-model="searchKeywords" @input="searchConfirm" placeholder="请输入" class="input-with-select">
+					<el-input v-model="searchKeywords" clearable @input="searchConfirm" placeholder="请输入" class="input-with-select">
 						<template #prepend>
 							<el-select v-model="selectlabel" @change='searchTypeChange' placeholder="SKU"
 								style="width: 110px">

@@ -14,7 +14,7 @@
 				    v-model="queryParams.name"
 				    placeholder="标签分类名称"
 				    clearable
-					@clear = "SearchShow=true"
+					@clear = "SearchShow=true;handleQuery"
 				    @input="handleQuery"
 				  />
 				  <el-button @click="handleAdd" link class="im-but-one " >
@@ -36,7 +36,7 @@
 			      <el-icon class="more-icon" :class="{'isvisable':item.isvisable}"><MoreFilled /></el-icon>
 			      <template #dropdown>
 			        <el-dropdown-menu>
-			          <el-dropdown-item  @click.stop="handleDelete(item)">删除</el-dropdown-item>
+			          <el-dropdown-item  @click.stop="handleDelete(item)">停用</el-dropdown-item>
 			          <el-dropdown-item  @click.stop="handleUpdate(item)">重命名</el-dropdown-item>
 			        </el-dropdown-menu>
 			      </template>
@@ -75,7 +75,7 @@
         label-width="95px"
       >
         <el-form-item label="标签组名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入标签组名称" />
+          <el-input v-model="formData.name" maxlength="20" placeholder="请输入标签组名称" />
         </el-form-item>
         <el-form-item label="标签组描述" prop="description">
           <el-input v-model="formData.description" placeholder="请输入标签组描述" />
@@ -216,18 +216,18 @@ export default {
 
 			function handleDelete(item) {
 			  const ids = [item.id || state.ids].join(',');
-			  ElMessageBox.confirm('确认删除已选中的数据项?', '警告', {
+			  ElMessageBox.confirm('确认停用已选中的数据项?', '警告', {
 				confirmButtonText: '确定',
 				cancelButtonText: '取消',
 				type: 'warning',
 			  })
 				.then(() => {
 				  deleteDictTypes(ids).then(() => {
-					ElMessage.success('删除成功');
+					ElMessage.success('停用成功');
 					handleQuery();
 				  });
 				})
-				.catch(() => ElMessage.info('已取消删除'));
+				.catch(() => ElMessage.info('已取消停用'));
 			}
 
 			function handleRowClick(row) {

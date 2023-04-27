@@ -24,7 +24,9 @@
 		    state.tagsList=res.data;
 		});
 	});
-	
+	function reset(){
+		state.tagsValue='';
+	}
 	function changeTags(tags){
 		 var arrs=[];
 		 if(tags){
@@ -34,6 +36,9 @@
 		 }
 		 emit("change",arrs);
 	}
+	defineExpose({
+	  state,reset
+	})
 </script>
 
 <style>

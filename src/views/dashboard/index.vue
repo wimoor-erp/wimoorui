@@ -1,5 +1,5 @@
 <template>
-<div class='main-sty' style='background-color:var(--el-color-info-lighter)'>
+<div v-if="homeAuthority==1" class='main-sty'>
   <el-row style='margin-bottom:16px'>
     <el-space>
       <el-select v-model="groupid" placeholder="全部店铺" @change="groupChange">
@@ -67,10 +67,24 @@
 	  <!--商品销售排名 -->
      <Goodsrank :parameter="param"/>
 	  <!--公告 -->
-	  <Notice/>
+	  <Notice  :span="6"/>
 	   <!--开发服务-->
-	   <Service/>
+	   <Service :span="6"/>
   </el-row>
+ </div>
+ <div v-else-if="homeAuthority==2" class='main-sty' style='flex: 1 1 0%;'  >
+	 <el-row :gutter="16"  style="height: calc(100vh - 70px);">
+	 <!--公告 -->
+	 <Notice  :span="12"/>
+	  <!--开发服务-->
+	  <Service :span="12"/>
+	  </el-row>
+ </div>
+ <div v-else class='main-sty' style='flex: 1 1 0%;'  >
+ 	 <el-row :gutter="16"  style="height: calc(100vh - 70px);text-align: center;justify-content: center;align-items: center;">
+ 	 <!--公告 -->
+ 	    正在加载中...
+ 	  </el-row>
  </div>
  </template>
 
@@ -89,6 +103,7 @@ import {Help,UpSmall,DownSmall} from '@icon-park/vue-next';
 import {} from '@element-plus/icons-vue'
 import summaryDataApi from '@/api/amazon/summary/summaryDataApi'
 import groupApi from '@/api/amazon/group/groupApi';
+import userApi from '@/api/sys/admin/userApi';
 import { ref,reactive,onMounted,watch } from 'vue'
  import Datepicker from '@/components/header/datepicker.vue';
 export default{
@@ -100,7 +115,9 @@ export default{
       let salechart=ref(Salechart);
 	  let storeData=ref([]);
 	  let groupid=ref('');
+	  let homeAuthority=ref(0);
 	  let lastqty=reactive({});
+	  let loading=ref(true);
 	  let refreshtime=ref('');
 	  let saleData=ref([{
 		  label:'产品数量',
@@ -178,9 +195,17 @@ export default{
 	  }
 	  
 	   
-	  onMounted(()=>{
-	  	getGroupData();
-		getSummaryData();
+	  onMounted(async ()=>{
+		await userApi.limitData("home").then(res=>{
+			 if(res.data=="true"){
+				 homeAuthority.value=2;
+			 }else{
+				 homeAuthority.value=1;
+				 getGroupData();
+				 getSummaryData();
+			 }
+			 loading.value=false;
+		 })
 	  });
 	  let param=ref({});
 	  
@@ -207,7 +232,8 @@ export default{
 		  groupChange,
 		  param,
 		  lastqty,
-		  refreshtime
+		  refreshtime,
+		  homeAuthority,
 	  }
   },
  
@@ -221,4 +247,12 @@ export default{
 .arrow{margin-left:auto;}
 .data-group{display:flex}
 .pag-data-num{font-size:16px;font-weight:600;font-family: "Helvetica Neue";margin-bottom:16px;}
+</style>
+<style scoped>
+	.main-sty{
+	   background-color:var(--el-color-info-lighter)
+	}
+	.dark .main-sty{
+	   background-color:#000;
+	}
 </style>

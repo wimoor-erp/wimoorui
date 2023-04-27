@@ -1,5 +1,5 @@
 import request from "@/utils/request";
- import axios from 'axios';
+import downloadhandler from "@/utils/download-handler";
 function getPurchaseList(data){
 	 return request.get('/erp/api/v1/purchase_form/list',{params:data});
 }
@@ -11,7 +11,11 @@ function getReceiveReportExcel(data){
 	  return request({url:"/erp/api/v1/purchase_form/getReceiveReportExcel",
 	                responseType:"blob",
 					params:data,
-					method:'get'});
+					method:'get'}).then(res => {
+						downloadhandler.downloadSuccess(res,"ReceiveReport.xlsx")
+				}).catch(e=>{
+					    downloadhandler.downloadFail(e);
+				});;
 } 
 export default{
 	getPurchaseList,

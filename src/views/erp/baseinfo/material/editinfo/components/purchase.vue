@@ -5,6 +5,12 @@
 				<el-option v-for="(item,index) in buyerList" :label="item.name" :value="item.id" />
 		</el-select>
 	</el-form-item> -->
+	<el-form-item label="采购成本">
+		<el-input v-model="dataBaseForms.price" type="text" @input="dataBaseForms.price=CheckInputFloat(dataBaseForms.price)" placeholder="请输入采购成本"></el-input>
+	</el-form-item>
+	<el-form-item label="供货周期">
+		<el-input v-model="dataBaseForms.deliveryCycle" @input="dataBaseForms.deliveryCycle=CheckInputInt(dataBaseForms.deliveryCycle)" type="text" placeholder="请输入供货周期"></el-input>
+	</el-form-item>
 	<el-form-item label="供应商" class="grid-row">
 		<el-table border :data="dataForms" >
 			<el-table-column width="50" type="index">
@@ -32,6 +38,7 @@
 				<template #default="scope">
 					<el-switch
 					    v-model="scope.row.isdefault"
+						@change="changeIsdefault(scope.row)"
 					    inline-prompt
 					    active-text="是"
 					    inactive-text="否"
@@ -40,7 +47,7 @@
 			</el-table-column>
 			<el-table-column label="供货周期" width="160">
 				<template #default="scope">
-					<el-input v-model.number="scope.row.deliverycycle"  placeholder="默认为0">
+					<el-input v-model.number="scope.row.deliverycycle"  @input="scope.row.deliverycycle=CheckInputInt(scope.row.deliverycycle)" placeholder="默认为0">
 						  <template #append>天</template>
 					</el-input>
 				</template>
@@ -57,7 +64,7 @@
 						</el-table-column>
 						<el-table-column label="币种" prop="currency">
 							<template #default="scope">
-								RMB
+								CNY
 							</template>
 						</el-table-column>
 						<el-table-column label="采购单价" prop="price"/>
@@ -67,7 +74,7 @@
 			</el-table-column>
 			<el-table-column label="其它成本" width="100">
 				<template #default="scope">
-					<el-input v-model="scope.row.otherCost"   type="text"  ></el-input>
+					<el-input v-model="scope.row.otherCost"  @input="scope.row.otherCost=CheckInputFloat(scope.row.otherCost)"  type="text"  ></el-input>
 				</template>
 			</el-table-column>
 			<el-table-column label="供应商代码" width="120">
@@ -83,7 +90,7 @@
 			
 			<el-table-column label="不良率" width="150">
 				<template #default="scope">
-					<el-input v-model="scope.row.badrate"  placeholder="不良率">
+					<el-input v-model="scope.row.badrate" @input="scope.row.badrate=CheckInputFloat(scope.row.badrate)"  placeholder="不良率">
 						  <template #append>%</template>
 					</el-input>
 				</template>
@@ -111,6 +118,7 @@
 	import SupplierDialog from "@/views/erp/baseinfo/supplier/supplier_dialog"
 	import PriceDialog from"./purchase_price_dialog"
 	import {useRouter } from 'vue-router';
+	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	let router = useRouter();
 	const supDiaRef =ref()
 	const priDiaRef =ref()
@@ -118,12 +126,13 @@
 		 
 	})
 	let props = defineProps({
-	  dataForms:Object
+	  dataForms:Object,
+	  dataBaseForms:Object
 	})
 	let state=reactive({
 		nowRows:{},
 	});
-	 let {dataForms} =toRefs(props);
+	 let {dataForms,dataBaseForms} =toRefs(props);
 	 let { nowRows } =toRefs(state);
 	 
 	// let cusTableData =reactive([
@@ -149,9 +158,16 @@
 	}
 	function addSupplier(){
 		var row={};
-		row.isdefault=false;
+		if(props.dataForms.length>0){
+			row.isdefault=false;
+		}else{
+			row.isdefault=true;
+		}
 		row.stepList=[];
 		row.name='';
+		if(!props.dataForms || props.dataForms==null || props.dataForms==undefined || props.dataForms==undefined || props.dataForms=="null"){
+			props.dataForms=[];
+		}
 		props.dataForms.push(row);
 		// cusTableData.push({
 		// 	name:"义乌市烈火包装制品有限公司",
@@ -180,8 +196,8 @@
 	function removeSupplier(index){
 		props.dataForms.splice(index,1);
 	}
-	function getSupplierRows(rows){
-		 var name=rows[0].name;
+	function getSupplierRows(row){
+		 var name=row.name;
 		 var ispush=true;
 		 props.dataForms.forEach(function(item){
 			 if(name==item.name){
@@ -189,12 +205,21 @@
 			 }
 		 });
 		 if(ispush==true){
-			state.nowRows.name=rows[0].name;
-			state.nowRows.supplierid=rows[0].id; 
+			state.nowRows.name=row.name;
+			state.nowRows.supplierid=row.id; 
 		 }else{
 			 ElMessage.error('已有重复的供应商！')
 		 }
 		
+	}
+	function changeIsdefault(row){
+		var nowisdefault=row.isdefault;
+		props.dataForms.forEach(function(item){
+			item.isdefault=false;
+		});
+		if(nowisdefault==true){
+			row.isdefault=true;
+		}
 	}
 </script>
 

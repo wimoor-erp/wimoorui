@@ -24,24 +24,56 @@
 	  <template #footer>
 	  	<span class="dialog-footer">
 	  		<el-button @click="saleFormulaVisable = false">取消</el-button>
-	  		<el-button type="primary" @click="">提交</el-button>
+	  		<el-button type="primary" @click="submitForm">提交</el-button>
 	  	</span>
 	  </template>
 	</el-dialog>
 </template>
 
-<script>
-	import {ref,reactive,onMounted} from "vue"
-	export default{
-		setup(){
-			let saleFormulaVisable =ref(false)
-			let formulaText = ref("(30日销量*0.2)/30 + (15日销量*0.3)/15 + (7日销量*0.5)/7")
-			return{
-				saleFormulaVisable,
-				formulaText,
+<script setup>
+	import {ref,reactive,onMounted,toRefs} from "vue";
+	import productinoptApi from '@/api/amazon/product/productinoptApi.js';
+	import {ElMessage} from 'element-plus';
+	 let state =reactive({
+		 saleFormulaVisable:false,
+		 formulaText:"",
+	 });
+	let {
+		saleFormulaVisable,formulaText,
+	}=toRefs(state)
+	function submitForm(){
+		productinoptApi.formulaSave({"formuladata":state.formulaText}).then((res)=>{
+			if(res.data){
+				ElMessage({
+					message:'日均销量计算公式修改成功，将会在下一日8点后生效！',
+					type:'success',
+				})
+				state.formulaText=res.data;
+				state.saleFormulaVisable=false;
 			}
-		}	
+		});
 	}
+	
+	function show(){
+		state.saleFormulaVisable=true;
+		state.formulaText="";
+		productinoptApi.loadformula().then((res)=>{
+			if(res.data){
+				state.formulaText=res.data;
+			}else{
+				state.formulaText="(30日销量*0.2)/30 + (15日销量*0.3)/15 + (7日销量*0.5)/7";
+			}
+		
+		});
+	}
+	 defineExpose({
+	 	show,
+	 })
+			
+			 
+			
+		 
+	 
 </script>
 
 <style>

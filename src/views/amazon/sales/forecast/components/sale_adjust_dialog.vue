@@ -22,7 +22,11 @@
 							<el-form label-width="120px"  >
 											 <el-form-item   label="预计日均销量">
 												 <div class="flex-center-between" style="flex: 1;">
-													 <el-input type="number" ref="preinputRef" clearable autofocus  v-model="presale" style="width: 120px;"></el-input>
+													 <el-input   
+													 ref="preinputRef" clearable 
+													 autofocus  v-model="presale" 
+													 @input="presale=CheckInputInt(presale)"
+													 style="width: 120px;"></el-input>
 												 </div>
 											 </el-form-item>
 											  <el-form-item>
@@ -36,7 +40,7 @@
 										 </el-form-item>
 											 
 											 <el-form-item>
-											 	 <el-button type="primary" @click="submitFormLast" >保存</el-button> 
+											 	 <el-button type="primary" :loading="saveloading" @click="submitFormLast" >保存</el-button> 
 											 </el-form-item>
 							</el-form>
 	
@@ -45,7 +49,10 @@
 							<el-form label-width="120px"  >
 											 <el-form-item   label="预计日均销量">
 												 <div class="flex-center-between" style="flex: 1;">
-													 <el-input autofocus type="number"  clearable v-model="presaleRange" style="width: 120px;"></el-input>
+													 <el-input autofocus  
+													   clearable v-model="presaleRange" 
+													   	@input="presaleRange=CheckInputInt(presaleRange)"
+													   style="width: 120px;"></el-input>
 												 </div>
 											 </el-form-item>
 											 <el-form-item label="预估时间段">
@@ -64,7 +71,7 @@
 											 </el-form-item>
 											 <el-form-item >
 												 
-											 			<el-button @click="submitFormRange" >添加时间段区间</el-button>
+											 			<el-button :loading="saveloading" @click="submitFormRange" >添加时间段区间</el-button>
 											 </el-form-item>
 							</el-form>
 						</el-tab-pane>
@@ -73,11 +80,14 @@
 							 <div v-for="item in listPresale">
 								 <span v-if="item.month>=10">{{item.month}}</span>
 								 <span v-else style="padding-left:8px;">{{item.month}}</span>月
-								 <el-input type="number" autofocus v-model="item.amount" clearable style="width: 80px;"></el-input>
+								 <el-input type="number" autofocus 
+								 v-model="item.amount" 
+								@input="item.amount=CheckInputInt(item.amount)"
+								 clearable style="width: 80px;"></el-input>
 							 </div>
 							   </el-space>     
 							 
-						   <el-button type="primary" @click="submitFormMonth" style="margin-top:5px;margin-right:40px;float:right">保存</el-button>
+						   <el-button type="primary" :loading="saveloading" @click="submitFormMonth" style="margin-top:5px;margin-right:40px;float:right">保存</el-button>
 						</el-tab-pane>
 					  </el-tabs>
 			 
@@ -104,9 +114,10 @@
 	import {Close} from '@element-plus/icons-vue';
 	import * as echarts from 'echarts';
 	import {getSales,save,clear} from "@/api/amazon/listing/preSalesApi.js";
-	import {} from "@/utils/index.js";
+	import {CheckInputInt} from "@/utils/index.js";
 	import { ElMessage, ElMessageBox } from 'element-plus'
 	const preinputRef=ref()
+	const emit = defineEmits(['confirm']);
 	const state=reactive({
 		  dialog:{visible:false},
 		  lastType:180,
@@ -114,15 +125,18 @@
 		  presaleRange:"",
 		  itemrow:{},
 		  dateRange:{},
+		  saveloading:false,
 		  listPresale:[],
+		  parentrow:{},
 		  data:{name:"",sku:"",image:""},
 	})
 	const {
-	  formData,dialog,data,lastType,presale,listPresale,presaleRange,dateRange
+	  formData,dialog,data,lastType,presale,listPresale,presaleRange,dateRange,saveloading
 	} = toRefs(state);
 	function show(itemrow,parentrow){
 		state.data.name=parentrow.name;
 		state.data.sku=itemrow.sku;
+		state.parentrow=parentrow;
 		state.data.summonth=itemrow.summonth;
 		state.data.sumseven=itemrow.sumseven;
 		state.data.sysavgsales=itemrow.sysavgsales;
@@ -159,6 +173,15 @@
 		  value=new Date(value);
 		 if(value>new Date())return false;
 		 return true;
+	 }
+	 function handleSave(preSaleList){
+		 state.saveloading=true;
+		 save(preSaleList).then(res=>{
+			         state.saveloading=false;
+		 			 ElMessage({ message: "保存成功", type: 'success', });
+					 emit("confirm",state.parentrow);
+		 			 handleQuery()
+		 }) 
 	 }
 	 function submitFormMonth(){
 		 var preSaleList=[];
@@ -216,10 +239,7 @@
 				 }
 			 }
 		 }
-		save(preSaleList).then(res=>{
-					 ElMessage({ message: "保存成功", type: 'success', });
-					 handleQuery()
-		}) 
+		 handleSave(preSaleList);
 	 }
 	 function submitFormRange(){
 	       var start=state.dateRange[0];
@@ -227,6 +247,10 @@
 		   var preSaleList=[];
 		   if(state.presaleRange==""){
 		   			  ElMessage({ message: "预设销量不能为空", type: 'error', });
+		   			  return ;
+		   }
+		   if(!state.dateRange || !state.dateRange[0]){
+		   			  ElMessage({ message: "预估时间段不能为空", type: 'error', });
 		   			  return ;
 		   }
 		   while(start<=end){
@@ -238,13 +262,11 @@
 			  param.quantity=state.presaleRange;
 			  param.date=start;
 			  preSaleList.push(param);
+			  start=start.clone();
 			  start=start.setDate(start.getDate()+1);
 			  start=new Date(start); 
 		   }
-		  save(preSaleList).then(res=>{
-		  			 ElMessage({ message: "保存成功", type: 'success', });
-		  			 handleQuery()
-		  })
+		 handleSave(preSaleList);
 	 }
 	 function submitFormLast(){
 		 var preSaleList=[];
@@ -261,14 +283,12 @@
 			 param.marketplaceid=state.itemrow.marketplaceid;
 			 param.quantity=state.presale;
 			 param.date=date;
+			 preSaleList.push(param);
+			 date=date.clone();
 			 date=date.setDate(date.getDate()+1);
 			 date=new Date(date);
-			 preSaleList.push(param);
 		 }
-		 save(preSaleList).then(res=>{
-			 ElMessage({ message: "保存成功", type: 'success', });
-			 handleQuery()
-		 })
+		handleSave(preSaleList);
 	 }
 	 function handleDelete(){
 		 var param={};
@@ -420,8 +440,7 @@
 		 			},
 		       series: myseries
 		 }
-		 console.log(option);	  
-		 myChart.setOption(option);
+		 myChart.setOption(option,true);
 		 window.addEventListener('resize',()=>{
 				   myChart.resize();
 		 })

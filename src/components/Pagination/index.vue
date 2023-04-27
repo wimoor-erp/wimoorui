@@ -7,6 +7,7 @@
         :layout="layout"
         :page-sizes="pageSizes"
         :total="total"
+		:small="small"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
     />
@@ -19,7 +20,7 @@ import {scrollTo} from '@/utils/scroll-to'
 	export default{
 		  name:'GlobalTable',
 		  components:{},
-		  props:["total","page","limit","pageSizes","layout","background","autoScroll","hidden"],
+		  props:["total","page","limit","pageSizes","layout","background","autoScroll","hidden","small"],
 		  //layout: 'total, sizes, prev, pager, next, jumper'
 		  emits:['update:page'],
 		  setup(props,context){
@@ -66,8 +67,7 @@ import {scrollTo} from '@/utils/scroll-to'
 
 <style scoped>
 .pagination-container {
-  background: #fff;
-  padding: 32px 16px;
+  padding: 16px 16px;
 }
 
 .pagination-container.hidden {

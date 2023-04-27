@@ -1,18 +1,23 @@
 <template>
  <div>
 	 <GlobalTable  ref="globalTable" :tableData="tableData"  :size="20" @loadTable="loadtableData" 
-	 :stripe="true" :height="undefined"
+	 :stripe="true" :height="tableheight"
+	 :cellClassName="cellClassName"
 	 :defaultSort="defaultSort" @selectionChange = "selectRow"    >
 		  <template #field>
 		 <el-table-column  type="selection" width="38" />
 		 <el-table-column label="图片" width="85">
 			 <template #default="scope">
-			   <el-image :src="scope.row.image"    style="width:60px; height:60px"  ></el-image>
+			   <el-image :src="scope.row.image"  @click.stop="handleToMaterial(scope.row)" class="pointer" style="width:80px; height:80px"  >
+			   </el-image>
+			  <div v-if="scope.row.inSnl=='1'" class='image-title'>
+			  	  轻小
+			  </div>
 			 </template>
 		 </el-table-column>
 		 <el-table-column label="产品信息" min-width="400" >
 		 			 <template #default="scope">
-		 			 <div class="sku-name ">{{scope.row.name}}</div>
+		 			 <div class="sku-name font-small">{{scope.row.name}}</div>
 					 <el-space>
 					<span class="font-bold font-base">{{scope.row.sku}}  </span>
 					 <span class="font-extraSmall flex-center">ASIN:<el-link class="font-extraSmall"   @click.stop="openUrl(scope.row.pointName,scope.row.asin)" type="primary"  > {{scope.row.asin}}</el-link></span>
@@ -34,7 +39,7 @@
 							<el-tag v-if="scope.row.tagNameList" effect="plain" :type="item.color"  v-for="item in scope.row.tagNameList" size="small" >
 								{{item.name}}
 							</el-tag>
-							<el-tag size="small" v-if="scope.row.flownnumber" type="danger">{{scope.row.flownnumber}}人跟卖</el-tag>
+							<el-tag size="small" v-if="scope.row.flownnumber" @click.stop="handleShowFlow(scope.row)" class="pointer" type="danger">{{scope.row.flownnumber}}人跟卖</el-tag>
 					</el-space>
 					</div>
 					 <el-space class="font-extraSmall" :size="16">
@@ -47,7 +52,7 @@
 		 <el-table-column  prop="price" label="售价" width="90">
 		            <template #default="scope">
 						<div class="table-edit-flex" >
-							<el-popover placement="right" :width="230" trigger="click" @show.stop="showPrice(scope.row.id)">
+							<el-popover placement="right" :width="260" trigger="click" @show.stop="showPrice(scope.row.id)">
 							      <template #reference>
 							       <span class="sale-price">
 							       	${{scope.row.landedAmount}}
@@ -61,7 +66,11 @@
 											<span v-if="scope.row.ptype=='LOWP'">最低售价</span>
 										</template>
 								    </el-table-column>
-							        <el-table-column width="90" prop="landedAmount" label="价格" >
+							        <el-table-column width="120" prop="landedAmount"
+									   label="价格" >
+									   <template #header>
+										   <el-space><div>价格</div> <el-button size="small" @click.stop="updatePrice(scope.row)">更新</el-button></el-space>
+									   </template>
 										<template #default="scope">
 											{{scope.row.landedCurrency}} {{scope.row.landedAmount}}
 										</template>
@@ -92,10 +101,42 @@
 						  <div>
 						  <div class="font-extraSmall">日均销量</div>
 						    {{NullTransform(scope.row.averageSalesDay)}} 
+							<span v-if="scope.row.summonth && scope.row.sales15">
+								<span :title="avgrateCalc(scope.row.summonth,scope.row.sales15)" v-if="avgrateCalc(scope.row.summonth,scope.row.sales15) && avgrateCalc(scope.row.summonth,scope.row.sales15)>=25">
+									<up-two theme="filled" size="11" fill="#00aa00" />
+								</span>
+								<span :title="avgrateCalc(scope.row.summonth,scope.row.sales15)" v-if="avgrateCalc(scope.row.summonth,scope.row.sales15) && avgrateCalc(scope.row.summonth,scope.row.sales15)<=-25">
+									<down-two theme="filled" size="11" fill="#ff1044" />
+								</span>
+							</span>
 						  </div>
 						  <div class="m-t-16">
 						  <div class="font-extraSmall">销量排名</div>
-						    {{NullTransform(scope.row.rank)}}  
+						    <el-popover
+						       placement="top-start"
+						       title="排名详情"
+						       :width="300"
+						       trigger="click"
+							   @show="showRankInfo(scope.row)"
+						     >
+								<table class="sd-table el-table" v-if="scope.row.rankData&&scope.row.rankData.length>0">
+								 <tr  v-for="item in scope.row.rankData">
+									 <td>
+										 <span v-if="item.name">{{item.name}}</span>
+										<span v-else>{{item.categoryId}}</span>
+									 </td>
+									 <td width="100px;"> {{item.rank}}</td>
+								 </tr>
+								</table>
+								<div v-else-if="scope.row.rankDataloading!=false">加载中...</div>
+								<div v-else>
+									<el-divider></el-divider>
+									暂无数据！</div>
+						       <template #reference>
+						        <span class="pointer"> {{NullTransform(scope.row.rank)}} </span>
+						       </template>
+						     </el-popover>
+						    
 						  </div>
 						  </div>
 					 </el-col>
@@ -115,7 +156,11 @@
 						 <div class="flex-v-bet" >
 						  <div>
 						  <div class="font-extraSmall">七日访问量|转化率</div>
-						  {{NullTransform(scope.row.sessions)}}|{{formatPercent(scope.row.sessionrate)}}%
+						      {{NullTransform(scope.row.sessions)}}|{{formatPercent(scope.row.sessionrate)}}%
+							  <el-tooltip v-if="scope.row.unitsordered7">
+								 <template #content>数据来自流量报表，对应销量{{scope.row.unitsordered7}} ,注意流量报表数据延迟两日</template>
+								<span class="font-extraSmall"><el-icon><InfoFilled /></el-icon></span>
+							  </el-tooltip>
 						  </div>
 						  <div class="m-t-16">
 						  <div class="font-extraSmall">购物车比例</div>
@@ -135,7 +180,7 @@
 																 <li><span>预留</span><el-tag>{{FBAInvData.afnReservedQuantity}}</el-tag></li>
 																 <li><span>正在发货</span><el-tag>{{FBAInvData.afnInboundWorkingQuantity}}</el-tag></li>
 																<li><span>待接收</span><el-tag>{{FBAInvData.afnInboundShippedQuantity}}</el-tag></li>	 
-																<li><span>已接受</span><el-tag>{{FBAInvData.afnInboundReceivingQuantity}}</el-tag></li>
+																<li><span>已接收</span><el-tag>{{FBAInvData.afnInboundReceivingQuantity}}</el-tag></li>
 																<li><span>不可用</span><el-tag type="info">{{FBAInvData.afnUnsellableQuantity}}</el-tag></li>
 																<li><span>异常</span><el-tag type="danger">{{FBAInvData.afnResearchingQuantity}}</el-tag></li>
 																<li v-if="scope.row.mregion=='EU'"><span>站点库存</span><el-tag type="warning">{{scope.row.countryinv}}</el-tag></li>
@@ -340,6 +385,9 @@
 			   	      <el-dropdown-menu>
 			   	         <el-dropdown-item @click="matching(scope.row)">配对</el-dropdown-item>
 			   			<el-dropdown-item  @click="refreshProduct(scope.row)">同步商品</el-dropdown-item>
+						<el-dropdown-item v-if="scope.row.disable==true"  @click="undisable(scope.row)">显示产品</el-dropdown-item>
+						<el-dropdown-item v-else  @click="disable(scope.row)">隐藏产品</el-dropdown-item>
+						<el-dropdown-item   @click="showOwner(scope.row)">负责人</el-dropdown-item>
 						<el-dropdown-item  @click="EditStatus(scope.row)">编辑状态</el-dropdown-item>
 						<el-dropdown-item  @click="editTags(scope.row)">编辑标签</el-dropdown-item>
 			   	      </el-dropdown-menu>
@@ -363,6 +411,16 @@
 	  	</span>
 	  </template>
  </el-dialog>
+  <!-- 显示产品负责人 -->
+<el-dialog v-model="ownerDialog" title="编辑平台商品负责人" destroy-on-close='true' width="600px" >
+	<OwnerAll @owner="getOwner" notAll="isNotAll" ref="ownerRef"  />
+	<template #footer>
+		<span class="dialog-footer">
+			<el-button @click="ownerDialog = false">取消</el-button>
+			<el-button type="primary" @click.stop="updateOwner">提交</el-button>
+		</span>
+	</template>
+</el-dialog>
  <!-- 销量折线图 -->
  <Salechart ref="salechartRef"/>
  <!-- 操作日志 -->
@@ -377,22 +435,25 @@
   <PorfitDetails ref="porfitRef"/>
   <ArrivalDialog ref="arrivalchartRef"/>
   <OtherCost ref="otherCostRef" />
+  <FollowDialog ref="followDialogRef"></FollowDialog>
   </template>
 <script>
 	import {ref,reactive,onMounted,watch,h} from 'vue'
 	import {useRouter } from 'vue-router'
-	import {Help,Plus,MenuUnfold,ChartHistogram,Slide,ChartLine} from '@icon-park/vue-next';
+	import {Help,Plus,MenuUnfold,ChartHistogram,Slide,ChartLine,DownTwo,UpTwo} from '@icon-park/vue-next';
 	import {ElMessage,ElDivider} from 'element-plus';
-	import {Search,ArrowDown,Edit,MoreFilled,CaretTop} from '@element-plus/icons-vue';
+	import {Search,ArrowDown,Edit,MoreFilled,CaretTop,InfoFilled} from '@element-plus/icons-vue';
 	import listingApi from '@/api/amazon/listing/listingApi';
 	import '@/assets/css/packbox_table.css'
-	import Salechart from "@/views/amazon/listing/common/salechart.vue"
+	import OwnerAll from '@/components/header/ownerAll.vue';
+	import Salechart from "@/views/amazon/listing/common/salechart.vue";
 	import Matching from"./matching.vue";
 	import ArrivalDialog from"@/views/amazon/listing/common/arrival_dialog.vue";
 	import PorfitDetails from './profit_details.vue'
 	import OtherCost from"./other_cost.vue";
 	import productinfoApi from '@/api/amazon/product/productinfoApi.js'
 	import ModifyPriceDialog from "./modifypriceDialog.vue"
+	import FollowDialog from "./follow_dialog.vue"
 	import SaleStatusSelect from "./sale_status_select.vue"
 	import RemarksDialog from "./remarks_dialog.vue"
 	import GlobalTable from "@/components/Table/GlobalTable/index";
@@ -402,25 +463,30 @@
 	import inventoryRptApi from "@/api/amazon/inventory/inventoryRptApi.js";
 	import productRefreshApi from '@/api/amazon/product/productRefreshApi.js';
 	import productinoptApi from '@/api/amazon/product/productinoptApi.js';
+	import productRankApi from '@/api/amazon/product/productRankApi.js';
 	import {getAllTags} from '@/api/sys/admin/tag.js';
+	import userApi from '@/api/sys/admin/userApi.js';
 	export default {
 		name:'Table',
 		components: {
 			Edit,ChartHistogram,Slide,ArrowDown,MoreFilled,
 			Salechart,Matching,GlobalTable,ModifyPriceDialog,
-			RemarksDialog,SaleStatusSelect,PorfitDetails,
-			CaretTop,ChartLine,ArrivalDialog,OtherCost,
+			RemarksDialog,SaleStatusSelect,PorfitDetails,InfoFilled,
+			CaretTop,ChartLine,ArrivalDialog,OtherCost,OwnerAll,FollowDialog,DownTwo,UpTwo
 		},
 		emits:["checkRow"],
 		setup(props,context) {
 			let defaultSort=ref({"prop": 'sku', "order": 'ascending' });
 			let modifypriceRef =ref()
+			let followDialogRef=ref();
 			let remarksRef =ref()
+			let ownerRef=ref();
 			let statusRef = ref()
 			let porfitRef = ref()
 			let otherCostRef = ref()
 			let markprops = { multiple: true }
 			let markVisable =ref(false)
+			let ownerDialog=ref(false)
 			let globalTable=ref(GlobalTable);
 			let arrivalchartRef =ref()
 			let stripe = ref(false)
@@ -439,6 +505,10 @@
 			let tagsValue=ref();
 			let checkTags=ref("");
 			let nowTagProRow=ref({});
+			var queryParams={};
+			let ownerid=ref();
+			let ownerpid=ref();
+			let tableheight = ref(undefined)
 		onMounted(()=>{
 			
 		})
@@ -498,13 +568,20 @@
 				data.sort=params.sort;
 				data.order=params.order;
 			}
+			if(params.marketplace){
+				data.marketplace=params.marketplace;
+			}
+			queryParams=data;
 			globalTable.value.loadTable(data);
 		}
 		 function loadtableData(data){
 			 //根据 params去查product
+			 //看不到加载信息
+			 tableheight.value = document.body.clientHeight -250
 			 productinfoApi.productList(data).then((res)=>{
 			 	tableData.records = res.data.records
 			 	tableData.total =res.data.total
+				tableheight.value = ''
 			 });
 		 }
 		 function modifyPrice(row){
@@ -584,6 +661,16 @@
 				 }
 			  });
 		 }
+		 function handleToMaterial(row){
+			 router.push({
+			 	path:'/material/details',
+			 	query:{
+			 	  title:"产品详情",
+			 	  path:'/material/details',
+			 	  details:row.mid,
+			 	}
+			 })
+		 }
 		 function showPrice(pid){
 			 productinoptApi.findPriceById({"pid":pid}).then((res)=>{
 				 if(res.data){
@@ -629,21 +716,14 @@
 			 var pid=nowTagProRow.value.id;
 			 var ids=checkTags.value;
 			 productinoptApi.saveProductTags({"pid":pid,"ids":ids}).then((res)=>{
-				 if(res.data=="ok"){
 					 ElMessage({
 					      message: '操作成功！',
 					      type: 'success'
-					 })
-				 }else{
-					 ElMessage({
-					      message: '操作失败！',
-					      type: 'error'
-					 })
-				 }
+					 });
+					 loadData(queryParams);
 			 });
 		 }
 		 function changeTags(tags){
-			 
 			 if(tags){
 				 var items="";
 				  tags.forEach(function(item){
@@ -654,24 +734,139 @@
 				 checkTags.value="";
 			 }
 		 }
+		 function undisable(row){
+			 productinfoApi.undisable({"id":row.id}).then((res)=>{
+					 if(res.data=="success"){
+						 ElMessage({
+							  message: '操作成功！',
+							  type: 'success'
+						 })
+						 row.disable=false;
+						 loadData(queryParams);
+					 }else{
+						 ElMessage({
+							  message: '操作失败！',
+							  type: 'error'
+						 })
+					 }
+			 });
+		 }
+		 function disable(row){
+		 		productinfoApi.disable({"id":row.id}).then((res)=>{
+						 if(res.data=="success"){
+							 ElMessage({
+								  message: '操作成功！',
+								  type: 'success'
+							 })
+							  row.disable=true;
+							   loadData(queryParams);
+						 }else{
+							 ElMessage({
+								  message: '操作失败！',
+								  type: 'error'
+							 })
+						 }
+		 		});	 
+		 }
+		 function showOwner(row){
+			 ownerDialog.value=true;
+			 ownerpid.value=row.id;
+			 setTimeout(function(){
+				 productinoptApi.findOwnerById({"pid":row.id}).then((res)=>{
+					 if(res.data){
+						ownerRef.value.ownerid=res.data;
+						ownerid.value=res.data;
+					 }
+				 });
+			 },500)
+		 }
+		 function updatePrice(row){
+			 productinoptApi.refreshPrice(row.id).then(res=>{
+				 
+			 });
+		 }
+		 function getOwner(id){
+			 ownerid.value=id;
+		 }
+		 function updateOwner(){
+			 productinoptApi.updateOwnerById({"pid":ownerpid.value,"ownerid":ownerid.value}).then((res)=>{
+				 if(res.data){
+					 ElMessage({
+							  message: '操作成功！',
+							  type: 'success'
+					 })
+				 }
+			 });
+		 }
+		 function handleShowFlow(row){
+			 followDialogRef.value.show(row);
+		 }
+		 function cellClassName({ row, column, rowIndex, columnIndex }){
+			 if(columnIndex==1){
+				 return "wm-product-image";
+			 }else{
+			   return "";
+			 }
+		 }
+		 function avgrateCalc(monthsale,halfmonthsale){
+			 var rate=0;
+			 if(monthsale-halfmonthsale>halfmonthsale){
+				 rate= formatFloat((monthsale-halfmonthsale*2)*100.0/(monthsale-halfmonthsale))*(-1) ;
+			 }else{
+				 rate = formatFloat((halfmonthsale*2-monthsale)*100.0/(monthsale-halfmonthsale)) ;
+			 }
+			 return rate;
+		 }
+		 function showRankInfo(row){
+			 row.rankDataloading=true;
+			 productRankApi.rank({"id":row.id}).then((res)=>{
+				 row.rankDataloading=false;
+				 if(res.data){
+					 row.rankData=res.data;
+				 }
+			 });
+		 }
 			return {
 			//value
 			tableData,star,activeName,markprops,tagsList,markVisable,globalTable,defaultSort,stripe,fulfillVis,
-			localInvData,FBAInvData,priceList,FBAEUlist,tagsValue,checkTags,nowTagProRow,
+			localInvData,FBAInvData,priceList,FBAEUlist,tagsValue,checkTags,nowTagProRow,queryParams,ownerDialog,ownerid,ownerpid,
+			tableheight,
 			//function
 			rollbackPrice,rollbackremark,selectRow,handlesaleChart,editTags,matching,loadtableData,formatPercent,formatFloat,
 			formatInteger,stringText,modifyPrice,editRemarks,viewProfitDetails,handlarrivalChart,NullTransform,EditStatus,loadData,
 			showCostModal,loadInventory,refreshInventory,refreshProduct,showPrice,openUrl,handleAnalysis,loadEUInventory,submitTags,
-			changeTags,
+			changeTags,disable,undisable,showOwner,getOwner,updateOwner,cellClassName,handleToMaterial,handleShowFlow,avgrateCalc,
+			showRankInfo,
 			//ref
-			salechartRef,matchingRef,modifypriceRef,remarksRef,
-			porfitRef,arrivalchartRef,statusRef,otherCostRef,
+			salechartRef,matchingRef,modifypriceRef,remarksRef,followDialogRef,
+			porfitRef,arrivalchartRef,statusRef,otherCostRef,ownerRef
 			}
 		},
 	}
 </script>
 
 <style>
+.wm-product-image .cell{
+	padding:0;
+	position:relative;
+}
+.wm-product-image img{
+	 border-radius:4px;
+}
+.wm-product-image .image-title {
+    position: absolute;
+    z-index: 10;
+    top: 0px;
+    left: 0px;
+    font-size: 12px;
+    border-top-left-radius: 4px;
+    border-bottom-right-radius: 10px;
+    padding-left: 8px;
+    padding-right: 8px;
+	background-color: #1fcc4f;
+	line-height: 16px;
+	color:#fff
+}
 .el-rate .el-rate__icon{
 	margin-right:0
 }

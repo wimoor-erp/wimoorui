@@ -1,5 +1,5 @@
 <template>
-	<GlobalTable ref="globalTable" :defaultSort="defaultSort"  @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 220px)" border @loadTable="loadTableData" style="width: 100%;margin-bottom:16px;">
+	<GlobalTable ref="globalTable" :defaultSort="defaultSort"  @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 200px)" :stripe="true"  @loadTable="loadTableData" style="width: 100%;margin-bottom:16px;">
 		<template #field>
 		<el-table-column fixed type="selection" width="38" />
 		<el-table-column label="入库单编码" prop="number"></el-table-column>

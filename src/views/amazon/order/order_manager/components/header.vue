@@ -28,7 +28,7 @@
 	          end-placeholder="结束日期"
 	          :shortcuts="shortcuts"
 	        />
-	   <el-input  v-model="searchKeywords" placeholder="请输入" class="input-with-120" >
+	   <el-input  v-model="searchKeywords" clearable placeholder="请输入" class="input-with-120" >
 	      <template #prepend>
 	        <el-select v-model="selectlabel" @change='searchTypeChange' placeholder="SKU" style="width:80px">
 	          <el-option label="SKU" value="sku"></el-option>

@@ -18,14 +18,14 @@ function downPDFShipForm(data){
 function downPDFLabel(data){
 	return request({url:"/amazon/api/v1/shipForm/downPDFLabel",
 				    responseType:"blob",
-					params:data,
-					method:'get'});
+					data:data,
+					method:'post'});
 }
 function downExcelLabel(data){
 	return request({url:"/amazon/api/v1/shipForm/downExcelLabel",
 				    responseType:"blob",
-					params:data,
-					method:'get'});
+					data:data,
+					method:'post'});
 }
 
 function updateShipment(data){
@@ -39,7 +39,7 @@ function disableShipment(data){
 	return request.get('/erp/api/v1/shipForm/disableShipment',{params:data });
 }
 function amazondoneShipment(data){
-	return request.get('/erp/api/v1/shipForm/marketShipped',{params:data});
+	return request.get('/amazon/api/v1/shipForm/marketShipped',{params:data});
 }
 function validateShipment(data){
 	return request.get('/amazon/api/v1/shipForm/validateShipment',{params:data });
@@ -112,7 +112,9 @@ function getUnSyncShipmentDetial(data){
 function saveShipmentItemAndPlanBath(data){
 	return request.get('/amazon/api/v1/shipFormSync/saveShipmentItemAndPlanBath',{params:data});
 }
-
+function getShipCart(data){
+	return request.get('/amazon/api/v1/shipForm/getShipCart',{params:data});
+}
   
 
 export default{
@@ -143,4 +145,5 @@ export default{
 	getUnSyncShipmentDetial,
 	saveShipmentItemAndPlanBath,
 	saveTransTrace,
+	getShipCart
 }

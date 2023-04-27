@@ -1,6 +1,6 @@
 <template>
-	<el-tabs v-model="activeName"  @tab-change="handleClick">
-	  <el-tab-pane v-for="(item,index) in orderState"  :name="item.name" :key="item.name">
+	<el-tabs v-model="activeStatus"  @tab-change="handleClick">
+	  <el-tab-pane v-for="(item,index) in orderStateList"  :name="item.name" :key="item.name">
 		  <template #label>
 			  <span >{{item.label}}</span>
 			  <span  v-if="item.length">( <span class="text-orange">{{item.length}}</span> )</span>
@@ -14,24 +14,17 @@
 					  <span>添加调库单</span>
 					</el-button>
 					<el-button @click="upload">导入</el-button>
-					<Datepicker ref="datepickers" @changedate="changedate" />
-					<el-input v-model="searchKeywords" @input="searchConfirm" placeholder="请输入" class="input-with-select">
-						<template #prepend>
-							<el-select v-model="selectlabel" @change='searchTypeChange' placeholder="SKU"
-								style="width: 110px">
-								<el-option label="调库单编码" value="sku"></el-option>
-								<el-option label="SKU" value="fnsku"></el-option>
-								<el-option label="产品名称" value="asin"></el-option>
-							</el-select>
-						</template>
-						<template #append>
-							<el-button @click="searchConfirm">
-								<el-icon style="font-size: 16px;align-itmes:center">
-									<search />
-								</el-icon>
-				  	</el-button>
-						</template>
-					</el-input>
+					
+					<Datepicker ref="datepickers" v-if="activeStatus!='1' && activeStatus!='2' && activeStatus!='3'" @changedate="changedate" />
+					<el-input  v-model="searchKeywords" placeholder="输入调库编码,SKU或名称" @input="handleQuery" class="input-with-select" >
+					   <template #append>
+					     <el-button @click="handleQuery">
+					        <el-icon style="font-size: 16px;align-itmes:center">
+					         <search />
+					      </el-icon>
+					     </el-button>
+					   </template>
+					 </el-input>
 					<!-- <el-button>重置</el-button> -->
 				</el-space>
 				<div class='rt-btn-group'>
@@ -46,17 +39,17 @@
 			   width="400px"
 			 >
 			 <el-upload
-			     :drag="true"
-			     action
-				 :http-request="uploadFiles"
-				 :limit="1"
-				 :before-upload="beforeUpload" 
-				 :show-file-list="true" 
-				 :headers="headers" 
-				 accept=".xls,.xlsx,.zip"
-			     multiple
+			    :drag="true"
+			    action
+			    :http-request="uploadFiles"
+			    :limit="1"
+			    :before-upload="beforeUpload" 
+			    :show-file-list="true" 
+			    :headers="headers" 
+			    accept=".xls,.xlsx"
+			    multiple
 			   >
-			     <el-icon class="font-48"><upload-filled /></el-icon>
+			     <el-icon class="font-large"><upload-filled /></el-icon>
 			     <div class="el-upload__text">
 			      拖拽文件到此处或 <em>点击上传</em>
 			     </div>
@@ -76,28 +69,42 @@
 </template>
 
 <script setup>
-	import {ref,reactive,onMounted,watch,h,toRefs} from 'vue'
+	import {ref,reactive,onMounted,watch,h,toRefs,defineEmits} from 'vue'
 	import {Help,Plus,MenuUnfold,SettingTwo} from '@icon-park/vue-next';
 	import {ElMessage,ElDivider} from 'element-plus';
 	import {Search,ArrowDown,UploadFilled} from '@element-plus/icons-vue';
 	import Datepicker from '@/components/header/datepicker.vue';
-	import { useRouter } from 'vue-router'
-	const router = useRouter()
+	import { useRouter } from 'vue-router';
+	import dispatchApi from '@/api/erp/inventory/dispatchApi.js';
+	const emit = defineEmits(['getdata']);
+	const router = useRouter();
     const state =reactive({
-		orderState:[
-			{label:'全部',name:'0'},
-			{label:'未提交',name:'6',length:'2'},
-			{label:'待审核',name:'1',length:'5'},
+		orderStateList:[
+			{label:'全部',name:''},
+			//length:'2'
+			{label:'未提交',name:'0'},
+			{label:'待审核',name:'1'},
 			{label:'配货中',name:'2'},
 			{label:'已发货',name:'3'},
 			{label:'已完成',name:'4'},
 			{label:'已驳回',name:'5'},
 		],
 		uploadVisible:false,
+		queryParam:{
+			search:'',
+			auditstatus:''
+		},
+		activeStatus:'',
+		myfile:null,
+		searchKeywords:'',
 	})
 	const {
-		orderState,
+		orderStateList,
 		uploadVisible,
+		queryParam,
+		activeStatus,
+		myfile,
+		searchKeywords
 	}=toRefs(state)
 	function handleAdd(){
 		router.push({
@@ -110,8 +117,72 @@
 	}
 	//导入
 	function upload(){
-		state.uploadVisible = true
+		state.uploadVisible = true;
 	}
+	//日期改变
+	function changedate(dates){
+		state.queryParam.fromDate=dates.start;
+		state.queryParam.toDate=dates.end;
+		handleQuery();
+	}
+	function handleQuery(){
+		state.queryParam.search=state.searchKeywords;
+		emit('getdata',state.queryParam);
+	}
+	function handleClick(){
+		state.queryParam.auditstatus=state.activeStatus;
+		handleQuery();
+	}
+	//文件上传之前
+	function beforeUpload(file){
+		if (file.type != "" || file.type != null || file.type != undefined){
+		    //截取文件的后缀，判断文件类型
+			const FileExt = file.name.replace(/.+\./, "").toLowerCase();
+			//计算文件的大小
+			const isLt5M = file.size / 1024  < 5000; //这里做文件大小限制
+			//如果大于50M
+			if (!isLt5M) {
+				ElMessage({
+				    message: '上传文件大小不能超过 5MB!!',
+				    type: 'error'
+				  })
+				return false;
+			}
+			else {
+			   return true;
+			}
+		}
+	}
+	function uploadFiles(item){
+		//上传文件的需要formdata类型;所以要转
+		state.myfile=item.file;
+	}
+	function uploadExcel(){
+		let FormDatas = new FormData();
+		FormDatas.append('file',state.myfile);
+		dispatchApi.uploadExcel(FormDatas).then(function(res){
+			if(res.data!="上传成功"){
+				ElMessage({
+				  type: 'error',
+				  message: res.data,
+				});
+			}else{
+				ElMessage({
+				  type: 'success',
+				  message: '上传成功',
+				});
+				state.uploadVisible = false;
+				handleQuery();
+			}
+		})
+	}
+	function downloadTemp(){
+		dispatchApi.downExcelTemp();
+	}
+	onMounted(()=>{
+		//handleQuery();
+	});
+	
 	
 </script>
 

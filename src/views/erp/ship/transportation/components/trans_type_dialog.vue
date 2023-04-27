@@ -47,6 +47,21 @@
 		} =toRefs(state);
 	const emit = defineEmits(['confirm']);
 	function submitForm(){
+		if(state.formData){
+			var error=false;
+			state.formData.forEach(item=>{
+				if(item.name.length>20){
+					error=true;
+				}
+			})
+			if(error){
+				ElMessage({
+				   message: '名称过长！',
+				   type: 'error'
+				 });
+			   return ;
+			}
+		}
 		transportationApi.saveTransType(state.formData).then((res)=>{
 			ElMessage({
 			   message: '已提交成功！',

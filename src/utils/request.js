@@ -97,8 +97,10 @@ request.interceptors.response.use(
 				   sessionStorage.setItem("old_url_before_login",window.location.pathname+window.location.search);
 				}
 			    router.push("/ssologin");
-			}else{
+			}else if(error.response&&error.response.data.msg){
 				ElMessage.error(error.response.data.msg);
+				return Promise.reject(error);
+			}else{
 				return Promise.reject(error);
 			}
 		}else{

@@ -1,317 +1,462 @@
 <template>
-	   <table class="sd-table m-b-16 border-left-none" border="0" cellpadding="0" cellspacing="0">
-		   <thead>
-			   <tr>
-				   <th width="240px">产品信息</th>
-				   <th >单价</th>
-				   <th >数量</th>
-				   <th >金额</th>
-				   <th>入库仓</th>
-				   <th width="80px">状态</th>
-				   <th v-if="tableState=='3'" width="140px">到货数</th>
-				   <th v-if="tableState=='3'">付款金额</th>
-				   <th>备注</th>
-				   <th>操作</th>
-			   </tr>
-		   </thead>
-		   <tbody v-for="item in tableData" >
+	<div v-loading="loading" background="#ffff">
+<!-- <table  class="sd-table " border="0" cellpadding="0" cellspacing="0">
+ 			<thead>
+ 							   <tr>
+ 								   <th width="40%">订单信息</th>
+ 								   <th width="30%">产品信息</th>
+ 								   <th width="30%">供应商信息</th>
+ 								   <th width="15%">采购信息</th>
+ 								   <th v-if="tableState=='4' || tableState=='5' || tableState=='6'" width="150px">到货数</th>
+ 								   <th v-if="tableState=='4' || tableState=='5' || tableState=='6'" width="150px">付款金额</th>
+ 								   <th  width="10%">备注</th>
+ 								   <th  width="100">操作</th>
+ 							   </tr>
+ 			</thead>
+			</table>
+	  <el-scrollbar  height="calc(100vh - 325px)"  >  margin-top: -42px;-->
+	  
+	   <table class="sd-table m-b-16 " style="border-left:none"  border="0" cellpadding="0" cellspacing="0">
+			<thead  >
+							   <tr>
+								   <th width="40%">订单信息</th>
+								   <th width="30%">产品信息</th>
+								   <th width="30%">供应商信息</th>
+								   <th width="15%">采购信息</th>
+								   <th v-if="tableState=='4' || tableState=='5' || tableState=='6'" width="150px">到货数</th>
+								   <th v-if="tableState=='4' || tableState=='5' || tableState=='6'" width="150px">付款金额</th>
+								   <th  width="10%">备注</th>
+								   <th  width="100px">
+									   <el-space>
+										   <div>操作</div>
+										     <div>
+												 <el-tooltip  placement="top"  content="上一页">
+													 <span style="margin-right:3px;" v-if="parseInt(state.queryParams.currentpage)>1"  @click.stop="pageUp()"><el-icon class="pointer" ><ArrowLeft/></el-icon> </span>
+													 <span   v-else  style="color:#dedede;margin-right:3px;"><el-icon ><ArrowLeft/></el-icon> </span>
+												 </el-tooltip>
+											 
+												  <el-tooltip   placement="top" content="下一页">
+													  
+												 <span v-if="parseInt(state.queryParams.currentpage)<(parseInt(state.tableData.total)/parseInt(state.queryParams.pagesize))" 
+												  @click.stop="pageDown()"><el-icon class="pointer" ><ArrowRight /></el-icon></span>
+											     <span v-else  style="color:#dedede"><el-icon ><ArrowRight/></el-icon> </span>
+												 </el-tooltip>
+											 </div>
+										    
+									   </el-space>
+								   
+
+								  </th>
+							   </tr>
+			</thead>
+		   <tbody style="border:none" v-if="tableData.records && tableData.records.length>0" v-for="item in tableData.records" >
 			  <!-- 空格间距-->
-			   <tr class="sep-row"><td :colspan="tableState=='3'? 10:8"></td></tr>
-		   	   <tr class="sep-order">
-		   		<td :colspan="tableState=='3'? 10:8">
-					<div class="flex-center-between">
-					<el-space :size="24">
-						<el-checkbox v-model="checked1" size="small" />
-						<span><span class="font-extraSmall">单据编码: </span>{{item.order.code}}
-						</span>
-						<span v-if="item.order.payState"><span class="font-extraSmall">付款方式:</span>
-						<el-tag  type="warning" size="small" effect="plain" round>申请付款</el-tag>
-						</span>
-						<span><span class="font-extraSmall">创建时间: </span>{{item.order.time}}</span>
-						<span><span class="font-extraSmall">创建人: </span>{{item.order.operater}}</span>
-						<span><span class="font-extraSmall">总金额: </span>{{item.order.amount}}</span>
-						<span><span class="font-extraSmall">供应商: </span>
-						<el-link class="font-12 " :underline="false">
-							<el-popover
-							    placement="top-start"
-							    trigger="hover"
-								width="220px"
-							  >
-							   <el-space><span>供货周期:</span>
-							    <span v-if="item.order.DeliveryInput">{{item.order.week}}</span>
-								<el-input  v-else  v-model="item.order.week" style="width: 80px;" ></el-input>
-							    <el-icon @click="item.order.DeliveryInput=false" class="ic-cen"><Edit /></el-icon>
-							   </el-space>
-							   <p class="m-t-8"><span>起订量:</span>{{item.order.num}}</p>
-							    <template #reference>
-							   {{item.order.supplier}}
-							    </template>
-							  </el-popover>
-						
-						</el-link>
-						</span>
-						<span><span class="font-extraSmall">备注: </span>{{item.order.remark}}</span>
-					</el-space>
-					<el-space >
-						<el-button v-if="item.order.payState" type="info" link @click="download">
-								<bank-card theme="filled" size="13"/>
-							&nbsp;请款
-						</el-button>
-						<el-button type="info" link @click="download">
-								<folder-download theme="filled" size="13"/>
-							&nbsp;导出
-						</el-button>
-					<el-button type="info" link @click="handleDelete">
-					<el-icon class="font-small pointer ic-cen "><DeleteFilled /></el-icon>
-					&nbsp;作废
-					</el-button>
-					</el-space>
-				   </div>
-				</td>
-				</tr>
-				   <tr v-for="sub in item.list">
+			    <tr class="sep-row"><td :colspan="tableState=='4' || tableState=='5' || tableState=='6'? 10:8"></td></tr>
+				   <tr v-for="(sub,index) in item.itemlist">
+					   <td  class="border-right-color" >
+						   <div v-if="index=='0'">
+						  <div class="p-order-title ">
+							  <h4>{{item.number}}</h4>
+							  <el-space class="font-small" :spacer="spacer">
+								  <div class="flex-center text-gray">
+								  <el-icon class="font-base "><Clock /></el-icon>
+								  <span class="m-t-r-2-4"> {{dateFormat(item.createdate)}}</span>
+								 </div>
+								  <span>
+									<div class="flex-center text-gray">  
+									<el-icon class="font-base "><User /></el-icon>
+								  <span class="m-t-r-2-4">  {{item.usrname}}</span>
+								  </div>
+								  </span>
+							  </el-space>
+						  </div>
+						  <el-row  :gutter="24">
+							  <el-col  :sm="24" :md="24" :lg="16">
+								  <p class="font-small"><span class="font-extraSmall">入库仓: </span>{{item.warehouse}}
+								  <el-icon v-if="item.hasStatus1==item.itemlist.length" class="font-base" @click="handleWarehouseShow(item.id)"><Edit/></el-icon>
+								  </p>
+							  </el-col>
+							  <el-col :sm="24" :md="24" :lg="8">
+								  <p class="font-small" ><span class="font-extraSmall">总金额: </span><span class="word-break">￥{{item.orderprice}}</span></p>
+							  </el-col>
+						  </el-row>
+						 <p class="font-small"><span class="font-extraSmall">备注:</span>
+						 <span v-if="item.remark!=''&&item.remark!=undefined">
+						 	{{item.remark}}
+						 </span>
+						 <span v-else>-</span>
+						 </p>
+						 <el-space class="m-t-8">
+							 <el-button size="small" link class="text-gray"   @click="downloadExcel(item)">
+								<install theme="filled" size="16"  :strokeWidth="3"/> 
+							 	&nbsp;导出
+							 </el-button>
+							 <el-dropdown v-if="item.hasStatus1>0" trigger="click">
+							    <el-button size="small"   link class="text-gray" >
+									<audit theme="filled" size="16"  :strokeWidth="3"/>
+							    	&nbsp;批量审核
+							    </el-button>
+							      <template #dropdown>
+							        <el-dropdown-menu>
+							          <el-dropdown-item @click="approveAll(item)">通过</el-dropdown-item>
+							          <el-dropdown-item @click="approveReturnAll(item)">驳回 </el-dropdown-item>
+							        </el-dropdown-menu>
+							      </template>
+							    </el-dropdown>
+								<el-popconfirm title="自动付完货物费用,确认全部付款吗?"
+								  width="220"
+								:icon="InfoFilled"  @confirm="autoPaymentAll(item)" v-if="item.hasStatus2>0">
+								    <template #reference>
+								      <el-button size="small" link class="text-gray">
+										<pay-code-one theme="filled" size="16"  :strokeWidth="3"/>  
+										&nbsp;自动付款
+								      </el-button>
+								    </template>
+								  </el-popconfirm>
+								  <el-popconfirm title="确认全部自动收货吗?" width="160" :icon="InfoFilled"  @confirm="autoReceiveAll(item)" v-if="item.hasStatus2>0" >
+								      <template #reference>
+								        <el-button  size="small" link class="text-gray">
+											<receive theme="filled" size="17"  :strokeWidth="3"/>
+								        	&nbsp;自动收货
+								        </el-button>
+								      </template>
+								    </el-popconfirm>
+						 </el-space>
+						 </div>
+					   </td>
 					   <td>
 						   <div class="flex-center">
-							   <el-image class="img-40" :src="sub.img"></el-image>
+							   <div  @click.stop="handleToMaterial(sub)">
+								   <el-image v-if="sub.image" :src="sub.image" class="img-80 pointer"  ></el-image>
+								   <el-image  v-else :src="require('@/assets/image/empty/noimage40.png')"  class="img-80 pointer"   ></el-image>
+							   </div>
 							   <div >
-								   <div class="text-abb" style="width: 170px;">{{sub.product}}</div>
-								   <p class="sku">{{sub.sku}}</p>
+								   <div class="text-omit-2" >{{sub.mname}}</div>
+								   <p class="sku pointer">{{sub.sku}} <el-tag  size="small" v-if="sub.issfg=='2'" effect="plain" type="warning" @click.stop="showAssembly(sub)">组装</el-tag></p>
+								   <div class="m-t-8 flex-center">
+									   <el-tag v-show="sub.auditstatus==3" type="info">已完成</el-tag>
+									   <el-tag v-show="sub.auditstatus==1" type="warning">待审核
+									   <span v-if="sub.ischange==1" style="color: #ff0f47;">
+									        <el-icon @click="handlePurchase(sub)"><Warning /></el-icon>
+									   </span>
+									   </el-tag>
+									   <el-tag v-show="sub.auditstatus==0" type="danger">已作废</el-tag>
+									   <el-tag v-show="sub.auditstatus==2 && sub.paystatus==0&&sub.inwhstatus==1" type="blue">待付款</el-tag>
+									   <el-tag v-show="sub.auditstatus==2 && sub.paystatus==0&&sub.inwhstatus==0" type="blue">待付款</el-tag>
+									   <el-tag v-show="sub.auditstatus==2 && sub.inwhstatus==0&&sub.paystatus==1" type="blue">待收货</el-tag>
+									   <el-tag v-show="sub.paystatus==3" type="warning">已请款</el-tag>
+									   <div v-if="sub.orderstatus">
+										  <span v-if="orderStatus[sub.orderstatus]" class="tag-group"><span class="before">1688</span>
+										  待发货<!-- {{orderStatus[sub.orderstatus]}} -->
+										  </span> 
+										  <span v-else class="tag-group"><span class="before">1688</span>待收货<!-- {{sub.orderstatus}} --></span> 
+									   </div>
+								   </div>
 							   </div>
 						   </div>
-					   </td>
-					   <td>
-						   <span v-if="sub.isEdit">{{sub.price}}</span>
-						   <el-input v-model="sub.price" v-else></el-input>
+						  <!-- <div v-if="sub.auditstatus==2 && sub.paystatus==3"><span class="font-extraSmall">付款方式:</span>
+						   <el-tag  type="warning" size="small" effect="plain" round>申请付款</el-tag>
+						   </div> -->
 						 </td>
 					   <td>
-						  <span v-if="sub.isEdit">{{sub.num}}</span>
-						  <el-input v-model="sub.num" v-else></el-input> 
+						  <el-space direction="vertical" alignment="left">
+							  <p><span class="text-gray">供应商:</span ><el-link :underline="false"  @click.stop="handleToSupplier(sub.purchaseUrl)">{{sub.suppliername}}</el-link></p>
+							  <el-space><span class="text-gray">供货周期:</span>
+							  <el-popover
+							    v-if="sub.auditstatus==1"
+							    placement="top-start"
+							    title="供货周期"
+							    :width="200"
+							    trigger="click"
+							  	@show="showDatePopover(sub)"
+							  >
+							  	<el-input
+							  	    v-model="sub.delivery_cycle2"
+							  	    :rows="2"
+							  	    type="textarea"
+							  	    placeholder="请输入"
+							  	  />
+							  		<el-button type="primary" class='m-t-8' @click="updateCycleDate(sub.materialid,sub.delivery_cycle2,sub)">确定</el-button>
+							    <template #reference>
+							  		<span class="table-edit-flex">
+							      <span v-if="sub.delivery_cycle!=''&&sub.delivery_cycle!=undefined">{{sub.delivery_cycle}}</span>
+							  							   <span v-else >-</span>
+							      <el-icon><Edit /></el-icon>
+							  		</span>
+							    </template>
+							  </el-popover>
+							  <span v-else >
+								  <span class="table-edit-flex">
+								  <span v-if="sub.delivery_cycle!=''&&sub.delivery_cycle!=undefined">{{sub.delivery_cycle}}</span>
+								  <span v-else >-</span>
+								 </span>
+							  </span>
+							  </el-space>
+							  <p><span class="text-gray">起订量:</span>{{sub.moq}}</p>
+						  </el-space>
 					   </td>
 					   <td >
-						   <span v-if="sub.isEdit">{{sub.amount}}</span>
-						   <el-input  v-model="sub.amount" v-else></el-input>
+						   <el-space direction="vertical" alignment="left">
+							   <div>
+						    <span class="text-gray">单价:</span><span v-if="sub.withoutEdit">￥{{sub.itemprice}}</span>
+						    <el-input v-model="sub.edit_itemprice" @input="changeItemPrice(sub)" v-else></el-input>
+							</div>
+							<div>
+							<span class="text-gray">数量:</span>
+						   <span v-if="sub.withoutEdit">{{sub.amount}}</span>
+						   <el-input v-model="sub.edit_amount"   @input="changeItemAmount(sub)" v-else></el-input> 
+						   </div>
+						   <div>
+							<span class="text-gray">金额:</span>
+						   <span v-if="sub.withoutEdit">￥{{sub.orderprice}}</span>
+						   <el-input  v-model="sub.edit_orderprice"  @input="changeItemOrderprice(sub)" v-else></el-input>
+						   </div>
+						   </el-space>
 						</td>
-					   <td >
-						   <span v-if="sub.isEdit" >{{sub.warehouse}}</span>
-						   <el-input  @focus="handleWarehouseShow" v-model="sub.warehouse" v-else></el-input>
-					   </td>
-					    <td><el-tag :type="sub.state.type">{{sub.state.label}}</el-tag></td>
 					   <!-- 收货进度 -->
-					   <td v-if="tableState=='3'">
-						   <div>0/50 <el-tag effect="plain" type="info"  round size="small">未完成</el-tag></div>
-						  <p> <span class="font-extraSmall">预计到货:</span>2022-02-02</p>
+					   <td v-if="tableState=='4' || tableState=='5' || tableState=='6'">
+						   <div>{{sub.totalin}}
+						   <el-tag v-if="sub.inwhstatus==0" effect="plain" type="info"  round size="small">未完成</el-tag>
+						   <el-tag v-else effect="plain" type="success"  round size="small">已完成</el-tag>
+						   </div>
+						 <DeliveryDate :sub="sub"></DeliveryDate>
 					   </td >
-						<td v-if="tableState=='3'">
-						  <div>￥46.00 <el-tag effect="plain" type="success"  round size="small">已结清</el-tag></div>
+						<td v-if="tableState=='4' || tableState=='5' || tableState=='6'">
+						  <div :id="sub.id">￥{{sub.totalpay}} 
+						  <el-tag v-if="sub && sub.paystatus==1" effect="plain" type="success"  round size="small">已结清</el-tag>
+						  <el-tag v-else effect="plain" type="info"  round size="small">未结清</el-tag> 
+						  </div>
+						   <p> <span class="font-extraSmall">审核日期:</span>{{dateFormat(sub.audittime)}}</p>
 						 </td>
 					   <td >
 						   <el-popover
-						     placement="top-start"
+						     placement="left"
 						     title="备注"
-						     :width="200"
+						     :width="300"
 						     trigger="click"
+							 @show="showRemarkPopover(sub)"
 						   >
 						   	<el-input
-						   	    v-model="textarea"
-						   	    :rows="2"
+						   	    v-model="sub.remark2"
+						   	    :rows="3"
 						   	    type="textarea"
 						   	    placeholder="请输入"
 						   	  />
-						   		<el-button type="primary" class='m-t-8'>确定</el-button>
+						   		<el-button type="primary" class='m-t-8' @click="updatenotice(sub.id,sub.remark2,sub)">确定</el-button>
 						     <template #reference>
-						   		<div class="table-edit-flex" @click="editRemarks(scope.row)">
-						       <span>{{sub.remark}}</span>
+						   		<div class="table-edit-flex">
+						       <span class="text-omit-3" v-if="sub.remark!=''&&sub.remark!=undefined">
+							   <el-tooltip :content="sub.remark" placement="top" :show-after="300"> 
+							   {{sub.remark}}
+							  </el-tooltip>	   
+							   </span>
+							   <span v-else >-</span>
 						       <el-icon><Edit /></el-icon>
 						   		</div>
 						     </template>
 						   </el-popover>
 					   </td>
 					   <td >
-						   <el-space>
-					<template v-if="sub.state.label=='待审核'">
-						<el-dropdown>
-						    <el-button link type="primary">审核</el-button>
-						     <template #dropdown>
-						       <el-dropdown-menu>
-						         <el-dropdown-item @click="handlePass(sub)">通过</el-dropdown-item>
-						         <el-dropdown-item>驳回 </el-dropdown-item>
-						       </el-dropdown-menu>
-						     </template>
-						   </el-dropdown>
-						<el-button v-if="sub.isEdit" link type="primary" @click="sub.isEdit=false">编辑</el-button>
-						<el-button link v-else type="primary" @click="sub.isEdit = true">保存</el-button>
-					</template>
-					<el-button v-if="sub.state.label=='待下单'" link type="primary" @click="handleBuy(sub)">下单</el-button>
-					<el-button v-if="sub.state.label=='待收货'" link type="primary" @click="handleReceipt(sub,'收货')">收货</el-button>
-					<el-button v-if="sub.state.label=='待收货'&& !item.order.payState" link type="primary" @click="handlePay(sub,'付款')">付款</el-button>
-					<el-button v-if="sub.state.label=='已完成'" link type="primary" @click="handleDetails(sub)">详情</el-button>
+						   <el-space direction="vertical" alignment="left">
+					<template v-if="sub.auditstatus==1 || sub.auditstatus==0">
+						    <el-button  v-if="sub.auditstatus==1 && sub.withoutEdit==true" link type="primary" @click="handlePass(sub)">通过</el-button>
+							<el-button  v-if="sub.auditstatus==1 && sub.withoutEdit==true" link type="primary"  @click="handleReturn(sub)">驳回</el-button>
+						<span  v-else-if="sub.auditstatus==0"></span>
+						<el-space v-else>
+								<el-button link  type="primary" @click="cancelChangesub(sub)">取消</el-button>
+							    <el-button link  type="primary" @click="updateItem(sub)">保存</el-button>
+						</el-space>
 						<el-dropdown :hide-on-click="false">
 						  <span class="el-dropdown-link">
-						    <more-one class="ic-cen" theme="outline" size="16" fill="#333" :strokeWidth="3"/>
+							  <el-button type="primary" link>更多
+							  <el-icon class="ic-cen"><ArrowDown /></el-icon>
+							  </el-button>
 						  </span>
 						   <template #dropdown>
 						    <el-dropdown-menu>
 						      <el-dropdown-item @click="handleRecords(sub)">采购记录</el-dropdown-item>
-						      <el-dropdown-item @click="handlePurchase(sub)">采购变更</el-dropdown-item>
-						      <el-dropdown-item v-if="sub.state.label=='待收货'" @click="handleReceipt(sub,'退货')">退货</el-dropdown-item>
-						      <el-dropdown-item v-if="sub.state.label=='待收货'&& !item.order.payState" @click="handleRecords(sub)">退款</el-dropdown-item>
+							  <el-dropdown-item v-if="sub.withoutEdit && sub.auditstatus==1" @click="handleChanges(sub)" >编辑</el-dropdown-item>
+							  
 						    </el-dropdown-menu>
 						</template>
 						</el-dropdown>
+						
+					</template>
+					<el-space v-else direction="vertical" alignment="left">
+						<el-button v-if="sub.inwhstatus==0" link type="primary" @click="handleReceipt(sub,'rec')">商品收货</el-button>
+						<el-button v-if="sub.paystatus==0" link type="primary" @click="handlePay(sub,'pay')">商品付款</el-button>
+						<el-button v-if="sub.paystatus==3" link type="primary" @click.stop="gotoApprovePay(sub)" >审核请款</el-button>
+						<el-button v-if="sub.auditstatus==3||(sub.inwhstatus==1&&sub.paystatus==1)" link type="primary" @click="handleDetails(sub)">详情</el-button>
+						<el-dropdown :hide-on-click="false" >
+						  <span class="el-dropdown-link">
+						   <el-button type="primary" link>更多
+						   <el-icon class="ic-cen"><ArrowDown /></el-icon>
+						   </el-button>
+						  </span>
+						   <template #dropdown>
+						    <el-dropdown-menu>
+							  <el-dropdown-item v-if="!(sub.inwhstatus==0&&sub.auditstatus==2)"   @click="handleReceipt(sub,'rec')">收货</el-dropdown-item>
+						      <el-dropdown-item v-if="sub.auditstatus>=2"   @click="handleReceipt(sub,'ret')">退货</el-dropdown-item>
+							  <el-dropdown-item v-if="!(sub.paystatus==0&&sub.auditstatus==2)"    @click="handlePay(sub,'pay')">付款</el-dropdown-item>
+							  <el-dropdown-item v-if="sub.auditstatus>=2"    @click="handlePay(sub,'refund')">退款</el-dropdown-item>
+							  <el-dropdown-item v-if="sub.paystatus==0 && sub.totalin==0 && (sub.totalpay==0 || sub.totalpay==0.0) && sub.withoutEdit==true" @click="handleChangesub(sub)">撤回</el-dropdown-item>
+							  <el-dropdown-item v-if="sub.totalin==0 && (sub.totalpay==0 || sub.totalpay==0.0)" @click="handleDelete(sub)">作废</el-dropdown-item>
+							  <el-dropdown-item v-if="sub.auditstatus==2" @click="handleDetails(sub)">详情</el-dropdown-item>
+						    </el-dropdown-menu>
+						</template>
+						</el-dropdown>
+					</el-space>
+					 
 						</el-space>
 						</td>
 				   </tr>
 		   </tbody>
+		   <tbody v-else>
+			   <tr>
+				   
+				   <td v-if="tableState=='4' || tableState=='5' || tableState=='6'" colspan="10" style="text-align: center;">暂无匹配数据!</td>
+				   <td v-else colspan="8" class="text-center-p font-extraSmall" >暂无匹配数据!</td>
+			   </tr>
+		   </tbody>
 	   </table>
+		<!--   </el-scrollbar> -->
+	    <pagination
+		    background 
+	         v-if="tableData.total > 0"
+	         :total="tableData.total"
+	         v-model:page="queryParams.currentpage"
+	         v-model:limit="queryParams.pagesize"
+	         @pagination="handleQuery"
+			  layout="total,  prev, pager, next, jumper"
+			  :page-sizes="[10, 20, 50, 100]"
+	       />
+		</div>  
 	<Records ref="RecordsRef"/>
-	<WarehouseDialog :visible="warehouseDailog.visible" />
-	<Receipt ref="ReceiptRef"/>
-	<Payment ref="PaymentRef"/>
+	<ChangeRecords ref="changeRecordsRef"/>
+	<WarehouseDialog :visible="warehouseDailog.visible"  :single="true" @dataChange="dataChange" @handleClose="warehouseDailog.visible=false"/>
+	<Receipt ref="ReceiptRef" @change="changeRec" />
+	<Payment ref="PaymentRef" @change="changePay"/>
 	<Details ref="detailsRef"/>
+	<Assembly ref="AssemblyRef"/>
 </template>
 
 <script setup>
 	import '@/assets/css/packbox_table.css'
-	import {h,ref,reactive,toRefs,defineProps} from 'vue'
-	import {Download,Edit,DeleteFilled} from '@element-plus/icons-vue';
-	import {MoreOne,FolderDownload,BankCard} from '@icon-park/vue-next';
-	import {ElDivider} from 'element-plus'
-	import { ElMessage, ElMessageBox } from 'element-plus'
-	import Records from "../records.vue" 
-	import Receipt from "./receipt.vue" 
-	import Payment from "./payment.vue" 
-	import Details from "./details.vue" 
-	import WarehouseDialog from "@/views/erp/warehouse/base/warehouseDialog"
+	import {h,ref,reactive,toRefs,watch} from 'vue'
+	import {Download,Edit,DeleteFilled,EditPen,TakeawayBox,InfoFilled,Warning ,ArrowDown,Clock,User,ArrowLeft,ArrowRight } from '@element-plus/icons-vue';
+	import {MoreOne,PayCodeOne,Receive,Install,Audit} from '@icon-park/vue-next';
+	import {ElDivider} from 'element-plus';
+	import { ElMessage, ElMessageBox } from 'element-plus';
+	import Records from "../records.vue"; 
+	import ChangeRecords from "./change_records.vue"; 
+	import Assembly from "./assembly.vue"; 
+	import Receipt from "./receipt.vue"; 
+	import Payment from "./payment.vue"; 
+	import Details from "./details.vue"; 
+	import DeliveryDate from "./deliverydate.vue"; 
+	import {useRouter } from 'vue-router'
+	import orderStatus from '@/model/erp/purchase/open1688/order_status.json';
+	import {dateFormat,formatFloat,dateTimesFormat,CheckInputFloat,CheckInputInt} from '@/utils/index.js';
+	import NullTransform from"@/utils/null-transform";
+	import WarehouseDialog from "@/views/erp/warehouse/base/warehouseDialog";
+	import purchaselistApi from '@/api/erp/purchase/form/listApi.js';
+	import {updateItem,handleChangesub,changeItemPrice,changeItemOrderprice,changeItemAmount,handleChanges,updatenotice,handleDelete,
+	updateCycleDate} from  '@/hooks/erp/purchase/form.js';	const router = useRouter()
+	const spacer = h(ElDivider, { direction: 'vertical' })
+	const changeRecordsRef=ref();
 	const RecordsRef = ref()
 	const ReceiptRef =ref()
 	const PaymentRef =ref()
 	const detailsRef =ref()
 	const warehouseRef = ref()
+	const AssemblyRef= ref()
+	let globalTable=ref();
+	var isrefresh=router
+	const emit = defineEmits(['selectrow','changepay',]);
 	const props = defineProps({
 	             tableState:String,
 	        })
-	const state = reactive({
-		warehouseDailog:{visible: false},
-		tableData: [{
-			order:{
-						  DeliveryInput:true,	
-						  code:': PF202211140008',
-						  time: "2022-11-14",
-						  operater:'周漫',
-						  amount:'￥82.00',
-						  supplier:'义乌市布荣皮革有限公司',
-						  week:'5天',
-						  num:'1000',
-						  remark:'',
-						  payState:false,
-			},          
-			list:[{
-			isEdit:true,	
-			img: require('@/assets/image/testpic.png'),
-			product: '飞机盒 尺寸：40x30x5 cm，拍：KK特硬-空白',
-			sku: 'fe002',
-			state:{label:'待收货',type:'success'},
-			price:'￥46.00',
-			num:'50',
-			amount:'￥8600.00',
-			warehouse:'龙华仓',
-			remark:'',
-			},
-			{
-			isEdit:true,	
-			img: require('@/assets/image/testpic.png'),
-			product: '飞机盒 尺寸：40x30x5 cm，拍：KK特硬-空白',
-			sku: 'fe002',
-			state:{label:'待审核',type:'warning'},
-			price:'￥46.00',
-			num:'50',
-			amount:'￥8600.00',
-			warehouse:'龙华仓',
-			remark:'',
-			}
-		   ],
-		},
-		{
-			order:{
-						  DeliveryInput:true,	
-						  code:': PF202211140008',
-						  time: "2022-11-14",
-						  operater:'周漫',
-						  amount:'￥82.00',
-						  supplier:'义乌市布荣皮革有限公司',
-						  week:'5天',
-						  num:'1000',
-						  remark:'',
-						   payState:true,
-			},
-			list:[{
-			isEdit:true,	
-			img: require('@/assets/image/testpic.png'),
-			product: '飞机盒 尺寸：40x30x5 cm，拍：KK特硬-空白',
-			sku: 'fe002',
-			state:{label:'待收货',type:'success'},
-			price:'￥46.00',
-			num:'50',
-			amount:'￥8600.00',
-			warehouse:'龙华仓',
-			remark:'加急',
-			},
-			{
-			isEdit:true,	
-			img: require('@/assets/image/testpic.png'),
-			product: '飞机盒 尺寸：40x30x5 cm，拍：KK特硬-空白',
-			sku: 'fe002',
-			state:{label:'已完成',type:'info'},
-			price:'￥46.00',
-			num:'50',
-			amount:'￥8600.00',
-			warehouse:'龙华仓',
-			remark:'',
-			}
-		   ],
-		}],
-	})
 	const {
 		tableState,
-	} =toRefs(props);
+	} =toRefs(props);		
+	const state = reactive({
+		warehouseentryid:"",
+		warehouseDailog:{visible: false},
+		queryParams:{
+			currentpage:1,
+			pagesize:10,
+		},
+		loading:false,
+		tableData:{records:[],total:0},
+		selectrows:[],
+	})
 	const {
-		tableData,
+		tableData,loading,
 		warehouseDailog,
+		queryParams,
+		selectrows,
 	} = toRefs(state)
-	//单据作废
-	function handleDelete(){
-		 ElMessageBox.confirm(
-		    '确定要作废该采购单吗？',
-		    '单据删除',
-		    {
-		      confirmButtonText: '确认',
-		      cancelButtonText: '取消',
-		      type: 'warning',
-		    }
-		  )
-		    .then(() => {
-		      ElMessage({
-		        type: 'success',
-		        message: '单据已作废',
-		      })
-		    })
+ 
+	function cancelChangesub(row){
+		row.withoutEdit=true;
+	}
+	function showDeliveryModal(sub){
+		sub.deliveryDateRef.value.focus();
 	}
 	//采购记录
 	function handleRecords(row){
-		RecordsRef.value.show()
+		RecordsRef.value.show(row.id);
 	}
-	function handleWarehouseShow(){
+	//采购变更记录
+	function handlePurchase(row){
+		changeRecordsRef.value.show(row.id);
+	}
+	//展示组装信息
+	function showAssembly(sub){
+		AssemblyRef.value.show(sub,"ass");
+	}
+	function handleWarehouseShow(id){
+		state.formid=id;
 		state.warehouseDailog.visible=true
+	}
+	function showRemarkPopover(sub){
+	    sub.remark2=sub.remark;
+	}
+	function showDatePopover(sub){
+	    sub.delivery_cycle2=sub.delivery_cycle;
+	}	
+	function dataChange(warehouse){
+		purchaselistApi.updateWarehouse({'id':state.formid,'warehouseid':warehouse.id}).then(res=>{
+			ElMessage({
+				message:'更换仓库成功',
+				type:'success',
+			})
+			state.tableData.records.forEach(item=>{
+				if(item.id==state.formid){
+					item.warehouse=warehouse.name;
+				}
+			})
+		})
+		state.warehouseDailog.visible=false;
 	}
 	//审核通过
 	function handlePass(sub){
-		sub.state.label = "待下单"
-		sub.state.type = "danger"
-		ElMessage({
-			message:'审核通过 ',
-			type:'success',
-		})
+		purchaselistApi.approval({"ids":sub.id}).then((res)=>{
+			if(res.data){
+				sub.auditstatus=2;
+				sub.paystatus=0;
+				sub.inwhstatus=0;
+				ElMessage({
+					message:'审核通过 ',
+					type:'success',
+				})
+			}
+		});
 	}
+	function handleReturn(sub){
+		AssemblyRef.value.show(sub,"return");
+	}
+	
 	//下单
 	function handleBuy(sub){
 		ElMessageBox.confirm(
@@ -334,51 +479,273 @@
 		   .catch(() => {
 		     ElMessage({
 		       type: 'info',
-		       message: '取消下单',
+		       message: '取消操作',
 		     })
 		   })
 	}
-	//到货
+	//收货
 	function handleReceipt(sub,type){
-		ReceiptRef.value.show(type)
+		ReceiptRef.value.show(type,sub)
 	}
 	
 	//付款
 	function handlePay(sub,type){
-		PaymentRef.value.show(type)
+		PaymentRef.value.show(type,sub)
 	}
 	//采购单详情
-	function handleDetails(){
-		detailsRef.value.show()
+	function handleDetails(sub){
+		detailsRef.value.show(sub)
 	}
+	
+	function changeselect(row) {
+		 if(row && row.isselect==true){
+			 state.selectrows.push(row);
+		 }else{
+			 state.selectrows.forEach(function(item,index){
+				 if(item.id==row.id){
+				 	state.selectrows.splice(index,1)
+				 }
+			 });
+		 }
+		 emit('selectrow',state.selectrows);
+	}
+	function handleToMaterial(row){
+		 router.push({
+			path:'/material/details',
+			query:{
+			  title:"产品详情",
+			  path:'/material/details',
+			  details:row.materialid,
+			}
+		 })
+	}
+	function handleToSupplier(link){
+		 window.open(link,"_blank");
+	}
+	function changePay(){
+		emit("changepay");
+	}
+	function changeRec(){
+		emit("changepay");
+	}
+
+	function gotoApprovePay(row){
+		router.push({
+			path:"/finance/paymentRequest",
+			query:{
+				title:'请款单',
+				path:"/finance/paymentRequest",
+				number:row.number,
+			},
+		})
+	}
+	function approveAll(row){
+		var idslist="";
+		row.itemlist.forEach(function(item){
+			if(item.auditstatus==1){
+				idslist+=((item.id)+",");
+			}
+		});
+		if(idslist!=""){
+			purchaselistApi.approval({"ids":idslist}).then((res)=>{
+				if(res.data){
+					ElMessage({
+					  type: 'success',
+					  message: '订单审核通过成功！',
+					});
+					row.itemlist.forEach(function(item){
+						if(item.auditstatus==1){
+							item.auditstatus=2;
+							item.paystatus=0;
+							item.inwhstatus=0;
+						}
+					});
+				}
+			});
+		}else{
+			ElMessage({
+			  type: 'error',
+			  message: '单据暂无待审核项！',
+			})
+		}
+	}
+	function approveReturnAll(row){
+		var idslist="";
+		row.itemlist.forEach(function(item){
+			if(item.auditstatus==1){
+				idslist+=((item.id)+",");
+			}
+		});
+		if(idslist!=""){
+			purchaselistApi.purchaseReturn({"ids":idslist}).then((res)=>{
+				if(res.data){
+					ElMessage({
+					  type: 'success',
+					  message: '订单审核驳回成功！',
+					});
+					row.itemlist.forEach(function(item){
+						if(item.auditstatus==1){
+							item.auditstatus=0;
+							item.paystatus=0;
+							item.inwhstatus=0;
+						}
+					});
+				}
+			});
+		}else{
+			ElMessage({
+			  type: 'error',
+			  message: '单据暂无待审核项！',
+			})
+		}
+	}
+	function autoPaymentAll(row){
+		var idslist=[];
+		row.itemlist.forEach(function(item){
+			if(item.auditstatus==2 && item.paystatus==0){
+				idslist.push(item.id);
+			}
+		});
+		if(idslist.length>0){
+			purchaselistApi.autopay(idslist).then((res)=>{
+				if(res.data){
+					ElMessage({
+					  type: 'success',
+					  message: '订单付款成功！',
+					});
+					row.itemlist.forEach(function(item){
+						if(idslist.includes(item.id)){
+							item.paystatus=1;
+							if(item.inwhstatus==1){
+								item.auditstatus=3;
+							}
+							item.totalpay=item.orderprice;
+						}
+					});
+				}
+			});
+		}else{
+			ElMessage({
+			  type: 'error',
+			  message: '单据暂无付款项！',
+			})
+		}
+	}
+	function autoReceiveAll(row){
+		var idslist=[];
+		row.itemlist.forEach(function(item){
+			if(item.auditstatus==2 && item.inwhstatus==0){
+				idslist.push(item.id);
+			}
+		});
+		if(idslist.length>0){
+			purchaselistApi.autorec(idslist).then((res)=>{
+				if(res.data){
+					ElMessage({
+					  type: 'success',
+					  message: '订单收货成功！',
+					});
+					row.itemlist.forEach(function(item){
+						if(idslist.includes(item.id)){
+							item.inwhstatus=1;
+							if(item.paystatus==1){
+								item.auditstatus=3;
+							}
+							item.totalin=item.amount;
+						}
+					});
+				}
+			});
+		}else{
+			ElMessage({
+			  type: 'error',
+			  message: '单据暂无收货项！',
+			})
+		}
+	}
+	function downloadExcel(row){
+		var data={};
+		data.number=row.number;
+		data.warehouseid=row.warehouseid;
+		data.supplierid=row.itemlist[0].supplier;
+		data.buyerName=row.usrname;
+		data.buyerDate=dateFormat(row.createdate);
+		data.totalprice=row.orderprice;
+		data.remark=row.remark;
+		data.creator=row.creator;
+		data.formid=row.id;
+		purchaselistApi.downloadPurchaseInfo(data);
+	}
+	function load(params){
+		state.queryParams=params;
+		state.queryParams.currentpage=1;
+		state.queryParams.pagesize=10;
+		// state.queryParams.fromDate="2022-01-01";
+		// state.queryParams.toDate="2023-02-20";
+		//加载表格数据
+		handleQuery();
+	}
+	function handleQuery(){
+		state.loading=true;
+		purchaselistApi.getListByOrder(state.queryParams).then((res)=>{
+			state.loading=false;
+			state.tableData.records = res.data.records;
+			state.tableData.total =res.data.total;
+		});
+	}
+	function pageUp(){
+		if(parseInt(state.queryParams.currentpage)>1){
+			state.queryParams.currentpage=parseInt(state.queryParams.currentpage)-1;
+			handleQuery();
+		}
+	}
+	function pageDown(){
+		if(parseInt(state.queryParams.currentpage)<(parseInt(state.tableData.total)/parseInt(state.queryParams.pagesize)+1)){
+			state.queryParams.currentpage=parseInt(state.queryParams.currentpage)+1;
+			handleQuery();
+		}
+	}
+	function handleSizeChange(){
+		console.log()
+	}
+	defineExpose({
+	   load,
+	})
+	watch(() =>router.currentRoute.value.query,(newValue,oldValue)=> {
+	  if(newValue&&newValue['refresh']){
+					 setTimeout(()=>{
+						handleQuery();
+					 },100);
+				 }
+	  },{ immediate: true });
 </script>
 
-<style>
+<style scoped>
 .m-b-16{
 	margin-bottom:16px;
 }
 
-.border-left-none{
-	border-left: 0px;
-}
-.border-left-none tr td:first-child ,.border-left-none tr th:first-child{
-	border-left:1px solid #ebeef5;
-}
+
 .sep-row td{
 	border-right: 0!important;
 	border-left: 0!important;
+	background-color: #f1f1f1;
+	padding:4px 0;
+}
+.dark .sep-row td{
+	background-color: #545454;
 }
 .sep-row:hover{
 	background-color:#fff!important;
 }
-.sep-order{
-	background-color: #f9f9f9;
+.border-right-color{
+	border-right:2px solid #f1f1f1 !important;
 }
-.sep-order:hover{
-	background-color: #f9f9f9!important;
+.dark .border-right-color{
+	border-right:2px solid #1b1b1d !important
 }
-.img-40{width: 40px;
-height: 40px;flex: none;
+.img-80{width:80px;
+height:80px;flex: none;
 margin-right: 8px;}
 tr:hover  .table-edit-flex .el-icon{
 	opacity: 1;
@@ -386,4 +753,47 @@ tr:hover  .table-edit-flex .el-icon{
 .font-12{
 	font-size: 12px;
 }
+.text-center-p{
+	text-align: center!important;
+	padding-top: 32px!important;
+}
+.p-order-title{
+	margin-bottom: 8px;
+}
+.word-break{
+	white-space:nowrap
+}
+.m-t-r-2-4{
+	margin-top: 3px;
+	margin-left:4px;
+}
+.sd-table th, .sd-table td{
+	border-right:0px
+}
+.text-gray{
+	color: #999999;
+}
+.tag-group{
+	font-size: 12px;
+	border:1px solid #999;
+	color: #999;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	border-radius: 2px;
+	margin-left: 8px;
+}
+.tag-group .before{
+	color: #fff;
+	background-color: #999;
+	padding: 2px;
+}
+ .text-omit-3{
+	 overflow: hidden;
+	 text-overflow: ellipsis;
+	 display: -webkit-box;
+	 -webkit-line-clamp:3;
+	 line-clamp:3;
+	 -webkit-box-orient: vertical;
+ }
 </style>
