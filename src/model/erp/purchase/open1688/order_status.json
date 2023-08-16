@@ -1,0 +1,16 @@
+{
+	"waitbuyerpay":"等待买家付款",
+	"waitsellersend":"等待卖家发货",
+	"waitbuyerreceive":"等待买家收货",
+	"confirm_goods":"已收货",
+	"success":"交易成功",
+	"cancel":"交易取消",
+	"terminated":"交易终止",
+	"":"其他状态",
+	"waitselleragree":"等待卖家同意",
+	"waitbuyermodify":"待买家修改",
+	"waitbuyersend":"等待买家退货",
+	"waitsellerreceive":"等待卖家确认收货",
+	"refundsuccess":"退款成功",
+	"refundclose":"退款失败"
+}
