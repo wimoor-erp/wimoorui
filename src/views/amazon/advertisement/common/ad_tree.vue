@@ -11,12 +11,18 @@
 			   :class="{'sw-active':item.value==adtype}" 
 			   v-for="(item,index) in btnData"
 			   @click="handleChangeAdtype(index)"
-				>{{item.name}}</div>
+				>{{item.name}} <span
+						  @click.stop="visable=true"
+						  v-if="index==1">
+					<el-button size="small" text title="添加广告组合">
+					<el-icon class="font-medium"><Plus /></el-icon>
+					</el-button>
+				</span></div>
 		  </div>
 		  <div class="m-16">
-				 <el-input placeholder="搜索广告活动...">
+				 <el-input  v-model="queryParams.name" placeholder="搜索广告活动..." >
 					 <template #suffix>
-					  <el-icon><Search /></el-icon>
+					  <el-icon @click.stop="loadTreeData"><Search /></el-icon>
 					 </template>
 				 </el-input>
 		 </div>
@@ -28,7 +34,8 @@
 		  :props="defaultProps"
 		   node-key="id"
 		   :default-expanded-keys="[1]"
-		  @node-click="handleNodeClick" >
+		  @node-click="changeData" 
+		  @node-expand="handleNodeClick">
 		  <template #default="scope">
 			  <div class="item-node">
 				  <i v-if="scope.node.level>1" class="dot-state" 
@@ -45,17 +52,10 @@
 		  :props="defaultProps"
 		   node-key="id"
 		   :default-expanded-keys="[1]"
-		  @node-click="handleNodeClick" >
+		  @node-click="handlePoloClick" >
 		  <template #default="scope">
 		 			  <div class="item-node flex-center-between">
 		 				  <span>{{scope.node.label}}</span>
-						  <span
-						  @click.stop="visable=true"
-						  v-if="scope.node.level==1">
-						  <el-button size="small" text title="添加广告组合">
-						  <el-icon class="font-medium"><Plus /></el-icon>
-						  </el-button>
-						  </span>
 		 			  </div>
 		  </template>
 		  </el-tree>
@@ -98,12 +98,15 @@
 	import {Search,ArrowLeftBold,Plus} from '@element-plus/icons-vue'
 	import AdGroup from '@/components/header/ad_group.vue';
 	import '@/assets/css/switch_button.css';
-	const emit = defineEmits(['change']);
+	import advertApi from '@/api/amazon_adv/advertApi.js';
+	const emit = defineEmits(['change',]);
 	const state = reactive({
 		adtype:0,
 		leftAside:true,
 		visable:false,
-		queryParams:{},
+		queryParams:{
+			name:'',
+		},
 		formData:{
 			name:'',
 		},
@@ -112,84 +115,8 @@
 			{name:'广告组合',value:1},
 		],
 		adGroupsData:[
-			{
-				label: '广告组合',
-				level:1,
-				id:1,
-				children:[
-					{
-					 label: 'Portfolio1',
-					 level:2,	 
-					},
-					{
-					 label: 'Portfolio2',
-					 level:2,	 
-					},
-				]
-			}
 		],
 		treeData:[
-			{
-				label: '已启动',
-				level:1,
-				id:1,
-				children:[{
-					label: 'campaign1',
-					status:true,
-					level:2,
-					children:[
-						{
-							label: 'SBV_KW_B3043FPJJB_Acrylic Snowflake_PPT',
-							status:false,
-							level:3,
-						}
-					]
-				},
-				{
-					label: 'campaign2',
-					status:true,
-					level:2,
-					children:[
-						{
-							label: 'SBV_KW_B3043FPJJB_Acrylic Snowflake_PPT',
-							status:false,
-							level:3,
-						}
-					]
-				}
-				],
-			},{
-				label: '已暂停',
-				level:1,
-				children:[{
-					label: 'campaign1',
-					status:true,
-					level:2,
-					children:[
-						{
-							label: 'SBV_KW_B3043FPJJB_Acrylic Snowflake_PPT',
-							status:true,
-							level:3,
-						}
-					]
-				}],
-			},{
-				label: '已归档',
-				status:false,
-				level:1,
-				children:[{
-					label: 'campaign1',
-					status:false,
-					level:2,
-					children:[
-						{
-							label: 'SBV_KW_B3043FPJJB_Acrylic Snowflake_PPT',
-							status:false,
-							level:3,
-						}
-					]
-				}],
-			},
 		],
 	})
 	
@@ -203,13 +130,73 @@
 		formData,
 		queryParams,
 	}=toRefs(state)
+	function handlePoloClick(row){
+		state.queryParams.campaignid=null;
+		state.queryParams.adgroupid=null;
+		state.queryParams.portfoliosid=row.id;
+		state.queryParams.poloname=row.name;
+		emit("change",state.queryParams);
+	}
+	function changeData(row){
+		state.queryParams.portfoliosid=null;
+		if(row.level==1){
+			state.queryParams.campaignid=row.campaignid;
+			state.queryParams.camname=row.name;
+		}
+		if(row.level==2){
+			state.queryParams.adgroupid=row.adgroupid;
+			state.queryParams.adgroupname=row.name;
+		}
+		emit("change",state.queryParams);
+	}
+	
+	function handleNodeClick(row){
+		advertApi.loadAdGroup({"profileid":row.profileid,"campaignsid":row.campaignid,"campaignType":"sp"}).then((res)=>{
+			if(res.data && res.data.length>0){
+				res.data.forEach(item=>{
+					item.level=2;
+					item.label=item.name;
+					item.id=item.adgroupid;
+				});
+				row.children=res.data;
+			}
+		});
+	}
+	
 	function handleChangeAdtype(index){
-		state.adtype = index
+		state.adtype = index;
 	}
 	function changeGroup(data){
 		state.queryParams.groupid=data.groupid;
 		state.queryParams.profileid=data.profileid;
+		loadTreeData();
+		loadPofoData();
 		emit("change",state.queryParams);
+	}
+	function loadTreeData(){
+		advertApi.loadCampaignsNotArchived({"profileid":state.queryParams.profileid,"campaignType":"sp","name":state.queryParams.name}).then((res)=>{
+			if(res.data && res.data.length>0){
+				res.data.forEach(item=>{
+					item.level=1;
+					item.children=[{}];
+					item.label=item.name;
+					item.id=item.campaignid;
+				});
+				state.treeData=res.data;
+			}
+		});
+	}
+	function loadPofoData(){
+		advertApi.findPortfoliosForProfileId({"groupid":state.queryParams.groupid,"profileid":state.queryParams.profileid}).then((res)=>{
+			if(res.data && res.data.length>0){
+				res.data.forEach(item=>{
+					item.level=1;
+					item.label=item.name;
+				});
+				state.adGroupsData=res.data;
+			}
+		});
+		
 	}
 </script>
 

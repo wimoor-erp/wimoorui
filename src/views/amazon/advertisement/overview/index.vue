@@ -69,7 +69,7 @@
 			<AdFunnel/>
 		</el-col>
 		<el-col :span="12">
-			<AcosRank/>
+			<RoasRank/>
 		</el-col>
 	</el-row>
 	<el-row>
@@ -117,7 +117,7 @@
 	import{Tools}from '@element-plus/icons-vue'
 	import{ref,reactive,toRefs}from'vue'
 	import AdFunnel from "./components/adFunnel.vue"
-	import AcosRank from "./components/acosRank.vue"
+	import RoasRank from "./components/roasRank.vue"
 	import AdStatistics from "./components/adStatistics.vue"
 	const state = reactive({
 		wardatatype:'商品广告',

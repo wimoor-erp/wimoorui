@@ -177,7 +177,7 @@
 <script>
 	import { ElDivider } from 'element-plus'
 	import {CopyDocument,Crop,Plus,Edit,Warning} from '@element-plus/icons-vue'
-	import {h, ref ,watch,reactive,onMounted,computed} from 'vue'
+	import {h, ref ,watch,reactive,onMounted,computed,inject} from 'vue'
 	import { useRoute,useRouter } from 'vue-router'
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
 	import shipmentplanApi from '@/api/erp/ship/shipmentplanApi.js';
@@ -204,6 +204,7 @@
 			let reApproveloading=ref(false);
 			let expclicks=0;
 			let localshipmentid="";
+		    const emitter = inject("emitter"); // Inject `emitter`
 			function splitHandel(items){
 				var nowshipment=items;
 				splitDialogRef.value.show(items.itemlist,planData.value,nowshipment);
@@ -288,6 +289,7 @@
 			    goodsDeatilsRef.value.show(data);
 			}
 			function copyPlan(shipmentid){
+				emitter.emit("removeCache", "添加货件");
 				router.push({
 					path:'/invoice/addshipment',
 					query:{

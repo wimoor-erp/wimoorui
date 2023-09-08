@@ -37,10 +37,16 @@
 			  		   </template>
 			  		 </el-table-column>
 			  		 <el-table-column label="入库数量" prop="amount">
-			  			  <!-- <template #default="scope">
-			  				  <el-input v-model="scope.row.amount">
-			  				  </el-input>
-			  			  </template>  -->
+			  			 <template #default="scope">
+			  				 {{scope.row.amount}}
+			  				  <shelfInvOpt
+			  				   :materialid="scope.row.materialid"
+			  				   :formid="scope.row.id"
+			  				   :warehouseid="warehouseform.warehouseid"
+			  				   :amount="scope.row.amount"
+			  				   opt="1"
+			  				   formtype="otherout"></shelfInvOpt>
+			  			  </template>  
 			  		 </el-table-column>
 			  		 <el-table-column label="可用库存" prop="fulfillable">
 			  		 </el-table-column>
@@ -64,6 +70,7 @@
 	import {dateFormat,dateTimesFormat} from '@/utils/index.js';
 	import {redirectToList} from '@/utils/page_helper.js';
 	import inApi from '@/api/erp/inventory/inApi.js';
+	import shelfInvOpt from "@/views/erp/components/shelfInvOpt.vue"
 	import {useRouter } from 'vue-router';
 	const emitter = inject("emitter"); // Inject `emitter`
 	const router = useRouter();

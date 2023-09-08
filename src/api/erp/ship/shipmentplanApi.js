@@ -28,6 +28,10 @@ function updateShipmentRemark(data){
 function getItemlistByShipmentId(data){
 	return request.get('/amazon/api/v1/shipForm/getItemlistByShipmentId',{params:data});
 }
+function getItemlistByInboundPlanId(data){
+	return request.get('/amazon/api/v1/shipForm/getItemlistByInboundPlanId',{params:data});
+}
+
 function saveTrans(data){
 	return request.get('/amazon/api/v1/shipForm/saveTrans',{params:data});
 }
@@ -74,5 +78,5 @@ function uploadExcel(FormData){
 export default{
 	getPlanList,getProductInfoList,guidance,saveInboundPlan,findPlanSubDetail,getPlanInfo,updatePlanRemark,uploadExcel,
 	updateShipmentRemark,getItemlistByShipmentId,saveTrans,createShipment,cancelShipment,updatePlan,downExcelLabelBySku,
-	downExcelTemp,handlerExpShipment
+	downExcelTemp,handlerExpShipment,getItemlistByInboundPlanId
 }

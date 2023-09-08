@@ -1,5 +1,4 @@
 export function tranStatus(row){
-	   console.log(row);
 				let val = row.status;
 				if(val==0){
 					return "已取消";

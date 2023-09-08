@@ -79,12 +79,19 @@
 				marketplaceid.value=val;
 				context.emit("change",getData())
 			}
+			function setGroup(value){
+				 groupid.value=value.groupid;
+				 marketplaceid.value=value.marketplaceid;
+				 groupRadioRef.value.setValue(value.groupid);
+				 marketRadioRef.value.setValue(value.marketplaceid);
+				 context.emit("change",getData())
+			}
 		    function getData(){
 				return {'groupid':groupid.value,"marketplaceid":marketplaceid.value};
 			}
 			return{
 				 groupList,marketList,groupChange,marketChange,groupid,marketplaceid,
-				 getData,groupRadioRef,marketRadioRef,getGroupData
+				 getData,groupRadioRef,marketRadioRef,getGroupData,setGroup
 			}
 		}
 	}

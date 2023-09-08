@@ -3,29 +3,29 @@
 	  <GlobalTable ref="globalTable" :tableData="tableData"  @loadTable="loadtableData" :defaultSort="{ prop: 'createdate', order: 'descending' }" :stripe="true"  height="calc(100vh - 300px)" style="width: 100%;margin-bottom:16px;">
 	    <template #field>
 		   <el-table-column type="selection" width="38" />
-		   <el-table-column prop="orderNum" label="货件编码/货件名称" width='170'>
+		   <el-table-column prop="orderNum" label="货件编码/货件名称" width='160'>
 		      <template #default="scope">
 			     <span class='sku' @click="toFormApprove(scope.row)">{{scope.row.shipmentid}}</span>
 				  <p>{{scope.row.name}}</p>
 			  </template>
 		    </el-table-column>
-	    <el-table-column prop="plan" label="店铺/发货仓库" width='150'>
+	    <el-table-column prop="plan" label="店铺/发货仓库" width='180'>
 		<template #default="scope">
 		     <span >{{scope.row.groupname}}</span>
-			  <p v-if="scope.row.syncinv!=1">{{scope.row.warehouse}}</p>
+			  <p class="text-gray" v-if="scope.row.syncinv!=1">{{scope.row.warehouse}}</p>
 			  <div style="margin-left:-5px" v-else>
 				  <el-button key="primary" @click="showSyncDailog(scope.row)" type="primary" link >本地出库 <span class="font-extraSmall">（同步货件）</span></el-button>
 				 
 			  </div>
 		  </template>
 		</el-table-column>
-		 <el-table-column prop="address" label="配送中心" width="90" >
+		 <el-table-column prop="address" label="配送中心" width="120" >
 			 <template #default="scope">
 			      <span >{{scope.row.country}}</span>
-				  <p>{{scope.row.centerId}}({{scope.row.countryCode}})</p>
+				  <p class="text-gray">{{scope.row.centerId}}({{scope.row.countryCode}})</p>
 			   </template>
 		 </el-table-column>
-		  <el-table-column prop="createdate" label="创建日期" width="170"  sortable="custom">
+		  <el-table-column prop="createdate" label="创建日期" width="160"  sortable="custom">
 		  <template #default="scope">
 		       <span >{{dateTimesFormat(scope.row.createdate)}}</span>
 			   <span v-if="scope.row.delayDays>0&&scope.row.status==5" style="padding-left:2px;">
@@ -62,10 +62,10 @@
 				  <p class="font-extraSmall">拟发货数量:{{scope.row.sumQuantity}}</p>
 			  </template> 
 		 </el-table-column> 
-		  <el-table-column  label="发货渠道" width="230">
+		  <el-table-column  label="发货渠道" width="270">
 			   <template #default="scope">
 			      <span >{{scope.row.company}}</span>
-			 	  <p>{{scope.row.channame}}
+			 	  <p class="font-extraSmall">{{scope.row.channame}}
 				  <el-button v-if="scope.row.apiSystem" 
 				             @click="showTransInfoDailog(scope.row)" 
 							 key="primary" 
@@ -84,7 +84,8 @@
 							 <div v-if="scope.row.status2date">审核日期：{{dateTimesFormat(scope.row.status2date)}}</div>
 							 <div v-if="scope.row.status3date">配货日期：{{dateTimesFormat(scope.row.status3date)}}</div>
 							 <div v-if="scope.row.status4date">装箱日期：{{dateTimesFormat(scope.row.status4date)}}</div>
-							 <div v-if="scope.row.status5date">发货日期：{{dateTimesFormat(scope.row.status5date)}}</div>
+							 <div v-if="scope.row.shipedDate"> 出库日期：{{dateTimesFormat(scope.row.shipedDate)}}</div>
+							 <div v-if="scope.row.status5date">物流发货：{{dateTimesFormat(scope.row.status5date)}}</div>
 							 <div v-if="scope.row.receivedate">接收日期：{{dateTimesFormat(scope.row.receivedate)}}</div>
 							 <div v-if="scope.row.status6date">结束日期：{{dateTimesFormat(scope.row.status6date)}}</div>
 					    </template>
@@ -109,10 +110,10 @@
 			   </template> 
 			</el-table-column>    
 		   <el-table-column prop="remark" label="备注"  />
-	    <el-table-column prop="operate" label="操作"  width="100"  fixed="right" >
+	    <el-table-column prop="operate" label="操作"  width="120"  fixed="right" >
 	        <template #default="scope">
 	          <el-space>
-	            <el-button type="primary" plain @click="shipmentfollow(scope.row)">跟踪发货</el-button>
+	            <el-button type="primary"  @click="shipmentfollow(scope.row)">跟踪发货</el-button>
 	          </el-space>
 	        </template>
 	    </el-table-column>
@@ -276,5 +277,8 @@
 <style>
 	.sku{
 		cursor:pointer;
+	}
+	.text-gray{
+		color:#999;
 	}
 </style>

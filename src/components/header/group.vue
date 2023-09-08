@@ -21,35 +21,42 @@
 		name:"group",
 		components:{MenuUnfold,Search,ArrowDown,SettingTwo,Help,Copy,MoreOne,},
 		emits:["change"],
-		props:["defaultValue","isproduct"],
+		props:["defaultValue","isproduct","init"],
 		setup(props,context){
 			let groupList =ref([])
 			let marketList =ref([])
 			let groupid=ref("")
 			let marketplaceid = ref("")
 			onMounted(()=>{
-				getGroupData()
+				if(!props.init){
+					getGroupData()
+				}
 			})
-		 
+		    function init(defaultgroupid,defaultmarket){
+				 getGroupData(defaultgroupid,defaultmarket);
+			}
 			//获取店铺列表
-			function getGroupData(){
+			function getGroupData(defaultgroupid,defaultmarket){
 				groupApi.getAmazonGroup().then((res)=>{
 					 if(props.defaultValue!="only"&&props.defaultValue!="onlyEU"){
 						 res.data.push({"id":"","name":"全部店铺"})
 					 }
 					groupList.value=res.data;
 					if(res.data&&res.data.length>0){
-							 if(props.defaultValue!="all"){
+						    if(defaultgroupid){
+								 groupid.value =defaultgroupid;
+							 }
+							 else if(props.defaultValue!="all"){
 						         groupid.value = res.data[0].id;
 							}else{
 								 groupid.value ="";
 							}
-							getMarketData(groupid.value);
+							getMarketData(groupid.value,defaultmarket);
 					}
 				})
 			}
 			//获取国家列表
-			function getMarketData(id){
+			function getMarketData(id,defaultmarket){
 				marketApi.getMarketByGroup({'groupid':id}).then((res)=>{
 					if(props.isproduct=='ok'){
 						res.data.push({"id":"IEU","name":"欧洲(不含UK)","marketplaceid":"IEU"})
@@ -78,7 +85,10 @@
 					}
 					marketList.value=res.data;
 					if(res.data&&res.data.length>0){
-	        			if(props.defaultValue!="all"){
+						if(defaultmarket){
+							 marketplaceid.value =defaultmarket;
+						}
+	        			else if(props.defaultValue!="all"){
 	        			  marketplaceid.value = res.data[0].marketplaceid;
 						}else{
 							marketplaceid.value = "";
@@ -94,6 +104,11 @@
 			function marketChange(val){
 				context.emit("change",getData())
 			}
+			function setData(option){
+				if(option){
+					
+				}
+			}
 		    function getData(){
 				var market={};
 				marketList.value.forEach(function(item){
@@ -106,7 +121,7 @@
 	
 			 
 			return{
-				 groupList,marketList,groupChange,marketChange,groupid,marketplaceid,getData
+				init,groupList,marketList,groupChange,marketChange,groupid,marketplaceid,getData
 			}
 		}
 	}

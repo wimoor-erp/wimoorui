@@ -70,7 +70,15 @@
 						</div>
 					</template>
 				</el-table-column>
-				<el-table-column prop="shelfname" label="库位" sortable="custom" />
+				<el-table-column prop="shelfname" label="库位" sortable="custom" >
+				<template #default="scope">
+					<div  >{{scope.row.shelfname}}</div>
+					<div class='font-extraSmall'>
+					{{scope.row.addressname}}
+					<span v-if="scope.row.warehousename">: {{scope.row.warehousename}}</span>
+					 </div> 
+					</template>
+					</el-table-column>
 				<el-table-column prop="quantity" label="库位库存" sortable="custom" />
 				<el-table-column prop="operate" label="操作" width="120"  >
 					<template #default="scope">
@@ -118,7 +126,8 @@
 				</el-table-column>
 				<el-table-column prop="warehousequantity" label="仓库地址" sortable="custom">
 					<template #default="scope">
-						<div>{{scope.row.warehousename}}</div>
+						<div>{{scope.row.addressname}}
+						<span v-if="scope.row.warehousename">: {{scope.row.warehousename}}</span></div>
 						<div class="font-extraSmall">总库存:{{scope.row.warehousequantity}}
 						</div>
 					</template>
@@ -421,12 +430,13 @@
 			const getshelfsdata = () => {
 				let arr = []
 				diglogunshelftableData.value.forEach((item, index) => {
-						const rows = {}
-						rows.materialid = item.materialid
-						rows.quantity = item.quantity
-						rows.shelfid = shelfdata.data.id
-						rows.opt = 1
-						arr.push(rows)
+						const rows = {};
+						rows.materialid = item.materialid;
+						rows.quantity = item.quantity;
+						rows.shelfid = shelfdata.data.id;
+						rows.warehouseid=item.warehouseid;
+						rows.opt = 1;
+						arr.push(rows);
 				})
 				return arr
 			}
@@ -466,7 +476,8 @@
 			function addOffTheShelf(row,index){
 				let arr = []
 				let obj = {}
-				obj.materialid = row.materialid
+				obj.materialid = row.materialid;
+				obj.warehouseid= row.warehouseid;
 				if (row.amount) {
 					obj.quantity = row.amount
 				} else {
@@ -512,7 +523,8 @@
 					})
 					return
 				}
-				obj.shelfid = row.shelfid
+				obj.shelfid = row.shelfid;
+				obj.warehouseid=row.warehouseid;
 				obj.opt = 0
 				arr.push(obj)
 				shelfproductApi.subShelfInventory(arr).then(function(response) {
@@ -539,6 +551,7 @@
 					obj.materialid = item.materialid;
 					obj.shelfid = item.shelfid;
 					obj.quantity = item.quantity;
+					obj.warehouseid=item.warehouseid;
 					obj.opt = 0;
 					arr.push(obj);
 				})
@@ -572,22 +585,22 @@
 			//下架产品
 			function subShelfs() {
 				if (offshelfState) {
-					offShelfVisible.value = true
+					offShelfVisible.value = true;
 				} else {
 					ElMessage({
 						message: '请选择要下架的产品！',
 						type: 'error',
 					})
 				}
-				dialogTitle.value = shelfdata.data.number + '-' + shelfdata.data.name
+				dialogTitle.value = shelfdata.data.number + '-' + shelfdata.data.name;
 
 			}
 			const selectCheckboxShelf = function(selection) {
-				offShelftableData.value = selection
+				offShelftableData.value = selection;
 				if (selection.length > 0) {
-					offshelfState = true
+					offshelfState = true;
 				} else {
-					offshelfState = false
+					offshelfState = false;
 				}
 			}
 			const selectCheckboxunShelf = function(selection) {
@@ -657,7 +670,7 @@
 				loading,
 				hasConsumableChange,
 				hasConsumable,
-			}
+			};
 		},
 		//提交上架产品
 	}

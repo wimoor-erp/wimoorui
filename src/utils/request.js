@@ -37,7 +37,17 @@ const whiteMutiUrls=[
 	"/erp/api/v1/warehouse/getlist",
 	"/erp/api/v1/assembly/getSubForm",
 	"/erp/api/v1/purchase_form/getPriceBySupplier",
+	"/erp/api/v1/warehouse/shelf/list",
 	"/admin/api/v1/sysprogress",
+	"/erp/api/v1/warehouse/shelfInventoryOptPro/list",
+	"/erp/api/v1/shipTransCompany/getTranlist",
+	"/erp/api/v1/shipTransCompany/getChannel",
+	"/amazonadv/api/v1/advCampaignManager/getCampaignPlacement",
+	"/amazonadv/api/v1/advAdgroupManager/getAdGroupSuggestBid",
+	"/amazonadv/api/v1/advKeywordManager/getKeywordSuggestBid",
+	"/amazon/api/v1/report/product/analysis/productdetailByInfo",
+	"/amazonadv/api/v1/advProductAdsManager/getProductAdotherAsin",
+	"/amazonadv/api/v1/advProductTargeManager/getTargetBidRecommendations",
 ]
 // request 拦截器
 // 可以自请求发送前对请求做一些处理
@@ -146,6 +156,14 @@ request.interceptors.response.use(
 				return Promise.reject(error);
 			}
 		}else{
+			if(error.name=="AxiosError"&&error.response.data instanceof Blob){
+				var reader = new FileReader();
+				reader.readAsText(error.response.data, 'utf-8');
+				reader.onload = function (e) {
+					 var result=JSON.parse(reader.result);
+					 ElMessage({  message: '导出失败！'+result.msg,   type: 'error', })
+				}
+			}
             return Promise.reject(error);
 		}
     }

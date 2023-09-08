@@ -13,7 +13,7 @@
 					  <span class="font-large font-bold">{{item.value}}</span>
 				  </div>
 				  <div class="font-extraSmall text-right">
-					  <p v-if="item.rate" :class="item.rate>0?'text-green':'text-red'">{{item.rate}}%</p>
+					  <p v-if="item.rate" :class="item.rate>0?'text-green':'text-red'">{{formatFloat(item.rate)}}%</p>
 					  <p v-else>-</p>
 					<span> 较{{item.date}}</span>
 				  </div>
@@ -22,7 +22,7 @@
 	   </el-col>
   </el-row>
   <el-row>
-	   <el-radio-group v-model="radio">
+	   <el-radio-group v-model="radio" @change="loadSelect">
 	        <el-radio-button label="日" />
 	        <el-radio-button label="周" />
 	        <el-radio-button label="月" />
@@ -40,61 +40,167 @@
 <script setup>
 	import {ref,reactive,toRefs,nextTick} from"vue"
 	import * as echarts from 'echarts';
+	import advertApi from '@/api/amazon_adv/advertApi.js';
+	import advCampaignApi from '@/api/amazon_adv/advCampaignApi.js';
+	import advAdgroupApi from '@/api/amazon_adv/advAdgroupApi.js';
+	import advProductsApi from '@/api/amazon_adv/advProductsApi.js';
+	import advKeywordsApi from '@/api/amazon_adv/advKeywordsApi.js';
+	import advTargetApi from '@/api/amazon_adv/advTargetApi.js';
+	import {dateFormat,formatFloat,getValue,formatPercent} from '@/utils/index';
+	let props = defineProps({summary:{}});
+	const { summary} = toRefs(props);
 	const state = reactive({
 		radio:'日',
 		visible:false,
 		adList:[
-			{name:'曝光量',value:'456,120',rate:'+1.0',date:'昨日',},
-			{name:'花费',value:'$89,120.02',rate:'',date:'昨日',},
-			{name:'销量',value:'999',rate:'-0.2',date:'昨日',},
-			{name:'点击量',value:'2,896',rate:'-6.5',date:'昨日',},
-			{name:'点击率',value:'21.25%',rate:'',date:'昨日',},
-			{name:'ACOS',value:'36.55%',rate:'',date:'昨日',},
-			{name:'ROAS',value:'92.14%',rate:'',date:'昨日',},
-			{name:'转化率',value:'92.14%',rate:'',date:'昨日',},
-			{name:'每次点击费用',value:'$2.02',rate:'+2.3',date:'昨日',},
+			{name:'曝光量',value:'--',rate:'+1.0',date:'昨日',field:'impressions',ftype:'bar',listdata:[]},
+			{name:'花费',value:'--',rate:'',date:'昨日',field:'cost',ftype:'bar',listdata:[]},
+			{name:'销量',value:'--',rate:'-0.2',date:'昨日',field:'sumUnits',ftype:'bar',listdata:[]},
+			{name:'点击量',value:'--',rate:'-6.5',date:'昨日',field:'clicks',ftype:'bar',listdata:[]},
+			{name:'点击率',value:'--',rate:'',date:'昨日',field:'CTR',ftype:'line',listdata:[]},
+			{name:'ACOS',value:'--',rate:'',date:'昨日',field:'ACOS',ftype:'line',listdata:[]},
+			{name:'ROAS',value:'--',rate:'',date:'昨日',field:'ROAS',ftype:'line',listdata:[]},
+			{name:'转化率',value:'--',rate:'',date:'昨日',field:'CSRT',ftype:'line',listdata:[]},
+			{name:'每次点击费用',value:'--',rate:'+2.3',date:'昨日',field:'avgcost',ftype:'line',listdata:[]},
 		],
+		queryParams:{},
+		ftype:'',
+		queryItem:{},
+		labels:[],
+		listdata1:[],
+		listdata2:[],
+		ftype1:"line",
+		ftype2:"bar",
 	})
 	const{
 		visible,
 		adList,
 		radio,
+		queryParams,
+		ftype,
+		labels,
+		listdata1,
+		listdata2,
+		ftype1,
+		ftype2,
 	}=toRefs(state)
-	defineExpose({
-		show,
-	})
-	const dataSort = ref(['曝光量','点击率'])
 	const loadSelect = function(){
-		state.adList.forEach((item)=>{
-			if(dataSort.value[0]==item.name||dataSort.value[1]==item.name){
-				item.check = true
-			}
-		})
+		var bytime="Daily";
+		//bytime: Daily Weekly Monthly
+		if(state.radio=='日'){
+			bytime="Daily";
+		}else if(state.radio=='周'){
+			bytime="Weekly";
+		}else{
+			bytime="Monthly";
+		}
+		state.queryParams.bytime=bytime;
+		state.queryParams.searchlist=state.queryItem.field;
+		loadData()
 	}
+	function handChartData(res){
+		 state.labels=res.data.labels;
+		 state.queryItem.listdata= res.data.listdata1;
+		 adChart();
+	}
+	function loadData(){
+		if(state.ftype=="adcams"){
+			advCampaignApi.getCampaignChart(state.queryParams).then(handChartData);
+		}
+		if(state.ftype=="adgroups"){
+			advAdgroupApi.getAdGroupChart(state.queryParams).then(handChartData);
+		}
+		if(state.ftype=="adproducts"){
+			advProductsApi.getProductAdChart(state.queryParams).then(handChartData);
+		}
+		if(state.ftype=="adkey"){
+			advKeywordsApi.getKeywordChart(state.queryParams).then(handChartData);
+		}
+		if(state.ftype=="adtarget"){
+			advTargetApi.getProductTargeChart(state.queryParams).then(handChartData);
+		}
+		if(state.ftype=="adsearch"){
+			advKeywordsApi.getKeywordQueryChart(state.queryParams).then(handChartData);
+		}
+		if(state.ftype=="adtargetquery"){
+			advTargetApi.getProductTargeQueryChart(state.queryParams).then(handChartData);
+		}
+		
+	}
+	function loadSummary(){
+		 dataHandler(props.summary);
+	}
+	function dataHandler(summary){
+		if(summary){
+			state.adList[0].value=summary.impressions;
+			state.adList[1].value=summary.cost;
+			state.adList[2].value=summary.sumUnits;
+			state.adList[3].value=summary.clicks;
+			state.adList[4].value=summary.CTR;
+			state.adList[5].value=summary.ACOS;
+			state.adList[6].value=summary.ROAS;
+			state.adList[7].value=summary.CSRT;
+			state.adList[8].value=summary.avgcost;
+			getSelectData(state.adList[0]);
+		}
+	}
+
 	function getSelectData(item){
 				 /* 不点击自己 */
-				     if(dataSort.value.some(a=>a==item.name)){
-						 return;
-					 } 
-					  item.check = true
-					  dataSort.value.push(item.name)
-					  state.adList.forEach((i)=>{
-					  				if(i.name == dataSort.value[0]){
-					  					i.check = false
-					  				}
-					  })
-					  dataSort.value.shift()
+		  if(item.check==true){
+			    item.check = false; 
+				item.listdata=[];
+				adChart();
+		  }else{
+			   item.check = true;
+			   state.queryItem=item;
+			   loadSelect();
+		  }
+		 
 	}
-   function show(){
-	   state.visible = true
-	   loadSelect()
-	  nextTick(()=>{
-	 	adChart()
-	 })
+   function show(ftype,params){
+	   state.queryParams=params;
+	   state.ftype=ftype;
+	   state.visible = true;
+	   loadSummary();
+	   nextTick(()=>{
+	 	 adChart();
+	   })
    }
-   
+   var myChart=null;
    function adChart(){
-	   var myChart = echarts.init(document.getElementById('adchart'));
+	   //var chartdata_bar=[];
+	   if(myChart!=null){
+	   		myChart.dispose();
+	   }
+	   var chartdata=[];
+	   var legendname=[];
+	   state.adList.forEach(item=>{
+		   if(item.listdata&&item.listdata.length>0 && item.check==true){
+			   if(item.ftype=="bar"){
+				   var bar= {
+				    name:item.name, 
+				     data: item.listdata,
+				     type: item.ftype
+				   };
+				   chartdata.push(bar);
+			   }else{
+				   var line= {
+				     yAxisIndex: 1,
+				     name:item.name, 
+				     data: item.listdata,
+				     type: item.ftype
+				   };
+				   chartdata.push(line);
+			   }
+			   
+			   legendname.push(item.name);
+		   }
+	   })
+	   if(!chartdata || chartdata.length==0){
+		   return;
+	   }
+	  myChart = echarts.init(document.getElementById('adchart'));
 	    var option = {
 			grid:{
 				left:'0%',
@@ -105,14 +211,14 @@
 			    trigger: 'axis'
 			  },
 		   legend: {
-		    data: [dataSort.value[0],dataSort.value[1],],
+		    data: legendname,
 			icon: "circle",
 			itemWidth:6,
 			itemHeight:6,
 		   },
 	   	    xAxis: {
 	   	       type: 'category',
-	   	       data: ['7-22',],
+	   	       data: state.labels,
 			   axisLine:{
 			   show: false
 			   },
@@ -146,32 +252,23 @@
 			       },
 			       axisLabel: {
 					   formatter: function (value) {
-					       return value* 100 + '%';
+					       return formatFloat(value* 100) + '%';
 					   }
 			       }
 			     },
 			 ],
-			  color:['#409eff','#FF6700',],
-	   	     series: [
-				 
-	   	       {
-				 name:dataSort.value[0], 
-	   	         data: [1558,],
-	   	         type: 'line'
-	   	       },
-			   {
-				 yAxisIndex: 1,
-			   	 name:dataSort.value[1], 
-			     data: [0.25,],
-			     type: 'bar'
-			   }
-	   	     ],
+			  color:['#409eff','#FF6700','#00aa7f','#0055ff','#aa5e3a','#a45faa'],
+	   	     series: chartdata,
 	    }
 	    myChart.setOption(option);
 	    window.addEventListener('resize',()=>{
 	    myChart.resize();
 	    })
    }
+   
+   defineExpose({
+   	show,
+   })
 </script>
 <style>
 	.data-item .el-card__body{

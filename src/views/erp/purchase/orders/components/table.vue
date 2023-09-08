@@ -136,9 +136,9 @@
 									   <el-tag v-show="sub.paystatus==3" type="warning">已请款</el-tag>
 									   <div v-if="sub.orderstatus">
 										  <span v-if="orderStatus[sub.orderstatus]" class="tag-group"><span class="before">1688</span>
-										  待发货<!-- {{orderStatus[sub.orderstatus]}} -->
+										  <span :class="orderStatus[sub.orderstatus].color" style="padding-left:2px">  {{orderStatus[sub.orderstatus].simple}} </span> <a href=""></a>
 										  </span> 
-										  <span v-else class="tag-group"><span class="before">1688</span>待收货<!-- {{sub.orderstatus}} --></span> 
+										  <span v-else class="tag-group"><span class="before">1688</span>待收货</span> 
 									   </div>
 								   </div>
 							   </div>
@@ -187,20 +187,36 @@
 					   <td >
 						   <el-space direction="vertical" alignment="left">
 							   <div>
-						    <span class="text-gray">单价:</span><span v-if="sub.withoutEdit">￥{{sub.itemprice}}</span>
+						    <span class="text-gray">单价:</span><span v-if="sub.withoutEdit">￥{{sub.itemprice}}
+							<div class="table-edit-flex pull-right">
+							 <el-icon v-if=" sub.auditstatus==1" @click="handleChanges(sub)"><Edit /></el-icon>
+							</div>
+							</span>
 						    <el-input v-model="sub.edit_itemprice" @input="changeItemPrice(sub)" v-else></el-input>
 							</div>
 							<div>
 							<span class="text-gray">数量:</span>
-						   <span v-if="sub.withoutEdit">{{sub.amount}}</span>
+						   <span v-if="sub.withoutEdit">{{sub.amount}}
+						   <div class="table-edit-flex pull-right">
+						    <el-icon v-if=" sub.auditstatus==1" @click="handleChanges(sub)"><Edit /></el-icon>
+						   </div>
+						   </span>
 						   <el-input v-model="sub.edit_amount"   @input="changeItemAmount(sub)" v-else></el-input> 
 						   </div>
 						   <div>
 							<span class="text-gray">金额:</span>
-						   <span v-if="sub.withoutEdit">￥{{sub.orderprice}}</span>
+						   <span v-if="sub.withoutEdit">￥{{sub.orderprice}}
+						     <div class="table-edit-flex pull-right">
+						      <el-icon v-if=" sub.auditstatus==1" @click="handleChanges(sub)"><Edit /></el-icon>
+						   	 </div>
+						   </span>
+						   
 						   <el-input  v-model="sub.edit_orderprice"  @input="changeItemOrderprice(sub)" v-else></el-input>
 						   </div>
+						  
 						   </el-space>
+						     
+						   
 						</td>
 					   <!-- 收货进度 -->
 					   <td v-if="tableState=='4' || tableState=='5' || tableState=='6'">
@@ -211,7 +227,8 @@
 							     <el-tag v-else effect="plain" type="success"  round size="small">已入库</el-tag>
 							</el-progress>
 						   </div>
-						 <DeliveryDate :sub="sub"></DeliveryDate>
+						    <p>  <span class="font-extraSmall">预计到货:</span>
+						          <DeliveryDate :sub="sub"></DeliveryDate></p>
 					   </td >
 						<td v-if="tableState=='4' || tableState=='5' || tableState=='6'">
 						     <div :id="sub.id">￥{{sub.totalpay}} 
@@ -230,6 +247,7 @@
 						     title="备注"
 						     :width="300"
 						     trigger="click"
+							 :ref="`popover-${sub.id}`"
 							 @show="showRemarkPopover(sub)"
 						   >
 						   	<el-input
@@ -238,7 +256,7 @@
 						   	    type="textarea"
 						   	    placeholder="请输入"
 						   	  />
-						   		<el-button type="primary" class='m-t-8' @click="updatenotice(sub.id,sub.remark2,sub)">确定</el-button>
+						   		<el-button type="primary" class='m-t-8' @click="updatenotice(sub.id,sub.remark2,sub,'popover-'+sub.id,proxy)">确定</el-button>
 						     <template #reference>
 						   		<div class="table-edit-flex">
 						       <span class="text-omit-3" v-if="sub.remark!=''&&sub.remark!=undefined">
@@ -259,8 +277,8 @@
 							<el-button  v-if="sub.auditstatus==1 && sub.withoutEdit==true" link type="primary"  @click="handleReturn(sub)">驳回</el-button>
 						<span  v-else-if="sub.auditstatus==0"></span>
 						<el-space v-else>
-								<el-button link  type="primary" @click="cancelChangesub(sub)">取消</el-button>
 							    <el-button link  type="primary" @click="updateItem(sub)">保存</el-button>
+								<el-button link  type="primary" @click="cancelChangesub(sub)">取消</el-button>
 						</el-space>
 						<el-dropdown :hide-on-click="false">
 						  <span class="el-dropdown-link">
@@ -271,8 +289,6 @@
 						   <template #dropdown>
 						    <el-dropdown-menu>
 						      <el-dropdown-item @click="handleRecords(sub)">采购记录</el-dropdown-item>
-							  <el-dropdown-item v-if="sub.withoutEdit && sub.auditstatus==1" @click="handleChanges(sub)" >编辑</el-dropdown-item>
-							  
 						    </el-dropdown-menu>
 						</template>
 						</el-dropdown>
@@ -338,7 +354,7 @@
 
 <script setup>
 	import '@/assets/css/packbox_table.css'
-	import {h,ref,reactive,toRefs,watch} from 'vue'
+	import {h,ref,reactive,toRefs,watch,getCurrentInstance} from 'vue'
 	import {Download,Edit,DeleteFilled,EditPen,TakeawayBox,InfoFilled,Warning ,ArrowDown,Clock,User,ArrowLeft,ArrowRight } from '@element-plus/icons-vue';
 	import {MoreOne,PayCodeOne,Receive,Install,Audit} from '@icon-park/vue-next';
 	import {ElDivider} from 'element-plus';
@@ -357,8 +373,10 @@
 	import WarehouseDialog from "@/views/erp/warehouse/base/warehouseDialog";
 	import purchaselistApi from '@/api/erp/purchase/form/listApi.js';
 	import {updateItem,handleChangesub,changeItemPrice,changeItemOrderprice,changeItemAmount,handleChanges,updatenotice,handleDelete,
-	updateCycleDate} from  '@/hooks/erp/purchase/form.js';	const router = useRouter()
+	updateCycleDate} from  '@/hooks/erp/purchase/form.js';	
+	const router = useRouter()
 	const spacer = h(ElDivider, { direction: 'vertical' })
+	const   proxy  = getCurrentInstance();
 	const changeRecordsRef=ref();
 	const RecordsRef = ref()
 	const ReceiptRef =ref()
@@ -769,6 +787,10 @@ tr:hover  .table-edit-flex .el-icon{
 }
 .text-gray{
 	color: #999999;
+}
+.pull-right{
+	float:right;
+	margin-top:3px;
 }
 .tag-group{
 	font-size: 12px;

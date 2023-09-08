@@ -1,6 +1,6 @@
 <template >
      <div class="el-white-bg">
-	 <Header ref="myHeaderRef" @change = "handleQuery"/>
+	 <Header ref="myHeaderRef" @change = "handleQuery" @confirm="goToPlanConfirm"/>
 	 	 
 	 <div class=" expand-table m-b-p-16">
 		 <GlobalTable ref="globalTableRef"
@@ -46,30 +46,31 @@
 		</el-table-column>
 		<el-table-column prop="sku" label="名称/SKU" :sort-orders="sortOrders" sortable='custom' min-width="200" >
 		   <template #default="scope">
-			   <el-tooltip  placement="top" :content="scope.row.name" :show-after="200">
+			    <div @mouseenter.stop="handleEmtpy">
+			   <el-space  class="m-b-8">
+				   <el-link :underline="false"  @click.stop="productDetails(scope.row)" class="font-sku">{{scope.row.sku}}
+				   </el-link>
+			   				<span v-if="scope.row.issfg=='1'"   @click.stop="handleEmtpy">
+			   					<el-tag
+			   					 title="组合产品"
+			   					 @click.stop="e=>handleAssemblyShow(e,scope.row)"
+			   					 @mouseenter="e=>handleAssemblyShow(e,scope.row)"
+			   					 type="warning" class="pointer" v-if="scope.row.issfg=='1'"
+			   					 size="small" 
+			   					>组合</el-tag>
+			   				</span>
+			   				<el-tag v-if="scope.row.tagNameList" effect="plain" :type="item.color"  v-for="item in scope.row.tagNameList" size="small" >
+			   					{{item.name}}
+			   				</el-tag>
+			   				<copy  @click.stop="CopyText(scope.row.sku)" title='复制SKU' theme="outline" size="14" fill="#666" :strokeWidth="3"/>
+			   </el-space>
+			   </div>
+			  <el-tooltip  placement="top" :content="scope.row.name" :show-after="200">
 		      <div class='font-name text-omit-1 m-b-8'>{{scope.row.name}}</div>
 			  </el-tooltip>
 			  <div @mouseenter.stop="handleEmtpy">
-			  <el-space :size="4" class="m-b-8">
-		        <el-link :underline="false"  @click.stop="productDetails(scope.row)" class="font-sku">{{scope.row.sku}}
-				</el-link>
-				<span v-if="scope.row.issfg=='1'"   @click.stop="handleEmtpy">
-					<el-tag
-					 title="组合产品"
-					 @click.stop="e=>handleAssemblyShow(e,scope.row)"
-					 @mouseenter="e=>handleAssemblyShow(e,scope.row)"
-					 type="warning" class="pointer" v-if="scope.row.issfg=='1'"
-					 size="small" 
-					>组合</el-tag>
-				</span>
-				<el-tag v-if="scope.row.tagNameList" effect="plain" :type="item.color"  v-for="item in scope.row.tagNameList" size="small" >
-					{{item.name}}
-				</el-tag>
-				<copy  @click.stop="CopyText(scope.row.sku)" title='复制SKU' theme="outline" size="14" fill="#666" :strokeWidth="3"/>
-			  </el-space>
 			  <el-row >
 			  <el-space  class="font-extraSmall"  :size="4" :spacer="spacer">
-				  
 				  <div @click.stop="handleEmtpy" >
 					       <span
 						   @click.stop="e=>handleWisePriceShow(e,scope.row)"
@@ -93,26 +94,24 @@
 		</el-table-column>
 		<el-table-column label="报表" width="80">
 			<template #default="scope">
-				<el-link :underline="false" style='margin-right:12px;' type="warning" @click.stop="handlesaleChart(scope.row)">
-				 <el-tooltip content="销量报表" placement="top" :hide-after="0" :show-after="200">
+				<el-space  :size="3" direction="vertical">
+				<el-button  text @click.stop="handlesaleChart(scope.row)">
+				 <el-tooltip content="销量报表" placement="right" :hide-after="0" :show-after="200">
 				 <chart-histogram class="ic-cen" theme="outline" size="16" fill="#ff6700" :strokeWidth="4"/>
 				 </el-tooltip>
-				 </el-link>   
-				 
-				 <el-link :underline="false" type="danger" @click.stop="handlarrivalChart(scope.row)">
-									   <el-tooltip content="预计到货报表" placement="top" :hide-after="0" :show-after="200">
+				 </el-button>   
+				 </el-space>
+				 <el-button text @click.stop="handlarrivalChart(scope.row)">
+					 <el-tooltip content="预计到货报表" placement="right" :hide-after="0" :show-after="200">
 				<chart-line class="ic-cen" theme="filled" size="15" fill="#529b2e"/>
 				 </el-tooltip>
-				 </el-link>
+				 </el-button>
 			</template>
 		</el-table-column>
 		<el-table-column label="公告"  min-width="220" >
 			<template #default="scope">
 					<span class="table-edit-flex" >
-						<el-tooltip :content="scope.row.notice" placement="top" :hide-after="0" :show-after="200">
-							<span class="text-omit-2 font-gray">{{scope.row.notice}}</span>
-						</el-tooltip>
-					
+					    <span class="font-small " v-html="scope.row.htmlnotice"></span>
 						<el-icon @click.stop="editRemarks(scope.row)"><Edit/></el-icon>
 					</span>
 			</template>
@@ -123,7 +122,7 @@
 						  <div
 						   @click.stop="e=>getPurHistory(e,scope.row)"
 						   @mouseenter="e=>getPurHistory(e,scope.row)"
-						   class="font-extraSmall pointer" v-if="scope.row.last!=''" style="width:67px;" v-html="scope.row.last"></div>
+						   class="font-small pointer" v-if="scope.row.last!=''" style="width:67px;" v-html="scope.row.last"></div>
 						   <span v-else>-</span>
 				  </div>
 			  </template>
@@ -146,20 +145,17 @@
 				</template>
 		</el-table-column>
        
-	<el-table-column label="总需求量"
+	<el-table-column label="建议采购"
 		prop="marketneedpurchase"  
 		:sort-orders="sortOrders" sortable='custom' 
 		 width="110">
 	 	<template #default="scope">
-			 <div v-if="queryParams&&queryParams.plansimple">
-					<div class="font-bold">{{scope.row.marketneedpurchase}}</div>
+			 <div class="font-bold font-gray">
+				 <div  v-if="scope.row.rowstatue.isplan==false&&scope.row.prereallyamount&&parseInt(scope.row.marketneedpurchase)!=parseInt(scope.row.prereallyamount)"
+				 > {{scope.row.prereallyamount}}</div>
+				<div v-else >{{scope.row.needpurchase}}</div>
 			 </div>
-			 <div v-else>
-				 <div class="font-extraSmall" v-if="scope.row.rowstatue.isplan==false&&scope.row.prereallyamount&&parseInt(scope.row.marketneedpurchase)!=parseInt(scope.row.prereallyamount)"
-				 >建议采购:{{scope.row.prereallyamount}}</div>
-				<div v-else class="font-extraSmall">建议采购:{{scope.row.needpurchase}}</div>
-			 </div>
-			
+			<div class="font-extraSmall">总需求量:{{scope.row.marketneedpurchase}}</div>
 	 	</template>
 	 </el-table-column>
  
@@ -236,10 +232,12 @@
 	virtual-triggering
 	trigger="click"
 	>
+	<el-icon class="pointer" style="float:right;margin-top:-30px;" @click="editRow.warehouseVisable=false" ><Close /></el-icon>
 	 <el-radio-group class="m-b-p-16" v-model="editRow.warehouseid" @change="handleChangeWarehouse(editRow),editRow.warehouseVisable=false">
 	    <el-radio v-for="item in plan.warehouseList" :key="item.warehouseid" :label="item.warehouseid">{{item.name}}</el-radio>
 	</el-radio-group>
-	<el-button @click="editRow.warehouseVisable=false">关闭</el-button>
+	<el-button style="float:right" size="small" @click="editRow.warehouseVisable=false"  > 关闭</el-button>
+	 
 	</el-popover>
 	<!-- 组装产品 -->
 	<AssemblyDialog :assbRef="assbRef" @change="getAssembliyList(editRow)" :loading="editRow.assloading"
@@ -383,6 +381,7 @@
 	        <el-button type="primary" @click.stop="handlePSaveCycle(expenditem)">确定</el-button>
 	   </div>
 	  </el-popover>
+	  <Confirm ref="confirmRef"></Confirm>
 </template>
 <script setup>
 	import { ref ,watch,reactive,onMounted,toRefs,h} from 'vue'
@@ -393,13 +392,14 @@
 	import SaleAdjustDialog from "@/views/amazon/sales/forecast/components/sale_adjust_dialog";
 	import AssemblyDialog from "@/views/erp/components/assembly_dialog";
 	import ShipRecordDialog from "@/views/erp/ship/ship_plan/components/ship_record.vue"
-	import GoodsDeatils from "@/views/amazon/listing/common/goods_deatils"
+	import GoodsDeatils from "@/views/amazon/listing/common/goods_deatils";
+	import Confirm from "@/components/dialog/confirm";
     import Header from "./components/header";
 	import CopyText from"@/utils/copy_text";
 	// API依赖
 	import planApi from '@/api/erp/ship/planApi.js';
 	import inventoryApi from '@/api/erp/inventory/inventoryApi.js';
-	import {Edit,ArrowRightBold,ArrowDownBold,} from '@element-plus/icons-vue';
+	import {Edit,ArrowRightBold,ArrowDownBold,Close} from '@element-plus/icons-vue';
 	import { ElMessage ,ElMessageBox,ElDivider} from 'element-plus'
 	import transportationApi from '@/api/erp/ship/transportationApi';
 	import warehouseApi from '@/api/erp/warehouse/warehouseApi'
@@ -408,7 +408,7 @@
 	import {sublit} from "@/api/erp/assembly/assemblyApi";
 	import {changeWarehouse,saveItem,deleteItem,getLast3} from '@/api/erp/purchase/plan/planApi';
 	import { useRouter } from 'vue-router'
-	import {CheckInputInt,dateFormat} from "@/utils/index";
+	import {CheckInputInt,dateFormat,decodeText} from "@/utils/index";
 	import materialApi from '@/api/erp/material/materialApi.js';
 	const spacer = h(ElDivider, { direction: 'vertical' })
    const router = useRouter();
@@ -427,7 +427,8 @@
    const WisePriceRef = ref()
    const purHistoryRef = ref()
    const InventoryRef = ref()
-   const InventoryDetalisRef =ref()
+   const InventoryDetalisRef =ref();
+   const confirmRef=ref();
    const stockCycleRef =ref()
    const warehouseSelectRef = ref()
    const productShowHideRef = ref()
@@ -503,6 +504,7 @@
 	   state.tableData.records.forEach(row=>{
 		   if(row.id==formdata.materialid){
 			   row.notice=formdata.mark;
+			   row.htmlnotice=decodeText(row.notice);
 		   }
 	   })
    }
@@ -534,14 +536,17 @@
 				  	query:{
 				  	  title:"产品详情",
 				  	  path:'/material/details',
-					  details:row.id
+					  details:row.id,
+					  type:"product"
 				  	}
 				  })
 	}
 	function handleChangeWarehouse(row){
 		changeWarehouse({"planid": state.plan.id,"materialid":row.id,"warehouseid":row.warehouseid}).then(res=>{
 			ElMessage({ message: "修改成功", type: 'success', });
-			globalTableRef.value.loadTable(params);
+			row.warehousename=res.data.name;
+		}).catch(e=>{
+			row.warehouseid=row.oldwarehouseid;
 		});
 	}
 	
@@ -593,6 +598,7 @@
    		 const evt = e || window.e || window.event;
    		 assbRef.value = evt.currentTarget
    		 state.editRow = row
+		 state.editRow.oldwarehouseid=state.editRow.warehouseid;
    	}
 	function getPurHistory(e,row){
 		const evt = e || window.e || window.event;
@@ -715,6 +721,9 @@
 			   					   loading:false,
 			   					   showeu:false,
 			   				   };
+							   if(item.notice){
+							       item.htmlnotice=decodeText(item.notice);
+							   }
 			   					if(!item.amount||parseInt(item.amount)<=0){
 			   						       item.reallyamount=parseInt(item.needpurchase)-parseInt(item.quantity);
 										   if(item.reallyamount<0){
@@ -786,21 +795,16 @@
 	   if(row.reallyamount){
 		   if(row.boxnum&&row.reallyamount%row.boxnum>0){
 		   	  error=error+"不符合箱规【"+row.boxnum+"】，";
+			  
 		   }
 		   if(!state.plan){
 			   ElMessage({ message: '没有可以保存的发货计划', type: 'warning', });
 			   return ;
 		   }
 		   if(error!=""){
-			   ElMessageBox.confirm(
-			   	    error+'您确定要加入发货计划吗?',
-			   	    '加入计划',
-			   	    {
-			   	      confirmButtonText: '确定',
-			   	      cancelButtonText: '取消',
-			   	      type: 'warning',
-			   	    }
-			   	  ).then( () => {savePlanItem(state.plan,row);})
+			   confirmRef.value.show("warning_boxmessage",'加入计划', error+'您确定要加入发货计划吗?',()=>{
+				   savePlanItem(state.plan,row);
+			   })
 		   }else{
 			   savePlanItem(state.plan,row);
 		   }
@@ -855,6 +859,92 @@
 		   globalTableRef.value.toggleRowExpansion(row);
 	   }
    }
+   function goToPlanConfirm(queryPrarams,summary){
+	   var params=JSON.parse(JSON.stringify(state.queryParams));
+	       params.plantype="purchase";
+		   params.pagesize=1000000;
+		   params.currentpage=1;
+		   var itemlist=[];
+		   if(state.queryParams.selected&&summary.skunum!=state.tableData.total){
+			   ElMessageBox.confirm(
+			   	     '您确定部分提交发货计划吗?（查看已选搜索会自动促发部分发货，将只会提交能这一次查看的计划内容其他内容保留）',
+			   	    '提交',
+			   	    {
+			   	      confirmButtonText: '确定',
+			   	      cancelButtonText: '取消',
+			   	      type: 'warning',
+			   	    }
+			   	  ).then( () => { 
+					  planApi.getPlanList(params).then(res=>{
+						  if(res.data&&res.data.records&&res.data.records.length>0){
+							  res.data.records.forEach(item=>{
+							  	itemlist.push(item.id);
+							  });
+							  router.push({
+							  	path:"/e/p/p/s",
+							  	query:{
+							  		title:'提交采购计划',
+							  		path:"/e/p/p/s",
+							  		planid:state.queryParams.planid,
+									list:itemlist
+							  	},
+							  })
+						  }else{
+							  ElMessage({
+							  			message: '未找到对应记录！',
+							  			type: 'error',
+							  })
+						  }
+					  		
+					  	})
+				  })
+		   }else{
+			   router.push({
+			   	path:"/e/p/p/s",
+			   	query:{
+			   		title:'提交采购计划',
+			   		path:"/e/p/p/s",
+			   		planid:state.queryParams.planid,
+					list:itemlist
+			   	},
+			   })
+		   }
+	    
+   	
+   }
+   function freezeItem(item){
+   	   Object.freeze(item.asin);
+   	   Object.freeze(item.openDate);
+   	   Object.freeze(item.mincycle);
+   	   Object.freeze(item.needpurchase);
+   	   Object.freeze(item.asin);
+   	   Object.freeze(item.shopid);
+   	   Object.freeze(item.sumweek);
+   	   Object.freeze(item.url);
+   	   Object.freeze(item.groupname);
+   	   Object.freeze(item.groupid);
+   	   Object.freeze(item.statuscolor);
+   	   Object.freeze(item.salesday);
+   	   Object.freeze(item.sum15);
+   	   Object.freeze(item.shipday);
+   	   Object.freeze(item.summonth);
+   	   Object.freeze(item.country);
+   	   Object.freeze(item.sumseven);
+   	   Object.freeze(item.needshipfba);
+   	   Object.freeze(item.cycle);    
+   	   Object.freeze(item.marketname);           
+   	   Object.freeze(item.msku);  
+   	   Object.freeze(item.marketplaceid);  
+   	   Object.freeze(item.sku);  
+   	   Object.freeze(item.warehouseid);  
+   	   Object.freeze(item.amazonauthid); 
+   	   Object.freeze(item.afn_reserved_future_supply); 
+   	   Object.freeze(item.afn_inbound_shipped_quantity); 
+   	   Object.freeze(item.afn_reserved_quantity); 
+   	   Object.freeze(item.afn_researching_quantity); 
+   	   Object.freeze(item.afn_fulfillable_quantity); 
+   	   Object.freeze(item.afn_unsellable_quantity); 
+   }
    function loadDetail(row){
 			 	row.rowstatue.loading=true;
 				var subrow=[];
@@ -882,6 +972,7 @@
 							if(item.marketplaceid=='EU'&&item.subnum>1){
 								handleShowEUData(item,row);
 							}
+							freezeItem(item)
 							subrow.push(item);
 			 			});
 						row.needpurchase=needpurchase;
@@ -891,7 +982,7 @@
 							   row.reallyamount=0;
 							}
 						}
-						row.expendData=subrow;
+						row.expendData=Object.freeze(subrow);
 			 		}
 			 	 })
 			 }
@@ -961,9 +1052,6 @@
 	.expand-table{
 		padding-left:16px;
 		padding-right:16px;
-	}
-	.el-table__expanded-cell td,.el-table__expanded-cell th{
-	    font-size:12px;
 	}
 	.flex-center-bew{
 		display: flex;

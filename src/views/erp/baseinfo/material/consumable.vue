@@ -5,7 +5,15 @@
 	     <Header @getdata="loadData" ref="headerRef"  type="consumable"/>
 	</div>
 	<el-row>
-	   <GlobalTable ref="globalTable" :rowClassName="handleRowClassName" :defaultSort="defaultSort" @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 246px)"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
+	   <GlobalTable ref="globalTable" 
+	   :rowClassName="handleRowClassName" 
+	   :defaultSort="defaultSort" 
+	   @selectionChange='selectChange' 
+	   :tableData="tableData" 
+	   height="calc(100vh - 246px)"  
+	   @loadTable="loadTableData" 
+	   :stripe="true"  
+	   style="width: 100%;margin-bottom:16px;">
 		   <template #field>
 	     <el-table-column   type="selection" width="38" />
 	      <el-table-column   prop="image" label="图片" width="60" >
@@ -156,16 +164,25 @@
 				 </div>
 			</template>	
 		</el-table-column>
-		<el-table-column prop="inbound" label="在途库存" width="120"    sortable="custom">
+		<el-table-column prop="suggest" label="建议采购" width="120"    sortable="custom">
 			<template #default="scope">
-				<span v-if="scope.row.inbound">{{scope.row.inbound}}</span>	 
+				{{scope.row.suggest}} 
+				<span v-if="scope.row.needsuggest" class="font-small">
+				<span class="font-extraSmall" >(</span>
+				<span class="text-red" :title="'缺货'+scope.row.needsuggest+'个'">{{scope.row.needsuggest}}</span>
+				<span class="font-extraSmall">)</span>
+				</span>
+				<div class="font-extraSmall"><span >在途：</span>
+				<span v-if="scope.row.inbound">{{scope.row.inbound}}</span>
 				<span v-else>0</span>	 
+				</div>
+				
 			</template>	
 		</el-table-column>
 		<el-table-column prop="inbound" label="采购数量" width="120"    sortable="custom">
 			<template #default="scope">
 				 <el-input v-model="scope.row.amount" @input="scope.row.amount=CheckInputInt(scope.row.amount)" ></el-input>
-			     <div v-if="scope.row.suggest"><span class="font-extraSmall">建议:</span>{{scope.row.suggest}}</div>
+			     
 			</template>	
 		</el-table-column>
 		 <el-table-column prop="inbound" label="采购记录" width="130"   >
@@ -204,7 +221,7 @@
 </template>
 
 <script setup>
-	import {ref,reactive,toRefs,onMounted,} from "vue"
+	import {ref,reactive,toRefs,onMounted,inject} from "vue"
 	import {Copy,MenuUnfold,Plus,SettingTwo,Help,MoreOne} from '@icon-park/vue-next';
 	import {Edit } from '@element-plus/icons-vue';
 	import Header from "./components/header.vue"
@@ -221,6 +238,7 @@
 	import warehouseApi from '@/api/erp/warehouse/warehouseApi.js';
 	import consumablesApi from '@/api/erp/material/consumablesApi.js';
 	import {getLast} from '@/api/erp/purchase/plan/planApi';
+	const emitter = inject("emitter");
 	const headerRef=ref();
 	let router = useRouter()
 	const globalTable=ref();
@@ -237,7 +255,7 @@
 		pricelist:[],
 		pconsumableList:[],
 		queryParams:{},
-		defaultSort:{"prop": 'needinboundamount', "order": 'descending' }
+		defaultSort:{"prop": 'suggest', "order": 'descending' }
 		})
 		let {loading,tableData,tagsList,markprops,tagsValue,checkTags,nowTagProRow,markVisable,queryParams,defaultSort,
 		inventoryList,pricelist,pconsumableList,}=toRefs(state)
@@ -253,6 +271,7 @@
 			  })
 		  }
 		  function productEdit(row){
+			     emitter.emit("removeCache", "编辑辅料"+row.sku);
 				 router.push({
 				 	path:'/localproduct/editinfo',
 				 	query:{
@@ -278,27 +297,12 @@ function loadTableData(params){
 			state.tableData.records.forEach(item=>{
 				item.amount=item.planamount;
 				item.scVisible=false;
-				var needinboundamount=0;
-				if(item.needinboundamount){
-					needinboundamount=parseInt(item.needinboundamount);
-				}
-				var needamount=0;
-				if(item.needamount){
-					needamount=parseInt(item.needamount);
-				}
-				var fulfillable=0;
-				if(item.fulfillable){
-					fulfillable=parseInt(item.fulfillable);
-				}
-				var inbound=0;
-				if(item.inbound){
-					inbound=parseInt(item.inbound);
-				}
-				item.suggest=needinboundamount+needamount-inbound-fulfillable;
-				if(item.suggest<0){
-					item.suggest=0;
-				}
 				item.last="--";
+				if(item.needsuggest){
+					if(parseInt(item.needsuggest)<0){
+						item.needsuggest=0;
+					}
+				}
 				getLast({id:item.id}).then(res=>{
 					item.last=res.data;
 				})

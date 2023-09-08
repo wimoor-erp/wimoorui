@@ -13,6 +13,13 @@ export function getProductMonthSales(data){
 export function clear(data){
   	 return request.post('/amazon/api/v1/report/product/presale/clear',data);
 }
+export function getProductPreSalesByMonth(data){
+	return request.post('/amazon/api/v1/report/product/presale/getProductPreSalesByMonth',data);
+}
+export function getProductPreSales(data){
+	return request.post('/amazon/api/v1/report/product/presale/getProductPreSales',data);
+}
+
 export function downExcelTemp(data,callback){
 	return request({url:"/amazon/api/v1/report/product/presale/downExcelTemp",
 				                    responseType:"blob",

@@ -61,7 +61,7 @@
 										</td>
 										<td class="font-bold text-yellow">{{tableData.country[country.market].profit}}</td>
 									</tr>
-								 	<tr v-for="item in tableData.country[country.market].resultList" >
+								 	<tr v-for="item in tableData.country[country.market].resultList" :class="item.margin=='30.0%'?'font-bold':''">
 										<td >{{item.margin}}</td>
 										<td>{{item.sellingPrice}}</td>
 										<td>{{item.profit}}</td>
@@ -75,7 +75,7 @@
 								 	    <td><el-input  disabled/></td>
 								 		<td></td>
 								 	</tr>
-								  	<tr v-for="item in marginOptions">
+								  	<tr v-for="item in marginOptions" :class="item.margin=='30.0%'?'font-bold':''">
 								 		<td>{{item*100}}%</td>
 								 		<td></td>
 								 		<td></td>
@@ -110,7 +110,8 @@
 		    props.tableData.country[market].sellingPrice=CheckInputFloat(props.tableData.country[market].sellingPrice)
 		}
 		var price=props.tableData.country[market].sellingPrice;
-		if(price.substring(price.length-1,price.length)=="."){
+		var myprice=""+price;
+		if(myprice.substring(myprice.length-1,myprice.length)=="."||(myprice.length-2>=0&&myprice.substring(myprice.length-2,myprice.length)==".0")){
 			return ;
 		}
 		emit('dataChange',props.tableData);
@@ -118,6 +119,7 @@
 	function rateInput(){
 		emit('rateChange',props.tableData);
 	}
+ 
 	onMounted(()=>{
 		 
 	})
@@ -142,6 +144,9 @@
 		padding:2px 8px;
 		text-align: center;
 		border-right:0;
+	}
+	.standrate{
+		background-color:red;
 	}
 	.sd-table{
 		border:none;

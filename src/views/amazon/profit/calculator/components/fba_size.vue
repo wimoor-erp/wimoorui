@@ -7,7 +7,7 @@
 <ul class="card-tabs"  v-if="countryOptions" >
 	<li v-for="market in countryOptions" >
 		<span v-if="tableData.country&&tableData.country[market.market]&&tableData.country[market.market].productTier">
-		<el-link :href="countryFee[market.market]" v-if="market.market=='US'&&tableData.country[market.market].outboundWeight<1">
+		<el-link target="_blank" :href="countryFee[market.market]" v-if="market.market=='US'&&tableData.country[market.market].outboundWeight<1">
 		     {{market.name}} Product Tier:  {{tableData.country[market.market].productTier}} 
 			 <span v-if="isSmlAndLight=='true'">{{tableData.country[market.market].outboundWeight}} oz</span>
 			 <span v-else>{{tableData.country[market.market].outboundWeight*16}} oz</span>

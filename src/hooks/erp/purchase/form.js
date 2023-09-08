@@ -1,5 +1,6 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import purchaselistApi from '@/api/erp/purchase/form/listApi.js';
+import {dateFormat,formatFloat,dateTimesFormat,CheckInputFloat,CheckInputInt} from '@/utils/index.js';
 export	function updateItem(sub){
 		purchaselistApi.updatePrice({"id":sub.id,"amount":sub.edit_amount,"price":sub.edit_itemprice,"totalprice":sub.edit_orderprice}).then((res)=>{
 			if(res.data){
@@ -34,7 +35,6 @@ export	function changeItemPrice(sub){
 		}
 	}
 export	function handleChanges(row){
-	console.log(row);
 			if(row.paystatus==3){
 				ElMessage({
 				  type: 'error',
@@ -77,14 +77,21 @@ export function handleDelete(row){ 	//单据作废
 			   })
 		}
 	}
-export function updatenotice(id,notice,row){
+export function updatenotice(id,notice,row,key,proxy){
  	purchaselistApi.updateNotice({"entryid":id,"notice":notice}).then((res)=>{
  		if(res.data){
  			row.remark= notice;
  			ElMessage({
  			  type: 'success',
  			  message: '备注修改成功！',
- 			})
+ 			});
+			var pop=proxy.refs[key];
+			if(pop instanceof Array){
+				pop[0].hide();
+			}else{
+				pop.hide();
+			}
+			//proxy.$refs[`popover-${scope.$index}`].doClose()
  		}
  	});
  }

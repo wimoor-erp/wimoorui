@@ -17,34 +17,43 @@
 					</el-select>
 		        </el-space>
 				
-				<div class='rt-btn-group' style="margin-bottom:20px;">
-				 <el-button style="float:right;"  @click="downloadList">导出</el-button>
+				<div class='rt-btn-group' >
+				 <el-button   @click="downloadList">导出</el-button>
 				</div>
 				
 				
 			 </el-row>
-			 <el-table :data="tableData" v-loading="loading" >
-				 <el-table-column prop="name" label="店铺"   />
+			 <el-table :data="tableData" 
+			 :row-class-name="rowclassname"
+			 v-loading="loading" >
+				 <el-table-column prop="name" label="店铺"   >
+					 <template #default="scope">
+						 <el-space>
+						<el-icon v-show="scope.row.pid=='0'" class="ic-cen font-small"><ArrowDownBold /></el-icon> 
+						{{scope.row.name}}
+						</el-space>
+					 </template>
+				 </el-table-column >
 				 <el-table-column prop="tocurrency" label="币种"  />
-				 <el-table-column prop="principal" label="销售额" >
+				 <el-table-column prop="principal" label="销售额" align="right">
 				 </el-table-column>
-				 <el-table-column prop="commission" label="销售佣金" >
+				 <el-table-column prop="commission" label="销售佣金" align="right">
 				 </el-table-column>
-				 <el-table-column prop="fbafee" label="FBA费用" >
+				 <el-table-column prop="fbafee" label="FBA费用" align="right">
 				 </el-table-column>
-				 <el-table-column prop="refund" label="退款金额" >
+				 <el-table-column prop="refund" label="退款金额" align="right">
 				 </el-table-column>
-				 <el-table-column prop="storagefee" label="仓储费" >
+				 <el-table-column prop="storagefee" label="仓储费" align="right">
 				 </el-table-column>
-				 <el-table-column prop="advfee" label="广告费" >
+				 <el-table-column prop="advfee" label="广告费" align="right">
 				 </el-table-column>
-				 <el-table-column prop="other" label="其它" >
+				 <el-table-column prop="other" label="其它" align="right">
 				 </el-table-column>
-				 <el-table-column prop="setin" label="结算收入" >
+				 <el-table-column prop="setin" label="结算收入" align="right">
 				 </el-table-column>
-				 <el-table-column prop="price" label="采购成本" >
+				 <el-table-column prop="price" label="采购成本" align="right">
 				 </el-table-column>
-				 <el-table-column prop="profit" label="利润" >
+				 <el-table-column prop="profit" label="利润" align="right">
 				 </el-table-column>
 			 </el-table>
 		</div>
@@ -58,6 +67,7 @@
 		import { ElMessage, ElMessageBox} from 'element-plus';
 		import settlementAccRptApi from '@/api/amazon/finances/settlementAccRptApi.js';
 		import { outputmoney} from '@/utils/index';
+		import {ArrowDownBold} from '@element-plus/icons-vue'
 		let state=reactive({
 			dateOptions:[{label:'结算日期',value:''},{label:'转账日期',value:'acc'}],
 			queryParams:{datetype:"",currency:"CNY"},
@@ -114,12 +124,21 @@
 		function downloadList(){
 			settlementAccRptApi.downloadSettlementOverAll(state.queryParams);
 		}
+		function rowclassname({row}){
+			if(row.pid=='0'){
+				return 'sumrowclass'
+			}
+		}
 		onMounted(()=>{
 			 
 		});
 	</script>
 	
-	<style scoped="scoped">
+	<style >
+		.sumrowclass{
+			background:#f1f1f1!important;
+			font-weight:700;
+		}
 	</style>
 	
 

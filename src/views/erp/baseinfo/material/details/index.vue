@@ -76,7 +76,7 @@ import {redirectToList} from '@/utils/page_helper.js';
 import { ElMessage } from 'element-plus'
 import materialApi from '@/api/erp/material/materialApi.js';
 	    const emitter = inject("emitter"); // Inject `emitter`
-		let activeName =ref('1')
+		let activeName =ref('1');
 		const infoRef=ref({});
 		let router = useRouter()
 		let data=ref({});
@@ -84,7 +84,9 @@ import materialApi from '@/api/erp/material/materialApi.js';
 		let isdelete=ref("false");
 		const mid=router.currentRoute.value.query.details;
 		const type=router.currentRoute.value.query.type;
+		var scrolltopobj=null;
 		function scroll(obj){
+			scrolltopobj=obj.scrollTop;
 			activeName.value = tabScroll(obj,"tab-scroll")
 		}
 		 function closeTab(){
@@ -112,6 +114,7 @@ import materialApi from '@/api/erp/material/materialApi.js';
 			})
 		}
 		function editinfo(){
+	        emitter.emit("removeCache", "编辑产品");
 			router.push({
 				path:'/localproduct/editinfo',
 				query:{
@@ -120,10 +123,12 @@ import materialApi from '@/api/erp/material/materialApi.js';
 				  details:mid,
 				  replace:true,
 				  type:type,
+				  scrolltopobj:scrolltopobj
 				}
 			}) 
 		}
 		function copyinfo(){
+			emitter.emit("removeCache", "编辑产品");
 			router.push({
 				path:'/localproduct/editinfo',
 				query:{
@@ -132,6 +137,7 @@ import materialApi from '@/api/erp/material/materialApi.js';
 				  details:mid,
 				  iscopy:'ok',
 				  type:type,
+				  scrolltopobj:scrolltopobj
 				}
 			}) 
 		}

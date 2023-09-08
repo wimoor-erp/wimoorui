@@ -32,8 +32,8 @@ import request from "@/utils/request";
  export function clearItem(data){
  	 return request.get("/erp/api/v1/purchase/plan/item/clear",{params:data});
  }
- export function listItem(data){
- 	 return request.get("/erp/api/v1/purchase/plan/item/list",{params:data});
+ export function listItem(planid,data){
+ 	 return request.post("/erp/api/v1/purchase/plan/item/list/"+planid,data);
  }
  export function batchItem(data){
  	 return request.post("/erp/api/v1/purchase/plan/item/batch",data);

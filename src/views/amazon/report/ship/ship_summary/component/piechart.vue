@@ -2,13 +2,14 @@
 	<div style="margin-left:5px;margin-right:5px;margin-bottom:10px;">
     <div class="pag-radius-bor" style="padding:0px" :body-style="{ padding: '0px'}" >
 		  <h4 style="padding-left:10px;padding-top:10px;" class=" text-left">{{name}}</h4>
-      <div :id="name" style="height:180px;width:100%"></div>
+      <div :id="uuid" style="height:180px;width:100%"></div>
     </div>
 	</div>
 </template>
 <script setup>
 import * as echarts from "echarts";
-import { ref,reactive,onMounted,watch,toRefs } from 'vue'
+import { ref,reactive,onMounted,watch,toRefs } from 'vue';
+  import {guid} from '@/utils/index';
  let prop=defineProps({
  	  data:[],
 	  name:"",
@@ -17,6 +18,12 @@ import { ref,reactive,onMounted,watch,toRefs } from 'vue'
  let {
    data,name,keyvalue
  } =toRefs(prop);
+ const state = reactive({
+ 				  uuid:guid(),
+ 				});
+ const {
+   uuid,
+ } = toRefs(state);
  var kong=['#FF6700','#ff9249','#ffa76c','#ffc59e'];
  var lu=  ["#67c23a","#8dd968","#ade393","#d2f7c1"];
  var hai= ['#409eff','#66b1ff','#8cc5ff','#b3d8ff'];
@@ -63,7 +70,10 @@ import { ref,reactive,onMounted,watch,toRefs } from 'vue'
 	}
 		  
 	function generalChart(summary,datas,colors) {
-	  var myChart = echarts.init(document.getElementById(prop.name));
+	  var myChart = echarts.init(document.getElementById(state.uuid));
+	  if(myChart!=null){
+	  	 myChart.clear();
+	  }
 	  var option = {
 	    tooltip: {
 	      trigger: "item"

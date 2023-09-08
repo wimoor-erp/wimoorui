@@ -1,6 +1,7 @@
 <template>
    <div class="tab-head"  style="width:600px;">
-	 <el-tabs v-model="editableTabsValue" type="card" tab-position="bottom" @tab-click="pushShow"    @tab-remove="removeTab" >
+	 <el-tabs
+	  v-model="editableTabsValue" type="card" tab-position="bottom" @tab-click="pushShow"    @tab-remove="removeTab" >
     <el-tab-pane
       v-for="item in editableTabs"
       :key="item.name"
@@ -22,7 +23,7 @@
 		            <el-dropdown-item @click="closeLeft()">关闭左边</el-dropdown-item>
 		          </el-dropdown-menu>
 		        </template>
-		      </el-dropdown>  
+		      </el-dropdown> 
 	</template>
     </el-tab-pane>
   </el-tabs>
@@ -30,7 +31,7 @@
 </template>
 <script>
 import { useRoute,useRouter } from 'vue-router'
-import { defineComponent,ref,reactive,watch,onMounted,inject ,getCurrentInstance} from 'vue'
+import { defineComponent,ref,reactive,watch,onMounted,inject ,getCurrentInstance,nextTick} from 'vue'
 import {ArrowDown,Refresh} from '@element-plus/icons-vue'
 
 export default defineComponent({
@@ -45,14 +46,24 @@ export default defineComponent({
                  closable:false,
 				 meta:{ keepAlive: true }
              },
-         ])
+         ]);
          let route = useRoute()
          let router = useRouter()
+		  router.beforeEach((to,from)=>{
+			    var indexm=-1;
+			   editableTabs.value.forEach((item,index)=>{
+					 if(item.name==route.query.title){
+						item.scrolltop=window.pageYOffset;
+						console.log(item);
+					 }
+			   })
+		  });
          router.afterEach((to,from)=>{
              //如果to.path该页签存在于当前数组中---就执行激活当前页签---否则就新增加页签
              let newarr =[]
 			 let oldname=editableTabsValue.value;
 			 let indexm=-1;
+			 
 			 if(to.path=="/blank"){
 				 return;
 			 }
@@ -68,6 +79,7 @@ export default defineComponent({
             if(indexm>-1){
 				if(route.query.path=="/home"){
 					editableTabsValue.value='/home';
+					nextTick(() => {document.documentElement.scrollTop=0;});
 				}else{
 					let tab=JSON.parse(JSON.stringify(route.query));
 					editableTabsValue.value =route.query.title;
@@ -79,12 +91,20 @@ export default defineComponent({
 					    delete tabquery.replace;
 						delete tab.refresh;
 					    delete tab.replace;
-					editableTabs.value[indexm]=Object.assign(tabquery, tab);
+					var scrolltop=tabquery.scrolltop;
+					    delete tabquery.scrolltop;
+						if(scrolltop>0){
+							 nextTick(() => {document.documentElement.scrollTop=scrolltop;});
+						}else{
+							 nextTick(() => {document.documentElement.scrollTop=0;});
+						}
+					   editableTabs.value[indexm]=Object.assign(tabquery, tab);
 				}
             }else{
-                addTab()
+                addTab();
+				nextTick(() => {document.documentElement.scrollTop=0;});
             }
-			if(replace&&oldname!="/home"){
+			if(replace&&oldname!="/home"&&to.path!=from.path){
 				 removeTab(oldname);
 			}
          })
@@ -92,6 +112,8 @@ export default defineComponent({
 			 if(route.query.title){
 				 addTab()
 			 }
+			 
+			
 		 })
 		 
 		 function closeOther(){
@@ -247,17 +269,21 @@ export default defineComponent({
    .tab-head  .el-tabs__nav{
 	     display: flex;
    } 
-   .closeTab{
-	   opacity: 0;
-	  width:0;
-	   height:0;
-	   
+  .closeTab{
+	   width:14px;
+	   opacity:0;
+	   margin-left:8px;
    }
  .el-tabs__item:hover .closeTab{
-   	   opacity:1;
-   	   width:14px;
-   	   height:14px;
-	   margin-left:8px;
+	   opacity:1;
 	   color: #FF6700;
+   }
+   .el-tabs--card>.el-tabs__header .el-tabs__item.is-closable:hover{
+	   padding-left: 13px;
+	   padding-right: 13px;
+   }
+   .el-tabs--card>.el-tabs__header .el-tabs__item.is-active:hover{
+	   padding-left: 20px;
+	   padding-right:20px;
    }
 </style>

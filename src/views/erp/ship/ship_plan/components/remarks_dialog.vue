@@ -34,7 +34,7 @@
 	<script setup>
 		import {ref,reactive,onMounted,toRefs} from "vue";
 		import markApi from '@/api/erp/material/markApi';
-		import {dateFormat,dateTimesFormat} from "@/utils/index";
+		import {dateFormat,dateTimesFormat,decodeText} from "@/utils/index";
 		import { ElMessage, ElMessageBox } from 'element-plus';
 		const emit = defineEmits(['confirm']);
 		const state=reactive({

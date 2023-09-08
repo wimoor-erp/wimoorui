@@ -78,7 +78,7 @@
 	import {Search,ArrowDown,} from '@element-plus/icons-vue'
 	import {MenuUnfold,Plus,SettingTwo,Help,Copy,MoreOne} from '@icon-park/vue-next';
 	import { useRoute,useRouter } from 'vue-router'
-	 import { ref,reactive,onMounted,watch,onBeforeRouteUpdate } from 'vue'
+	 import { ref,reactive,onMounted,watch,onBeforeRouteUpdate ,inject} from 'vue'
 	 import groupApi from '@/api/amazon/group/groupApi.js';
 	 import marketApi from '@/api/amazon/market/marketApi.js';
 	 import warehouseApi from '@/api/erp/warehouse/warehouseApi.js';
@@ -90,6 +90,7 @@
 		components:{MenuUnfold,Search,ArrowDown,Plus,SettingTwo,Help,Copy,MoreOne,Group,Warehouse,Datepicker},
 		emits:["getdata"],
 		setup(props,context){
+			const emitter = inject("emitter");
 			let router = useRouter()
 			let queryParam={}
 			let selectlabel=ref('sku')
@@ -98,6 +99,7 @@
 			let color=ref("");
 			let isload=true;
 			function addShipment(){
+				emitter.emit("removeCache", "添加货件");
 				router.push({
 					path:'/invoice/addshipment',
 					query:{

@@ -1,8 +1,12 @@
 <template>
-  <GlobalTable ref="globalTable"   @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 302px)"  :stripe="true" @loadTable="loadTableData"  >
+  <GlobalTable ref="globalTable"   
+    @selectionChange='selectChange' 
+     :tableData="tableData" 
+     :stripe="true" 
+	 :rowClassName="checkedRowClass"
+    @loadTable="loadTableData"  >
 	<template #field>
-	  <el-table-column type="selection" width="40"></el-table-column>
- 
+	   <el-table-column type="selection" width="40"></el-table-column>
 	   <el-table-column  prop="sku" label="产品信息" max-width="300"  show-overflow-tooltip sortable="custom">
 	      <template #default="scope">
 			  <el-space>
@@ -11,8 +15,8 @@
 				  	  					<el-image   v-else :src="require('@/assets/image/empty/noimage40.png')"   class="pointer img40"  ></el-image>
 				  </div>
 				  <div>
-					  <div class='sku ' >{{scope.row.sku}}
-					  					   <el-tag class="pointer" v-if="scope.row.issfg=='2'" size="small" effect="plain" type="warning" @click.stop="showAssembly(scope.row)">组装</el-tag>
+					  <div  ><span class='font-bold '>{{scope.row.sku}}</span>
+					   <el-tag class="pointer" v-if="scope.row.issfg=='2'" size="small" effect="plain" type="warning" @click.stop="showAssembly(scope.row)">组装</el-tag>
 					  </div>
 					   <div class='name font-extraSmall'>{{scope.row.mname}}</div>
 					   <div>
@@ -24,12 +28,57 @@
 			  </el-space>
 	     </template>
 	   </el-table-column>
-		
+		<el-table-column  label="状态"  prop="auditstatus" >
+		   <template #default="scope">
+			   <el-space>
+			   <el-tag  v-if="scope.row.auditstatus==0" type="danger">已作废</el-tag>
+			   <el-tag  v-if="scope.row.auditstatus==1" type="warning">待审核
+			   <span v-if="scope.row.ischange==1" style="color: #ff0f47;">
+			        <el-icon @click="handlePurchase(scope.row)"><Warning /></el-icon>
+			   </span>
+			   </el-tag>
+			   <el-tag  v-if="scope.row.auditstatus==2 && scope.row.paystatus!=3" type="success">执行中</el-tag>
+			   <el-tag  v-if="scope.row.auditstatus==3" type="info">已完成</el-tag>
+			   <el-tag  v-if="scope.row.paystatus==3" type="warning">请款中</el-tag>
+			   <div v-if="scope.row['orderstatus']">
+							  <span v-if="orderStatus[scope.row.orderstatus]" class="tag-group"><span class="before">1688</span>
+							     <span :class="orderStatus[scope.row.orderstatus].color" style="padding-left:2px">   {{orderStatus[scope.row.orderstatus].simple}} </span> 
+							  </span> 
+							  <span v-else class="tag-group"><span class="before">1688</span> 待收货<!-- {{sub.orderstatus}} --></span> 
+			   		 </div>
+			   </el-space>
+		      <el-popover
+			    placement="top-start"
+			    title="备注"
+			    :width="200"
+			    trigger="click"
+				:ref="`popover-${scope.row.id}`"
+				@show="showRemarkPopover(scope.row)"
+			  >
+			  	<el-input
+			  	    v-model="scope.row.remark2"
+			  	    :rows="2"
+			  	    type="textarea"
+			  	    placeholder="请输入"
+			  	  />
+			  		<el-button type="primary" class='m-t-8' @click="updatenotice(scope.row.id,scope.row.remark2,scope.row,'popover-'+scope.row.id,proxy);">确定</el-button>
+			    <template #reference>
+			  		<div class="table-edit-flex font-small" >
+						<span v-if="scope.row.remark!=''&&scope.row.remark!=undefined">
+						<span class='font-extraSmall word-break'>备注:</span>
+						{{scope.row.remark}}</span>
+						<span v-else >-</span>
+			      <el-icon><Edit /></el-icon>
+			  		</div>
+			    </template>
+			  </el-popover>
+		  </template>
+		</el-table-column>
 		<el-table-column  label="供应商信息" prop="suppliername"  show-overflow-tooltip   sortable="custom" >
 		   <template #default="scope">
 			   <p></p>
 			   <p class="pointer" >
-			   <el-link :underline="false"  @click.stop="handleToSupplier(scope.row.purchaseUrl)">{{scope.row.suppliername}}</el-link>
+			   <el-link :underline="false"  @click.stop="handleToSupplier(scope.row.purchaseUrl)"><span class="text-gray ">供应商：</span>{{scope.row.suppliername}}</el-link>
 			    </p>
 			   <el-popover
 			     v-if="scope.row.auditstatus==1"
@@ -48,125 +97,111 @@
 			   		<el-button type="primary" class='m-t-8' @click="updateCycleDate(scope.row.materialid,scope.row.delivery_cycle2,scope.row)">确定</el-button>
 			     <template #reference>
 			   		<div class="table-edit-flex">
-						<span class="font-extraSmall">供货周期(天)：</span>
+						<span class="text-gray ">供货周期(天)：</span>
 			       <span v-if="scope.row.delivery_cycle!=''&&scope.row.delivery_cycle!=undefined">{{scope.row.delivery_cycle}}</span>
 			   							   <span v-else >-</span>
 			       <el-icon><Edit /></el-icon>
 			   		</div>
 			     </template>
 			   </el-popover>	
-			  <p v-else><span class="font-extraSmall">供货周期(天)：</span>
+			  <p v-else><span class=" text-gray">供货周期(天)：</span>
 								{{scope.row.delivery_cycle}}
 			  </p> 
-               <p><span class="font-extraSmall">起订量：</span>{{scope.row.moq}}</p>
+               <p><span class="text-gray">起订量：</span>{{scope.row.moq}}</p>
 		  </template>
 		</el-table-column>
         <el-table-column  label="订单信息"  prop="number" show-overflow-tooltip  sortable="custom"  >
 		   <template #default="scope">
-			<p>{{scope.row.number}}</p>
-			<p class="font-small"><span class="font-extraSmall">入库仓：</span>{{scope.row.warehousename}}</p>
-			<p><span class="font-extraSmall ">{{scope.row.creatorname}} 创建于 {{dateFormat(scope.row.createdate)}}</span></p>
+			<p><span class="text-gray ">订单编码：</span>{{scope.row.number}} <span class="text-gray"> ({{scope.row.creatorname}})</span></p>
+			<p class="font-base"><span class="text-gray">入库仓库：</span>{{scope.row.warehousename}}</p>
+			<p v-if="tableState=='4' || tableState=='5' || tableState=='6'"> <span class="text-gray">审核日期:</span>{{dateFormat(scope.row.audittime)}}</p>
+			<p v-else><span class="text-gray ">创建日期：</span>{{dateFormat(scope.row.createdate)}} </p>
 		  </template>
 		</el-table-column>
-		<el-table-column  label="状态"  prop="auditstatus"  >
+
+		<el-table-column  label="采购信息"  width="130" >
 		   <template #default="scope">
-			   <el-tag  v-if="scope.row.auditstatus==0" type="danger">已作废</el-tag>
-			   <el-tag  v-if="scope.row.auditstatus==1" type="warning">待审核
-			   <span v-if="scope.row.ischange==1" style="color: #ff0f47;">
-			        <el-icon @click="handlePurchase(scope.row)"><Warning /></el-icon>
+			   <div>
+			   <span class="word-break text-gray">单价：</span>
+			   <span v-if="scope.row.withoutEdit==true">￥{{scope.row.itemprice}}
+			   <div class="table-edit-flex pull-right">
+			    <el-icon v-if="scope.row.auditstatus==1" @click="handleChanges(scope.row)"><Edit /></el-icon>
+			   </div>
 			   </span>
-			   </el-tag>
-			   <el-tag  v-if="scope.row.auditstatus==2 && scope.row.paystatus!=3" type="success">执行中</el-tag>
-			   <el-tag  v-if="scope.row.auditstatus==3" type="info">已完成</el-tag>
-			   <el-tag  v-if="scope.row.paystatus==3" type="warning">请款中</el-tag>
-		      <el-popover
-			    placement="top-start"
-			    title="备注"
-			    :width="200"
-			    trigger="click"
-				@show="showRemarkPopover(scope.row)"
-			  >
-			  	<el-input
-			  	    v-model="scope.row.remark2"
-			  	    :rows="2"
-			  	    type="textarea"
-			  	    placeholder="请输入"
-			  	  />
-			  		<el-button type="primary" class='m-t-8' @click="updatenotice(scope.row.id,scope.row.remark2,scope.row)">确定</el-button>
-			    <template #reference>
-			  		<div class="table-edit-flex font-small" >
-							<span class='font-extraSmall'>备注:</span>
-						<span v-if="scope.row.remark!=''&&scope.row.remark!=undefined">{{scope.row.remark}}</span>
-						<span v-else >-</span>
-			      <el-icon><Edit /></el-icon>
-			  		</div>
-			    </template>
-			  </el-popover>
-		  </template>
-		</el-table-column>
-		<el-table-column  label="采购信息"  width="140" >
-		   <template #default="scope">
-			   <div class="flex-center">
-			   <span class="word-break font-extraSmall">单价(￥)：</span>
-			   <span v-if="scope.row.withoutEdit=='1'">{{scope.row.itemprice}}</span>
-			   <el-input size="small" v-model="scope.row.edit_itemprice" @input="changeItemPrice(scope.row)" v-else></el-input>
+			   <el-input  v-model="scope.row.edit_itemprice" @input="changeItemPrice(scope.row)" v-else></el-input>
 			   </div>
-			   <div class="flex-center ">
-			   <span class="word-break font-extraSmall">数量：</span>
-			   <span v-if="scope.row.withoutEdit=='1'">{{scope.row.amount}}</span>
-			   <el-input size="small" v-model="scope.row.edit_amount"   @input="changeItemAmount(scope.row)" v-else></el-input>
+			   <div >
+			   <span class="word-break text-gray">数量：</span>
+			   <span v-if="scope.row.withoutEdit==true">{{scope.row.amount}}
+			   <div class="table-edit-flex pull-right">
+			    <el-icon v-if="scope.row.auditstatus==1" @click="handleChanges(scope.row)"><Edit /></el-icon>
 			   </div>
-			   <div class="flex-center ">
-			   <span class="word-break font-extraSmall">金额(￥)：</span>
-			   <span v-if="scope.row.withoutEdit=='1'">{{scope.row.orderprice}}</span>
-			   <el-input size="small" v-model="scope.row.edit_orderprice"  @input="changeItemOrderprice(scope.row)" v-else></el-input>
+			   </span>
+			   <el-input  v-model="scope.row.edit_amount"   @input="changeItemAmount(scope.row)" v-else></el-input>
+			   </div>
+			   <div >
+			   <span class="word-break text-gray">金额：</span>
+			   <span v-if="scope.row.withoutEdit==true">￥{{scope.row.orderprice}}
+			   <div class="table-edit-flex pull-right">
+			    <el-icon v-if="scope.row.auditstatus==1" @click="handleChanges(scope.row)"><Edit /></el-icon>
+			   </div>
+			   </span>
+			   <el-input  v-model="scope.row.edit_orderprice"  @input="changeItemOrderprice(scope.row)" v-else></el-input>
 			   </div>
 		  </template>
 		</el-table-column>
 		
-		<el-table-column v-if="tableState=='4' || tableState=='5' || tableState=='6'" label="到货数" prop="auditstatus"  width="160">
+		<el-table-column v-if="tableState=='4' || tableState=='5' || tableState=='6'" label="到货数" prop="auditstatus"  width="200">
 			 <template #default="scope">
-				  <div> {{scope.row.totalin}} </div>
-				  <div>
-					  <el-progress :percentage="(scope.row.totalin/scope.row.amount)*100"  :status="scope.row.inwhstatus==0?'':'success'">
-					       <el-tag v-if="scope.row.inwhstatus==0&&scope.row.totalin>0" effect="plain" type="primary"  round size="small">入库中</el-tag>
+				 <!-- <div> {{scope.row.totalin}} </div> -->
+				  <div class="flex-center">
+					   <span class="text-gray">入库进度:</span>
+					  <el-progress style="flex-grow:1" :percentage="(scope.row.totalin/scope.row.amount)*100"  :status="scope.row.inwhstatus==0?'':'success'">
+					       <el-tag v-if="scope.row.inwhstatus==0&&scope.row.totalin>0" effect="plain" type="info"  round size="small">入库中</el-tag>
 						   <el-tag v-else-if="scope.row.inwhstatus==0" effect="plain" type="warning"  round size="small">未入库</el-tag>
 					       <el-tag v-else effect="plain" type="success"  round size="small">已入库</el-tag>
 					  </el-progress>
 				  </div>
-				 <p v-if="dateFormat(scope.row.deliverydate)<dateFormat(new Date())" style="color: #ff0f47;" > <span class="font-extraSmall">预计到货:</span>{{dateFormat(scope.row.deliverydate)}}</p>
-				  <p v-else > <span class="font-extraSmall">预计到货:</span>{{dateFormat(scope.row.deliverydate)}}</p>
+				  <div class="flex-center">
+					  <span class="text-gray">付款进度:</span>
+				  	  <el-progress style="flex-grow:1" :percentage="(scope.row.totalpay/scope.row.orderprice)*100"  :status="scope.row.paystatus==0?'':'success'">
+				  		<el-tag v-if="scope.row && scope.row.paystatus==1" effect="plain" type="success"  round size="small">已结清</el-tag>
+				  		<el-tag v-else effect="plain" type="warning"  round size="small">未结清</el-tag> 
+				  	  </el-progress>
+				  </div>
+				<p>  <span class="text-gray">预计到货:</span><DeliveryDate :sub="scope.row"></DeliveryDate></p>
 			 </template>
 		</el-table-column>
-		<el-table-column v-if="tableState=='4' || tableState=='5' || tableState=='6'" label="付款金额" prop="auditstatus" width="160" >
-			 <template #default="scope">
-				<div :id="scope.row.id"> ￥{{scope.row.totalpay}}
-				</div>
+		<el-table-column  label="操作" width="140" fixed="right" >
+			<template #header>
+				<el-space>
+				<div>操作</div>
 				<div>
-					  <el-progress :percentage="(scope.row.totalpay/scope.row.orderprice)*100"  :status="scope.row.paystatus==0?'':'success'">
-						<el-tag v-if="scope.row && scope.row.paystatus==1" effect="plain" type="success"  round size="small">已结清</el-tag>
-						<el-tag v-else effect="plain" type="warning"  round size="small">未结清</el-tag> 
-					  </el-progress>
+					 <el-tooltip  placement="top"  content="上一页">
+						 <span style="margin-right:3px;" v-if="parseInt(state.queryParams.currentpage)>1"  @click.stop="pageUp()"><el-icon class="pointer" ><ArrowLeft/></el-icon> </span>
+						 <span   v-else  style="color:#dedede;margin-right:3px;"><el-icon ><ArrowLeft/></el-icon> </span>
+					 </el-tooltip>
+
+				     <el-tooltip   placement="top" content="下一页">
+					 <span v-if="parseInt(state.queryParams.currentpage)<(parseInt(state.tableData.total)/parseInt(state.queryParams.pagesize))" 
+					  @click.stop="pageDown()"><el-icon class="pointer" ><ArrowRight /></el-icon></span>
+						<span v-else  style="color:#dedede"><el-icon ><ArrowRight/></el-icon> </span>
+					 </el-tooltip>
 				</div>
-				 <p> <span class="font-extraSmall">审核日期:</span>{{dateFormat(scope.row.audittime)}}</p>
-			 </template>
-		</el-table-column>
-		<el-table-column  label="操作" width="170" fixed="right" >
+				</el-space>
+			</template>
 		   <template #default="scope">
 			   <el-space>
 			   <template v-if="scope.row.auditstatus==1 || scope.row.auditstatus==0">
-			   	<el-dropdown v-if="scope.row.auditstatus==1  && scope.row.withoutEdit==true">
-			   	    <el-button   link type="primary">审核</el-button>
-			   	     <template #dropdown>
-			   	       <el-dropdown-menu>
-			   	         <el-dropdown-item @click="handlePass(scope.row)">通过</el-dropdown-item>
-			   	         <el-dropdown-item @click="handleReturn(scope.row)">驳回 </el-dropdown-item>
-			   	       </el-dropdown-menu>
-			   	     </template>
-			   	   </el-dropdown>
-				   <template v-if="scope.row.auditstatus==1">
-			   	<el-button v-if="scope.row.withoutEdit" link type="primary" @click="handleChanges(scope.row)" >编辑</el-button>
-			   	<el-button link v-else type="primary" @click="updateItem(scope.row)">保存</el-button>
+			   	   <template v-if="scope.row.auditstatus==1  && scope.row.withoutEdit==true">
+					<el-button link type="primary" @click="handlePass(scope.row)">通过</el-button>
+					<el-button link type="primary" @click="handleReturn(scope.row)">驳回 </el-button>
+			   	   </template>
+			     <template v-if="scope.row.auditstatus==1">
+					<el-space v-if="scope.row.withoutEdit==false" >
+					    <el-button link  type="primary" @click="updateItem(scope.row)">保存</el-button>
+						<el-button link  type="primary" @click="cancelChangesub(scope.row)">取消</el-button>
+					</el-space>
 				</template>
 			   	<el-dropdown :hide-on-click="false">
 			   	  <span class="el-dropdown-link">
@@ -220,9 +255,9 @@
   <Details ref="detailsRef"/>
 </template>
 
-<script setup>
-	import {h,ref,reactive,toRefs,defineExpose,defineProps,defineEmits} from 'vue'
-	import {Download,Edit,DeleteFilled,ArrowDown,Warning} from '@element-plus/icons-vue';
+<script setup> 
+	import {h,ref,reactive,toRefs,defineExpose,defineProps,defineEmits,getCurrentInstance} from 'vue'
+	import {Download,Edit,DeleteFilled,ArrowDown,Warning,ArrowLeft,ArrowRight} from '@element-plus/icons-vue';
 	import {MoreOne} from '@icon-park/vue-next';
 	import {useRouter } from 'vue-router'
 	import {ElDivider} from 'element-plus';
@@ -232,9 +267,11 @@
 	import Assembly from "./assembly.vue"; 
 	import Records from "../records.vue";
 	import ChangeRecords from "./change_records.vue"; 
+	import DeliveryDate from "./deliverydate.vue"; 
 	import Receipt from "./receipt.vue";
 	import Payment from "./payment.vue"; 
 	import Details from "./details.vue"; 
+	import orderStatus from '@/model/erp/purchase/open1688/order_status.json';
 	import purchaselistApi from '@/api/erp/purchase/form/listApi.js';
 	import {updateItem,handleChangesub,changeItemPrice,changeItemOrderprice,changeItemAmount,handleChanges,updatenotice,handleDelete,
 	updateCycle,updateCycleDate} from  '@/hooks/erp/purchase/form.js';	const router = useRouter()
@@ -246,15 +283,18 @@
 	const ReceiptRef = ref();
 	const emit = defineEmits(['selectrow','changepay',]);
 	let globalTable=ref();
+	 const   proxy  = getCurrentInstance();
 	const spacer = h(ElDivider, {
 		direction: 'vertical'
 	})
 	const state = reactive({
 		tableData:{records:[],total:0},
 		queryParams:{},
+		checkedRowsData:[],
 	})
 	const {
 		tableData,queryParams,
+		checkedRowsData,
 	} = toRefs(state)
 	const props = defineProps({
 	             tableState:String,
@@ -262,16 +302,28 @@
 	const {
 		tableState,
 	} =toRefs(props);
+	function checkedRowClass({row,rowIndex}){
+		var a = '';
+		state.checkedRowsData.filter(item=>{
+			if(item==row){
+				a='height-currnet-row'
+			}
+		})
+		return a;
+	}
+	
 	function showRemarkPopover(sub){
 	    sub.remark2=sub.remark;
 	}
 	function loadTableData(params){
+		state.queryParams=params;
 		purchaselistApi.list(params).then((res)=>{
 			state.tableData.records = res.data.records;
 			state.tableData.total =res.data.total;
 		})
 	}
 	function selectChange(selection) {
+		state.checkedRowsData = selection
 		 emit('selectrow',selection);
 	}
 
@@ -287,6 +339,9 @@
 			  details:row.materialid,
 			}
 		 })
+	}
+	function cancelChangesub(row){
+		row.withoutEdit=true;
 	}
 	function showDatePopover(sub){
 	    sub.delivery_cycle2=sub.delivery_cycle;
@@ -351,13 +406,23 @@
 		})
 	}
 	function load(params){
-		state.queryParams=params;
 		globalTable.value.loadTable(params);
 	}
 	defineExpose({
 	   load,
 	})
-	
+	function pageUp(){
+		if(parseInt(state.queryParams.currentpage)>1){
+			state.queryParams.currentpage=parseInt(state.queryParams.currentpage)-1;
+			globalTable.value.handleCurrentChange(state.queryParams.currentpage);
+		}
+	}
+	function pageDown(){
+		if(parseInt(state.queryParams.currentpage)<(parseInt(state.tableData.total)/parseInt(state.queryParams.pagesize)+1)){
+			state.queryParams.currentpage=parseInt(state.queryParams.currentpage)+1;
+			globalTable.value.handleCurrentChange(state.queryParams.currentpage);
+		}
+	}
 </script>
 
 <style scoped>
@@ -369,4 +434,30 @@
 	width:60px;
 	height:60px;
 }
+.text-gray{
+	color:#999;
+}
+.pull-right{
+	float:right;
+	margin-top:3px;
+}
+.tag-group{
+	font-size: 12px;
+	border:1px solid #999;
+	color: #999;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	border-radius: 2px;
+}
+.tag-group .before{
+	color: #fff;
+	background-color: #999;
+	padding: 2px;
+}
+</style>
+<style>
+	.height-currnet-row td{
+		background:#fbebe0!important;
+	}
 </style>

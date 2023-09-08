@@ -40,46 +40,39 @@
 			 :defaultSort="{ prop: 'createdate', order: 'descending' }"  @loadTable="loadTableData" :stripe="true"  
 			 style="width: 100%;margin-bottom:16px;">
 				<template #field>
-			    <el-table-column prop="number"  label="订单编号" width="220" sortable="custom" show-overflow-tooltip>
+			    <el-table-column prop="number"  label="订单编号" width="160" sortable="custom" show-overflow-tooltip>
 					<template #default="scope">
-					   <div >{{scope.row.number}}  
-					   <el-tag v-if="scope.row.paystatus==1" type="success">已付款</el-tag>
-					   <el-tag v-if="scope.row.paystatus==0" type="info">未付款</el-tag></div>
+					   <div >{{scope.row.number}}  </div>
 					   <div class='font-extraSmall'>{{scope.row.wname}}</div>
 					 </template>
 					</el-table-column>
+				<el-table-column prop="createdate" label="下单日期" sortable="custom" width="100" >
+					<template #default="scope">
+					{{dateFormat(scope.row.createdate)}}
+					</template>
+				</el-table-column>	
 				<el-table-column prop="image" label="图片" width="65" >
 				   <template #default="scope">
 				    <el-image v-if="scope.row.image" :src="scope.row.image"   style="width:40px;height:40px;"  ></el-image>
 					<el-image v-else :src="require('@/assets/image/empty/noimage40.png')"   style="width:40px;height:40px;"  ></el-image>
 				  </template>
 				</el-table-column>
-			    <el-table-column prop="sku" label="名称/SKU"  sortable="custom" show-overflow-tooltip>
+			    <el-table-column prop="sku" label="SKU" width="140"  sortable="custom" show-overflow-tooltip>
 			       <template #default="scope">
-			          <div class='mname'>{{scope.row.name}}</div>
-			          <div class='sku'>{{scope.row.sku}}  </div>
+			          <div >{{scope.row.sku}}  </div>
 			      </template>
 			    </el-table-column>
-				 <el-table-column prop="supplier"  width="220" label="供应商" sortable="custom" >
+				 <el-table-column prop="supplier"  width="180" label="供应商" show-overflow-tooltip sortable="custom" >
 				 <template #default="scope">
 						<div >{{scope.row.supplier}}</div>
+						<!-- <div>{{scope.row.itemprice}}</div> -->
 					</template>
 				 </el-table-column>
-				  <el-table-column prop="itemprice"  label="单价"  sortable="custom" />
-				 <el-table-column prop="createdate"  width="150" label="创建时间" sortable="custom" >
-						<template #default="scope">
-				 						<div >{{dateFormat(scope.row.createdate)}}</div>
-				 		</template>
-				 </el-table-column>
-				 <el-table-column prop="deliverydate"  width="150" label="预计到货时间" sortable="custom" >
-				 		<template #default="scope">
-				 						<div >{{dateFormat(scope.row.deliverydate)}}</div>
-				 		</template>
-				 </el-table-column>
-				<el-table-column prop="amount" width="120" label="采购数量"  sortable="custom" >
+				 <el-table-column prop="itemprice"  width="100" label="采购单价" sortable="custom" />
+				<el-table-column prop="amount" width="110" label="采购数量"  sortable="custom" >
 					<template #default="scope">
 					    <div >{{scope.row.amount}}</div>
-					    <div class='font-extraSmall' v-if="scope.row.totalin">入库:{{scope.row.totalin}}  </div>
+						<!--div>预估重量</div-->
 					</template>
 				</el-table-column>
 				 <el-table-column prop="orderprice"  width="120" label="采购金额" sortable="custom" >
@@ -92,11 +85,35 @@
 				<template #default="scope">
 					    <div v-if="scope.row.orderprice>=scope.row.totalpay">{{formatFloat(scope.row.orderprice-scope.row.totalpay)}}</div>
 						 <div v-else>0</div>
+						 <div>
+						 <el-tag v-if="scope.row.paystatus==1" type="success">已付款</el-tag>
+						 <el-tag v-if="scope.row.paystatus==0" type="info">未付款</el-tag></div>
 					</template>
 				</el-table-column>
-				  <el-table-column prop="shipfee"  label="运费"  sortable="custom" />
-				    <el-table-column prop="otherfee"  label="其它费用"  sortable="custom" />
-				   <el-table-column prop="orderRemark"  label="备注"  sortable="custom" />
+				  <el-table-column prop="shipfee"  label="运费"  sortable="custom" >
+				    <template #default="scope">
+					  <span v-if="scope.row.shipfee">{{scope.row.shipfee}}</span>
+					  <span v-else>-</span>
+				  	</template>
+				  </el-table-column>
+				    <el-table-column prop="totalin"  label="入库数量" width="110"  sortable="custom" />
+				    <el-table-column prop="otherfee"  label="其它费用" width="110"  sortable="custom" >
+					<template #default="scope">
+										  <span v-if="scope.row.otherfee">{{scope.row.otherfee}}</span>
+										  <span v-else>-</span>
+						</template>
+					</el-table-column>
+					<el-table-column prop="deliverydate"  width="120" label="预计到货时间" sortable="custom" >
+							<template #default="scope">
+											<div >{{dateFormat(scope.row.deliverydate)}}</div>
+							</template>
+					</el-table-column>
+				   <el-table-column prop="orderRemark"  label="备注"  sortable="custom">
+				   <template #default="scope">
+				   					  <span v-if="scope.row.orderRemark">{{scope.row.orderRemark}}</span>
+				   					  <span v-else>-</span>
+				   	</template>
+				   </el-table-column>
 			</template>
 			</GlobalTable>
         </el-row>
@@ -132,6 +149,7 @@
 	  		  listApi.getPayRecSumReport(params).then(res=>{
 	  				 state.tableData.records=res.data.records;
 	  				 state.tableData.total=res.data.total;
+					 console.log(state.tableData.records)
 					 if(params.currentpage==1){
 							 if(res.data.total>0){
 								 state.summary=res.data.records[0].summary;
@@ -168,7 +186,8 @@
 		arr[8]=state.summary.orderprice;
 		arr[9]=state.summary.waitPay;
 		arr[10]=state.summary.shipfee;
-		arr[11]=state.summary.otherfee;
+		arr[11]=state.summary.totalin;
+		arr[12]=state.summary.otherfee;
 	 	return  arr
 	 }
 	 

@@ -170,13 +170,14 @@
 	 <el-upload
 	     :drag="true"
 	     action
+		 ref="uploadRef"
 		 :http-request="uploadFiles"
 		 :limit="1"
+		 :on-exceed="handleExceed"
 		 :before-upload="beforeUpload" 
 		 :show-file-list="true" 
 		 :headers="headers" 
 		 accept=".xls,.xlsx,.zip"
-	     multiple
 	   >
 	     <el-icon class="font-large"><upload-filled /></el-icon>
 	     <div class="el-upload__text">
@@ -272,7 +273,7 @@
 	import {MenuUnfold,Plus,SettingTwo,Help,Copy,MoreOne} from '@icon-park/vue-next';
 	import {Search,ArrowDown,UploadFilled} from '@element-plus/icons-vue'
 	import { useRoute,useRouter } from 'vue-router'
-	import { ElMessage, ElMessageBox } from 'element-plus';
+	import { ElMessage, ElMessageBox,genFileId } from 'element-plus';
 	import Warehouse from '@/components/header/warehouse.vue';
 	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
 	import { ref,reactive,onMounted,watch,toRefs,inject,defineEmits,defineExpose,defineProps } from 'vue'
@@ -283,12 +284,13 @@
 	import materialZipApi from '@/api/erp/material/materialZipApi.js';
 	import {getAllTags} from '@/api/sys/admin/tag.js';
 	import downloadTemplateFileApi from '@/api/erp/common/downloadTemplateFileApi';
-	import downloadhandler from "@/utils/download-handler";
+	import uploadhandler from "@/utils/upload-handler";
 	import filtericon from "@/components/icon/filtericon.vue";
 	import consumableApi from '@/api/erp/purchase/plan/consumableApi.js';
 	onMounted(()=>{
 		changeData();
 	})
+	const uploadRef=ref();
 	const emitter = inject("emitter");
 	const emit = defineEmits(['getdata']);
 	let router = useRouter();
@@ -334,6 +336,7 @@
 				if(props.type=='package'){
 					title="添加包材";
 				}
+				emitter.emit("removeCache", title);
 				router.push({
 					path:'/localproduct/addinfo',
 					query:{
@@ -368,6 +371,7 @@
 				state.uploadTitle="导入产品组装关系";
 			}
 		}
+		
 		function downloadProduct(ftype){
 			state.uploadVisible = false;
 			 var data={};
@@ -413,7 +417,12 @@
 			 state.queryParam.taglist=tags;
 			 changeData();
 		}
-		
+		function handleExceed(files){
+			  uploadRef.value.clearFiles();
+			  const myfile = files[0]  ;
+			  myfile.uid = genFileId();
+			  uploadRef.value.handleStart(myfile);
+		}
 		function changeCategory(value){
 			state.queryParam.categoryid=value;
 			changeData();
@@ -488,7 +497,7 @@
 			}
 		}
 		function handlePurchase(){
-			emitter.emit("removeCache", "添加采购单");
+			    emitter.emit("removeCache", "添加采购单");
 				router.push({
 					path:"/e/p/o",
 					query:{
@@ -601,21 +610,22 @@
 			}
 			if(state.uploadtype=="cons"){
 				materialApi.uploadConsumableFile(FormDatas).then(function(res){
-					 ElMessage({
-					   type: 'success',
-					   message: '上传成功',
-					 });
-					  state.uploadVisible = false;
-					   changeData();
+					  uploadhandler.uploadResult(res,()=>{
+						   state.uploadVisible = false;
+						    changeData();
+					  });
+					 
+				}).catch(e=>{
+					  uploadhandler.uploadResult(e);
 				})
 			}
 			if(state.uploadtype=="customs"){
 				materialApi.uploadCustomsFile(FormDatas).then(function(res){
-					 ElMessage({
-					   type: 'success',
-					   message: '上传成功',
-					 });
-					  state.uploadVisible = false;
+					  ElMessage({
+					    type: 'success',
+					    message: '上传成功',
+					  });
+					   state.uploadVisible = false;
 					   changeData();
 				})
 			}

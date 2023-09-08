@@ -135,7 +135,7 @@
 	<!-- 渠道类型 -->
 	<el-dialog v-model="Channelvisable"   title="编辑渠道类型">
 		<el-table border :data="channelList.list">
-			<el-table-column type="index" >
+			<el-table-column type="index" width="60">
 				<template #header >
 				   <el-link :underline="false" type="primary" @click="addChannelName">
 				   <plus  class="ic-cen" theme="outline" size="24" :strokeWidth="3"/>
@@ -159,7 +159,7 @@
 		
 		      <span class="dialog-footer">
 		        <el-button @click="Channelvisable = false">取消</el-button>
-		        <el-button type="primary" @click="Channelvisable = false"
+		        <el-button type="primary" @click="handleChannel"
 		          >保存</el-button >
 		      </span>
 		    </template>
@@ -314,7 +314,12 @@
 						
 				});
 			}
-			
+			function handleChannel(){
+				 Channelvisable.value = false;
+				   transportationApi.saveChannel(channelList.list).then(res=>{
+					   loadChannelAllList();
+				   })
+			}
 			function submitCompanyDetail(){
 				form.detaillist=tranTableData.list;
 				let invaild=false;
@@ -373,7 +378,7 @@
 				tranTableData,
 				addTransportation,
 				removeTransportation,
-				editModeoftransport,
+				editModeoftransport,handleChannel,
 				Channelvisable,editChannel,addChannelName,removeChannelName,
 				apiList,marketList,weightList,transTypeAllList,channelAllList,channelList,
 				submitCompanyDetail,

@@ -58,7 +58,7 @@
 							<el-form-item label="API对接编号">
 							      <el-input v-model="form.ordernumber" />
 							    </el-form-item>
-								<el-form-item label="货件发货日期">
+								<el-form-item label="物流发货日期">
 								    <el-date-picker
 								            v-model="form.shipdate"
 								            type="date"
@@ -216,7 +216,7 @@
 		<el-row class="mar-bot">
 				<ShipmentOpt ref="optRef"  @change="handleOptChange"/>
 				<div class="rt-btn-group">
-					<el-button type="primary" link    v-if="shipmentstatus>4 "  @click="openMaterialCon('isshow')">查看辅料出库</el-button>
+					<el-button type="success"   v-if="shipmentstatus>4 "  @click="openMaterialCon('isshow')">查看辅料出库</el-button>
 					<el-button type="primary" @click="stepclick(3)" plain>下一步</el-button>
 					<el-button type="primary"  v-hasPerm="'amz:ship:conship'" v-if="shipmentstatus<=4 && shipmentstatus>=2"  @click="openMaterialCon('isopt')">确认出库(含辅料)</el-button>
 					<el-button type="primary"  v-hasPerm="'amz:ship:shipdone'" v-if="shipmentstatus<=4 && shipmentstatus>=2"  :loading="submitloading" @click="amazonDoneShipment()">确认出库</el-button>
@@ -341,7 +341,7 @@
 			
 		</el-dialog>
 		
-		<el-dialog v-model="materialDialogVisible" width="50%" center>
+		<el-dialog v-model="materialDialogVisible" width="50%" >
 			  <template #header>
 				  <span v-if="myshowtype!='isshow'">确认出库</span>
 				  <span v-else>辅料与箱子出库详情</span>
@@ -386,10 +386,11 @@
 				       </div>
 				 </template>
 			<el-table :data="boxListData.list" border >
-				 
-				<el-table-column prop="boxlength" label="长(cm)"  />
-				<el-table-column prop="boxwidth" label="宽(cm)"      />
-				<el-table-column prop="boxheight" label="高(cm)"     />
+				<el-table-column prop="boxlength" label="长x宽x高(cm)"  >
+				<template #default="scope">
+					 {{scope.row.boxlength}}x{{scope.row.boxwidth}}x{{scope.row.boxheight}}
+				</template>
+				</el-table-column>
 				<el-table-column prop="number" label="箱子数量"  >
 				</el-table-column>
 				<el-table-column prop="materialid" label="对应箱子SKU"  width="200" >
@@ -402,7 +403,6 @@
 				<el-table-column prop="number" label="库存"  >
 					<template  #default="scope">
 						 <div v-if="scope.row.packagesku">{{scope.row.packagesku.fulfillable}}</div>
-						 <div v-if="scope.row.packagesku">{{scope.row.packagesku.length}}*{{scope.row.packagesku.width}}*{{scope.row.packagesku.height}}</div>
 					      <div v-else>0</div>
 					</template>
 					
@@ -431,7 +431,7 @@
 			</template>
 		</el-dialog>
 		
-				<el-dialog v-model="compareVisible" title="物流比价" width="70%" center>
+				<el-dialog v-model="compareVisible" title="物流比价" width="70%" >
 					<CompareList ref="comareRef" :isdialog="true" :shipform="form" :shipdata="shipdata"></CompareList>
 					<template #footer>
 						<span class="dialog-footer">

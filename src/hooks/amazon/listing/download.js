@@ -1,6 +1,5 @@
 var idTmr;
 function transform(tableData, name, callback) {  //table为表格数据,name为导出文件名,//callback为导出完毕回调,方便你知道导出完成了(可根据自己需求决定是否需要)
-    console.log(tableData,'打印的数据');
     let tableInnerHTML = ''
     let headerData = ['ASIN', '名称', '品牌', '分类', '排名']
     let bodyData = tableData     //这里对应是表格数据，我们只需要传过来即可

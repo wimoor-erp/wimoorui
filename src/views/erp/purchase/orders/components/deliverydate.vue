@@ -1,8 +1,5 @@
 <template>
-	<p v-if="dateFormat(sub.deliverydate)<dateFormat(new Date())" style="color: #ff0f47;" >
-	   <span class="font-extraSmall">预计到货:</span><span class="pointer" @click="showpicker">{{dateFormat(sub.deliverydate)}}</span>
-	 </p>
-	<p v-else > <span class="font-extraSmall">预计到货:</span><span class="pointer" @click="showpicker">{{dateFormat(sub.deliverydate)}}</span></p>
+     <span class="pointer" :style="dateFormat(sub.deliverydate)<dateFormat(new Date())?'color: #ff0f47;':''" @click="showpicker">{{dateFormat(sub.deliverydate)}}</span> 
 	 <div class="hidepicker" >
 	 <el-date-picker
 	        v-model="sub.deliverydate"

@@ -237,6 +237,7 @@
 		 orderInfo:{},
 		 tradeType:"",
 		 address:{fullName:""},
+		 entry:{},
 		 addressVo:{},
 		 addressList:[],
 		 productinfo:{},
@@ -251,6 +252,7 @@
 	function show(formData){
 		if(formData.entry&&!formData.purchaseEntryid){
 			formData.purchaseEntryid=formData.entry;
+			state.entry=formData.entry;
 		}
 		state.formData=formData;
 		state.addressList=[];
@@ -294,7 +296,7 @@
 		var product={
 			offerId:state.productinfo.productID,
 			specId:state.productinfo.specId,
-			quantity:state.formData.entry.amount
+			quantity:state.entry.amount
 		}
 		preparams.product=JSON.stringify(product);
 		state.productinfoVo=preparams.product;

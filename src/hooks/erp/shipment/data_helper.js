@@ -255,6 +255,45 @@ export function handleLoadPlanData(state,callback){
  							 }
  						 }
  					 });
- 				 }
+ 				 }else if(state.queryData.inboundplanid){
+					 
+					  					 //货件审核的时候 复制按钮 点进来的
+					  					 state.productlist=[];
+					  					 state.totalproducts=0;
+					  					 shipmentplanApi.getItemlistByInboundPlanId({"inboundplanid":state.queryData.inboundplanid}).then((res)=>{
+					  						 if(res.data){
+					  							 var data=res.data;
+					  							 state.formData.groupid=data.groupid;
+					  							 state.formData.marketplaceid=data.marketplaceid;
+					  							 state.formData.warehouseid=data.warehouseid;
+					 							 callback(data);
+					  							 if(data.itemlist && data.itemlist.length>0){
+					  								 data.itemlist.forEach(function(item){
+					  									 item.sku=item.SellerSKU;
+					  									 item.quantity=item.Quantity;
+					  									 item.fulfillable=item.invquantity;
+					  									 item.id=item.mid;
+					  									 if(item.msku==undefined || item.msku==null || item.msku==''){
+					  										 item.msku=item.SellerSKU;
+					  									 }
+					  									 
+					  								 });
+					  								state.productlist=data.itemlist;
+					  								state.totalproducts=state.productlist.length;
+					 								loadInventory(state.productlist,state.formData.warehouseid);
+					  								var skulist="";
+					  								if(state.productlist.length>0){
+					  									 state.productlist.forEach(function(items){
+					  										 skulist+=(items.sku+",");
+					  									 }); 
+					  								}
+					  								if(skulist!=""){
+					  									 validSkuList(state,skulist);
+					  								}
+					  							 }
+					  						 }
+					  					 });
+					 
+				 }
 				 
  			 }

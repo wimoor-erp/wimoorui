@@ -109,6 +109,7 @@ function uploadConsumableFile(FormData){
 	return request({'method':'POST',
 	                 'url':"/erp/api/v1/material/uploadConsumableFile",
 				    'data':FormData,
+					'responseType':"blob",
 					'headers':{'Content-Type':"multipart/form-data"},
 				
 	});

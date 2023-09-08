@@ -49,7 +49,7 @@
 			 	<span v-else><el-tag class="ml-2" type="info">cbm</el-tag></span>
 			   </template>
 			 </el-table-column>
-			 <el-table-column label="价格(元)" width="90" prop="price" sortable='custom'/>
+			 <el-table-column label="价格(元)" width="100" prop="price" sortable='custom'/>
 			 <el-table-column label="材积基数(cbcm)" width="120" prop="drate"/>
 			 <el-table-column label="材积基数(cbm)" width="110" prop="cbmrate"/>
 			 <el-table-column label="备注" prop="remark"/>

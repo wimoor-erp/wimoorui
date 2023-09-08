@@ -71,75 +71,10 @@
 			</GlobalTable>
 		</el-row>
 	</div>
-	<el-dialog
-	width="480px"
-	title="记账" 
-	:rules="rules"
-	v-model="dialogVisable"
-	>
-	<el-form v-model="form" label-width="60px">
-		<el-form-item label="费用类型">
-		<el-radio-group v-model="form.ftype" class="ml-4">
-		  <el-radio label="in" >收入</el-radio>
-		  <el-radio label="out" >支出</el-radio>
-		</el-radio-group>
-		</el-form-item>
-		<el-form-item label="收支项目">
-           <el-select  v-model="form.projectid">
-			  <el-option v-for="item in feeTypeList" :key="item.id"  :label="item.name" :value="item.id" ></el-option>
-		   </el-select>
-		</el-form-item>
-		<el-form-item label="金额">
-           <el-input type="number" v-model="form.amount">
-			   <template #suffix>
-			   ￥
-			   </template>
-		   </el-input>
-		</el-form-item>
-		<el-form-item label="备注" prop="remark">
-			<el-input type="textarea"  v-model="form.remark"></el-input>
-		</el-form-item>
-	</el-form>
-	 <template #footer>
-	      <span class="dialog-footer">
-	        <el-button @click="dialogVisable = false">取消</el-button>
-	        <el-button type="primary" @click="handleConfirm">
-	          确认
-	        </el-button>
-	      </span>
-	    </template>
-	</el-dialog>
-<el-dialog v-model="feeVisable" title="费用项管理">
-		<el-button @click="handleAdd"   >添加费用类型</el-button>
-	    <el-table :data="feeTableData" class="m-t-8">
-	      <el-table-column  label="费用名称"  >
-		  <template #default="scope">
-		  		<el-input v-if="scope.row.edit" clearable placeholder="请输入费用项" v-model="scope.row.name" ></el-input>
-				<div v-else>{{scope.row.showname}}</div>
-		  </template>
-		  </el-table-column>
-	      <el-table-column  label="操作"  >
-		     <template #default="scope">
-				 <el-button v-if="!scope.row.edit" type="primary"
-				  @click="scope.row.edit=true"
-				  link>编辑</el-button>
-				 <el-button v-if="!scope.row.edit" type="primary"
-				  @click="handleDelete(scope.row)"
-				  link>删除</el-button>
-				  
-				  <el-button  v-if="scope.row.edit" type="primary"
-				   @click="handleSave(scope.row)"
-				   link>保存</el-button>
-				   <el-button v-if="scope.row.edit"  type="primary"
-				    @click="handleCancel(scope.row)"
-				    link>取消</el-button>
-			 </template>
-		  </el-table-column>
-	    </el-table>
-		 <template #footer>
-		        <el-button @click="feeVisable = false">关闭</el-button>
-		    </template>
-	  </el-dialog>
+	
+<FinItem ref="finItemRef" @change="loadTypeList()"></FinItem>
+<FinRecord ref="finRecordRef" @change="handleQuery()"></FinRecord>
+ 
 </template>
 
 <script setup>
@@ -147,22 +82,17 @@
 	import {Search} from '@element-plus/icons-vue'
 	import { ref,reactive,onMounted,watch,toRefs,defineEmits,computed} from 'vue'
 	import Datepicker from '@/components/header/datepicker.vue';
+	import FinItem from './finItem.vue';
+	import FinRecord from './finRecord.vue';
 	import journalApi from '@/api/erp/finances/journalApi.js';
 	import faccountApi from '@/api/erp/finances/faccountApi.js';
 	import projectApi from '@/api/erp/finances/projectApi.js';
 	import { ElMessage, ElMessageBox } from 'element-plus';
 	const emit = defineEmits(['changeData']);
 	const globalTableRef=ref();
+	const finItemRef =ref();
+	const finRecordRef =ref();
 	const state = reactive({
-		feeTableData:[ ],
-		dialogVisable:false,
-		feeVisable:false,
-		form:{
-			ftype:'in',
-			amount:'',
-			remark:'',
-			feetype:'',
-		},
 		feeTypeList:[],
 		selectLabel:'0',
 		expendRows:[],
@@ -176,10 +106,6 @@
 		searchWord,
 		queryParams,
 		tableData,
-		feeTableData,
-		dialogVisable,
-		form,
-		feeVisable,
 	} = toRefs(state)
 	function cancelAccItem(row){
 		ElMessageBox.confirm(
@@ -204,21 +130,8 @@
 		  )
 	}
 	function showAccDialog(){
-		state.dialogVisable=true;
-	}
-	function handleConfirm(){
 		if(state.queryParams.acc){
-			var data=state.form;
-			data.acct=state.queryParams.acc;
-			journalApi.save(data).then((res)=>{
-				ElMessage({
-				  type: 'success',
-				  message: '操作成功！',
-				})
-				state.dialogVisable=false;
-				handleQuery();
-				emit("changeData");
-			});
+		   finRecordRef.value.show(state.queryParams.acc);
 		}else{
 			ElMessage({
 			  type: 'error',
@@ -226,75 +139,8 @@
 			})
 		}
 	}
-	
-	function handleAdd(){
-		if(state.feeTableData&&state.feeTableData.length>0){
-			var hasNewItem=false;
-			state.feeTableData.forEach(item=>{
-				if(item.id==""){
-					hasNewItem=true;
-				}
-			})
-			if(hasNewItem){
-				ElMessage({
-				  type: 'error',
-				  message: '存在未保存的记录！',
-				})
-				return ;
-			}
-		}
-		state.feeTableData.push(  {  name:'', id:"",edit:true} );
-	}
-	function handleCancel(item){
-		if(item.id==""){
-			state.feeTableData = state.feeTableData.filter(item => item.id != "");
-		}else{
-			item.edit=false;
-		}
-	}
 	function handleFeeItem(){
-		state.feeVisable=true;
-		state.feeTableData=[];
-		projectApi.getProject().then((res)=>{
-			 res.data.forEach(item=>{
-				 if(item.issys==false){
-					 item.showname=item.name;
-				 	 state.feeTableData.push(item);
-				 }
-			 });
-		});
-	}
-	function handleDelete(row){
-		projectApi.delProject({"id":row.id}).then((res)=>{
-			ElMessage({
-			  type: 'success',
-			  message: '删除成功',
-			})
-			 state.feeTableData = state.feeTableData.filter(item => item.id != row.id);
-		});
-	}
-	function handleSave(row){
-		if(row.id){
-			projectApi.updateProject({"id":row.id,"name":row.name}).then((res)=>{
-				ElMessage({
-				  type: 'success',
-				  message: '修改成功',
-				})
-				 row.showname=row.name;
-				 row.edit=false;
-			});
-		}else{
-			projectApi.saveProject({"name":row.name}).then((res)=>{
-				ElMessage({
-				  type: 'success',
-				  message: '添加成功',
-				});
-				row.showname=row.name;
-				row.id=res.data.id;
-				row.edit=false;
-			});
-		}
-		
+		finItemRef.value.show();
 	}
 	//日期改变
 	function changedate(dates){
@@ -356,7 +202,8 @@
 	onMounted(()=>{
 		loadTypeList();
 	})
-</script>
+	
+	</script>
 
 <style scoped="scoped">
 	.with-select{

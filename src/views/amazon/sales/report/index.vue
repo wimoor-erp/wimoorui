@@ -219,7 +219,7 @@
 	 							label:{
 	 								show:true,
 	 							},
-	 							showAllSymbol:true,
+	 							showAllSymbol:false,
 	 							markLine:{
 	 											data : [ {
 	 												silent:false,  

@@ -1,4 +1,4 @@
-import {ElMessage,ElLoading} from 'element-plus';
+import {ElMessage} from 'element-plus';
 function downloadSuccess(res,filename){
 	ElMessage({ message: '导出成功！',  type: 'success', })
 	const blob = new Blob([res]);
@@ -12,6 +12,7 @@ function downloadSuccess(res,filename){
 		 window.URL.revokeObjectURL(link.href);
 	}
 }
+ 
 function downloadFail(res,filename){
 	if(res&&res.response.data){
 		var reader = new FileReader();

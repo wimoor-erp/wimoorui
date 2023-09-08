@@ -10,7 +10,7 @@
 	<div class=" con-header" style="padding:16px 16px 0px 16px;">
 		<el-row class="no-flex-warp">
 				<el-space>
-				   <GroupSelect @change="handleGroupChange" ></GroupSelect>
+				   <GroupSelect @change="handleGroupChange" defaultValue="all"></GroupSelect>
 				   <Market ref="marketRef" @change="handleMarketChange" :multiple="true"></Market>
 				   <Owner  ref="ownerRef" @owner="getOwner" />
 				   <Status ref="statusRef" @status="getStatus" />
@@ -103,7 +103,12 @@
 						       <el-radio label="showhid">隐藏</el-radio>
 						     </el-radio-group>
 						 </el-form-item>
-						 
+						 <el-form-item label="销售预估">
+						   <el-radio-group v-model="queryParams.different">
+						       <el-radio label="">不限</el-radio>	 
+						       <el-radio label="avgsales">系统预估大于手动干预</el-radio>
+						     </el-radio-group>
+						 </el-form-item>
 				 		 <el-form-item >
 				 			 <el-button type="primary" @click="handleQuery();moreSearchVisible=false">搜索</el-button>
 				 			 <el-button @click="resetForm(formRef)">取消</el-button>	
@@ -122,17 +127,23 @@
 				<el-button @click="openUpload" > 导入SKU入库仓库</el-button>
 				<div class='rt-btn-group'>
 					<div class="flex-center font-small m-r-16">
+						<el-button v-if="queryParams.selected==true" @click.stop="downloadCheckList" :loading="downloading" size="small" style="margin-right:10px;">导出已选</el-button>
 						<el-checkbox v-model="queryParams.selected" label="显示已选"  @change="handleQuery"/>
 						<el-divider direction="vertical" />
+						<el-checkbox  v-if="queryParams.marketplaceids&&queryParams.marketplaceids.length>0" v-model="queryParams.plansimple" label="简约计划"  @change="handleQuery"/>
+					     <el-divider v-if="queryParams.marketplaceids&&queryParams.marketplaceids.length>0" direction="vertical" />
+					  <el-affix :offset="80" class="affix">
+					  <span class="affix-s">	
 						<span @click="handleCheckShow">已选 <span class="text-orange font-bold"> {{summary.skunum}} </span> 个SKU</span>
 						<el-divider direction="vertical" />
 						<span>采购总数 <span class="text-orange font-bold"> 
 						<span v-if="summary.amount">{{summary.amount}}</span>
 						<span v-else>0</span>
 						</span></span>
+						</span>
+						</el-affix>
 					</div>
 					<el-space v-if="queryParams.marketplaceids&&queryParams.marketplaceids.length>0" >
-					<el-checkbox v-model="queryParams.plansimple" label="简约计划"  @change="handleQuery"/>
 					<el-dropdown :hide-on-click="false" @command="handleCommand"  trigger="click">
 					    <el-button class='ic-btn'  title='排序'>
 					       <sort-one theme="outline" size="16"  :strokeWidth="3"/>
@@ -182,7 +193,7 @@
 	import planApi from '@/api/erp/ship/planApi';
 	import { useRouter } from 'vue-router'
 	import {getSummary,clearItem,uploadPurchaseWarehouse} from '@/api/erp/purchase/plan/planApi';
-	
+	import editApi from '@/api/erp/purchase/form/editApi.js';
 	let deliverRef = ref()
 	let marketRef=ref();
 	let ownerRef=ref();
@@ -198,9 +209,10 @@
 	  loading:false,
 	  summary:{skunum:0,amount:0},
 	  progress:0,
+	  downloading:false,
 	});
 	const {
-	  queryParams,loading,progress, summary,
+	  queryParams,loading,progress, summary,downloading,
 	} = toRefs(state);
 	
 			let FbaInventorysChecked = ref([])
@@ -327,14 +339,24 @@
 				tagsRef.value.reset();
 				var groupid=state.queryParams.groupid;
 				var warehouseid=state.queryParams.warehouseid;
-				state.queryParams={'groupid':groupid,'warehouseid':warehouseid,shortdays:'',
-				                   searchtype:'sku',selected:false,categoryid:"",
-								   status2:"shownormal",
-								   owner:'',search:"",name:"",remark:"",
-								   tags:[],marketplaceids:[],status:'',
-								   hasAddFee:"",issfg:"",
-								   currentSolt:"desc",
-								   currentRank:"",skuarray:""} ;
+				state.queryParams.searchtype="sku";
+				state.queryParams.selected=false;
+				state.queryParams.categoryid="";
+				state.queryParams.shortdays=false;
+				state.queryParams.status2="shownormal";
+				state.queryParams.owner="";
+				state.queryParams.search="";
+				state.queryParams.name="";
+				state.queryParams.remark="";
+				state.queryParams.tags=[];
+				state.queryParams.marketplaceids=[];
+				state.queryParams.status='';
+				state.queryParams.hasAddFee="";
+				state.queryParams.issfg="";
+				state.queryParams.different="";
+				state.queryParams.currentSolt="desc";
+				state.queryParams.currentRank="";
+				state.queryParams.skuarray="";
 				handleQuery();
 			}
 			function resetForm(){
@@ -378,20 +400,11 @@
 					}
 				})
 			}
-			function goToPlanConfirm(){
-				router.push({
-					path:"/e/p/p/s",
-					query:{
-						title:'提交采购计划',
-						path:"/e/p/p/s",
-						planid:state.queryParams.planid,
-					}
-				})
-			}
+		
 			/* 发货提交 */
 			function submitPlan(){
 			  if(state.queryParams.planid){
-					    goToPlanConfirm();
+						emits("confirm",state.queryParams,state.summary);
 				}else{
 					ElMessage({
 					  type: 'error',
@@ -399,6 +412,12 @@
 					})	
 				}
 			
+			}
+			function downloadCheckList(){
+				state.downloading=true;
+				editApi.downloadItemList({"planid":state.queryParams.planid},()=>{
+					state.downloading=false;
+				});
 			}
 </script>
 
@@ -437,5 +456,17 @@
 	}
 	.m-b-4{
 		margin-bottom:4px;
+	}
+	.affix .el-affix--fixed{
+		background-color:rgba(0,0,0,0.8);
+		border-radius: 4px;
+		padding:4px 0px;
+		height:24px!important;
+		white-space: nowrap;
+		color:#fff;
+	}
+	.affix-s{
+		margin-right:8px;
+		margin-left:8px;
 	}
 </style>

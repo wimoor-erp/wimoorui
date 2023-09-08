@@ -2,7 +2,7 @@
 	<div class="box-ship">
 		<el-row>
 			<el-col :span="16">
-				<el-form :model="form" label-width="120px">
+				<el-form :model="form"  label-position="left" label-width="200px">
 					<el-form-item label="选择运输方式">
 						<el-radio-group v-model="form.tranType"  @change="loadCarrier" :disabled="boxDisable">
 							<el-radio  label="SP">
@@ -50,7 +50,7 @@
 			<table class="sd-table"    border="0" cellpadding="0" cellspacing="0"  v-if="!boxDetail.arecasesrequired">
 				<thead>
 					<tr>
-						<th style="width: 70px;" >图片</th>
+						<th style="width: 60px;" >图片</th>
 						<th style="width: 380px;"  >名称/SKU</th>
 						<th   style="width: 80px;">货件数量</th>
 						<!-- 箱子增减 -->
@@ -62,7 +62,7 @@
 					<tr v-for = "(item,index) in tableData.list" :key="index" >
 						<td><img :src="item.image"   style="width:40px;height:40px" /></td>
 						<td>
-							<div class='name'>{{item.name}}</div>
+							<div class='name  text-omit-1'>{{item.name}}</div>
 							<div class='sku'>{{item.sellersku}}</div>
 						</td>
 						<td>{{item.quantityshipped}}</td>
@@ -103,10 +103,10 @@
 						<td colspan="2">
 							<div class="text-right">合计</div>
 						</td>	
-						<td >{{boxDetail.sumquantityshiped}}</td>
+						<td  class=" font-bold">{{boxDetail.sumquantityshiped}}</td>
 						<!-- 每列合计 -->
-						<td  v-for="(item,index) in tableData.list.colBoxsumNum"><div class="text-center">{{getSummmary(index)}}</div></td>
-						<td >{{getSummmary()}}</td>
+						<td  v-for="(item,index) in tableData.list.colBoxsumNum"><div class=" font-bold">{{getSummmary(index)}}</div></td>
+						<td  class=" font-bold">{{getSummmary()}}</td>
 					</tr>
 				</tbody>	
 				<!-- 箱子加货物重量 -->
@@ -159,7 +159,7 @@
 						</div>
 						</td>
 						<td  v-for="(sub,i) in inputboxNum">
-							<div class="text-center">
+							<div>
 								<el-tooltip
 								   class="box-item"
 								   effect="light"
@@ -183,7 +183,7 @@
 						<tr>
 							<td colspan="3">
 							<div class="text-right">
-								<el-link type="primary" class="font-extraSmall" @click="addBoxSize" :underline="false">添加其他不同尺寸的箱子</el-link>
+								<el-link type="primary"  @click="addBoxSize" :underline="false">添加其他不同尺寸的箱子</el-link>
 								</div>
 							</td>
 							<td v-show="inputboxNum>0" :colspan="inputboxNum">使用以上复选框指定特定包装箱的尺寸
@@ -299,15 +299,15 @@
 		  		<tr v-for = "(item,index) in tableData.list" :key="index" >
 		  			<td><el-image :src="item.image" width="40" height="40"></el-image></td>
 		  			<td>
-		  				<div class='name'>{{item.name}}</div>
+		  				<div class='name text-omit-1'>{{item.name}}</div>
 		  				<div class='sku'>{{item.SellerSKU}}</div>
 		  			</td>
-					<td>{{item.boxnum}}</td>
+					<td >{{item.boxnum}}</td>
 		  			<td >
 						<div style="display: inline;margin: 5px;" v-for="(sub,i) in totalBoxNum">
 							<span>{{i+1}}:</span>
 							<!-- v-model="item.numbercase" -->
-							<el-checkbox   v-model="item['boxselect'+i]" ></el-checkbox>
+							<el-checkbox  size="large"  v-model="item['boxselect'+i]" ></el-checkbox>
 						</div>
 		  			</td>
 		  		</tr>
@@ -891,10 +891,18 @@
 	.box-ship .el-radio-group{
 		line-height:20px;
 	}
+	.sd-table td{
+		background-color: var(--el-bg-color);
+	}
 </style>
 <style>
 	.myshipdrop .el-input__wrapper{
 		border-top-right-radius:0px !important;
 		border-bottom-right-radius:0px !important;
 	}
+	.el-input.is-disabled .el-input__inner{
+		color:#333;
+		-webkit-text-fill-color:#333;
+	}
+	.el-radio__input.is-disabled+span.el-radio__label{color:inherit;}
 </style>

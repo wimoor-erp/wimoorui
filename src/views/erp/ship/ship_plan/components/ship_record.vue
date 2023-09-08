@@ -102,7 +102,7 @@
 	} = toRefs(state);
 	function show(itemrow,parentrow){
 		state.dialog.visible=true;
-		shipmentApi.getShipRecord({marketplaceid:itemrow.marketplaceid,sku:itemrow.sku}).then(res=>{
+		shipmentApi.getShipRecord({groupid:itemrow.groupid,marketplaceid:itemrow.marketplaceid,sku:itemrow.sku}).then(res=>{
 			state.tableData=res.data.records;
 			state.tableData.forEach(item=>{
 				item.oldArrivalTime=item.arrivalTime;

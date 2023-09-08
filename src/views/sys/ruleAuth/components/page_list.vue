@@ -11,10 +11,11 @@
 			    </div>
 			  </template>
 			  <div    class="text item">
-				  <span v-for="item in permList">
-					  <el-checkbox    v-if="!item.isfield"  :v-model="item.hasPerm" :label="item.name" :key="item.id" size="large" />
+				  <el-space  wrap>
+				  <span v-for="item in permList" class="m-r-24">
+					  <el-checkbox    v-if="!item.isfield"  :v-model="item.hasPerm" :label="item.name" :key="item.id"  />
 				  </span>
-					 
+				</el-space>	 
 			  </div>
 			</el-card>
 			</el-col>
@@ -26,9 +27,11 @@
 			    </div>
 			  </template>
 			  <div  class="text item">
-				  <span v-for="item in permList">
-				  <el-checkbox  v-if="item.isfield" :v-model="item.hasPerm" :label="item.name" :key="item.id" size="large" />
+				  <el-space wrap>
+				  <span v-for="item in permList"  class="m-r-24">
+				  <el-checkbox  v-if="item.isfield" :v-model="item.hasPerm" :label="item.name" :key="item.id" />
 			    </span>
+				</el-space>
 			  </div>
 			</el-card>
 			</el-col>
@@ -113,6 +116,9 @@
 <style scoped>
 	.con-body .el-checkbox-group{
 		font-size:16px;
+	}
+	.m-r-24{
+		margin-right:24px;
 	}
 	.con-body{
 		padding:16px;

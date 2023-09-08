@@ -55,7 +55,7 @@ export default [
  {
  	path:"localproduct/editinfo",
  	name:'edit',
-	meta:{keepAlive:false},
+	meta:{keepAlive:true},
  	component:()=>import("@/views/erp/baseinfo/material/editinfo/index")  
  },
  {

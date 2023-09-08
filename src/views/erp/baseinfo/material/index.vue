@@ -5,7 +5,15 @@
 	     <Header @getdata="loadData" ref="headerRef"  type="product"/>
 	</div>
 	<el-row>
-	   <GlobalTable ref="globalTable" :defaultSort="defaultSort" @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 250px)"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
+	   <GlobalTable ref="globalTable" 
+	   :defaultSort="defaultSort"
+		@selectionChange='selectChange' 
+		:tableData="tableData"   
+		 :rowClassName="handleRowClassName"
+		 @loadTable="loadTableData" 
+		 @rowClick="handleRowClick"
+		  height="calc(100vh - 250px)"  
+		 :stripe="true"  style="width: 100%;margin-bottom:16px;">
 		   <template #field>
 	     <el-table-column fixed type="selection" width="38" />
 	      <el-table-column fixed prop="image" label="图片" width="64" >
@@ -26,21 +34,27 @@
 			<el-image v-else :src="require('@/assets/image/empty/noimage40.png')"   width="40" height="40"  ></el-image>
 	      </template>
 	    </el-table-column>
-	    <el-table-column fixed prop="sku" label="名称/SKU" sortable="custom" width="240" show-overflow-tooltip>
+	    <el-table-column fixed prop="sku" label="名称/SKU" sortable="custom" min-width="240" show-overflow-tooltip>
 	       <template #default="scope">
-	          <div class='name'>{{scope.row.name}}</div>
+	          <div class='name'>{{scope.row.name}}  
+			  </div>
 	          <div class='sku'>{{scope.row.sku}}
-	            <copy class="" @click="CopyText(scope.row.name)" title='复制名称' theme="outline" size="14" fill="#666" :strokeWidth="3"/>
+	            <copy class="" @click.stop="CopyText(scope.row.sku)" title='复制SKU' theme="outline" size="14" fill="#666" :strokeWidth="3"/>
 	          </div>
 	      </template>
 	    </el-table-column>
+		<el-table-column prop="createdate"  label="生效日期" width="110" sortable="custom" >
+					 <template #default="scope">
+						<div>{{dateFormat(scope.row.createdate)}}</div>
+					 </template>
+				</el-table-column>
 	   <el-table-column prop="category"  label="品类" width="135" sortable="custom" >
 			 <template #default="scope">
 				<div>{{NullTransform(scope.row.category)}}</div>
 				<div v-if="scope.row.specification" class="font-extraSmall">规格:{{scope.row.specification}}</div>
 			 </template>
 		</el-table-column>
-	    <el-table-column prop="weight" label="重量(kg)"  width="120" sortable="custom" >
+	    <el-table-column prop="weight" label="重量(kg)"  width="110" sortable="custom" >
 			<template #default="scope">
 				<div v-if="scope.row.weight">{{NullTransform(scope.row.weight)}}</div>
 				<div v-else>-</div>
@@ -67,14 +81,14 @@
 			    </el-popover>
 		  </template>
 	    </el-table-column>
-	    <el-table-column prop="supplier" label="供应商" width='200'  sortable="custom">
+	    <el-table-column prop="supplier" label="供应商" min-width='200'  sortable="custom">
 			<template #default="scope">
 				<el-link v-if="scope.row.supplier" @click.stop="openPurchase(scope.row.purchaseUrl)" >{{scope.row.supplier}}</el-link>
 				<el-link v-else>-</el-link>
 			    <div ><span class="font-extraSmall">供货周期：</span>{{NullTransform(scope.row.delivery_cycle)}}</div>
 			</template>	
 		</el-table-column>	
-	    <el-table-column prop="fulfillable" label="库存" width="80"   sortable="custom">
+	    <el-table-column prop="fulfillable" label="库存" width="78"   sortable="custom">
 		<template #default="scope">
 			<el-popover
 			    placement="top"
@@ -93,32 +107,25 @@
 			  </el-popover>
 		</template>
 		 </el-table-column>
-	    <el-table-column prop="name" class-name="editable-cell" label="标签" width="170" >
+	    <el-table-column prop="name" class-name="editable-cell" label="标签" width="150" >
 	       <template #default="scope">
 	         <span class='tag-mr' v-if='scope.row.TagNameList'  v-for='(s,index) in scope.row.TagNameList' :key='index'>
-	             <el-tag  effect="plain" :title="s.name" :type="s.color">  {{s.name}}</el-tag>
+	             <el-tag size="small"  effect="plain" :title="s.name" :type="s.color">  {{s.name}}</el-tag>
 	         </span>
 			 <span v-else>-</span>
 			<span class="edit-text" @click.stop="editTags(scope.row)" :class="scope.row.active">修改</span>
 	       </template>
 	    </el-table-column>
-		<el-table-column prop="issfg" label="产品类型" width="105"   sortable="custom">
-		    <template #default="scope">
-				<el-tag v-if="scope.row.issfg=='0'" type="success" effect="plain">单独产品</el-tag>
-				<el-tag v-if="scope.row.issfg=='1'" type="warning" effect="plain">组合产品</el-tag>
-				<el-tag v-if="scope.row.issfg=='2'" type="danger" effect="plain">待组装产品</el-tag>
-		    </template>
-		</el-table-column>
 	    <el-table-column prop="remark" label="备注"  show-overflow-tooltip sortable="custom" >
 			 <template #default="scope">
 				 {{NullTransform(scope.row.remark)}}
 			</template>
 		</el-table-column>
-	    <el-table-column fixed="right" prop="operate" label="操作"  width="125" >
+	    <el-table-column fixed="right" prop="operate" label="操作"  width="135" >
 	        <template #default="scope">
 	          <el-space>
-	            <el-button type="primary" link @click="productDetails(scope.row)">详情</el-button>
-	            <el-button type="primary" link @click="productEdit(scope.row)">编辑</el-button>
+	            <el-button type="primary" link @click.stop="productDetails(scope.row)">详情</el-button>
+	            <el-button type="primary" link @click.stop="productEdit(scope.row)">编辑</el-button>
 	            <el-dropdown :hide-on-click="false">
 	              <span class="el-dropdown-link">
 	                <more-one class="ic-cen" theme="outline" size="16" fill="#333" :strokeWidth="3"/>
@@ -156,7 +163,7 @@
 </template>
 
 <script setup>
-	import {ref,reactive,toRefs,onMounted,} from "vue"
+	import {ref,reactive,toRefs,onMounted,inject} from "vue"
 	import {Copy,MenuUnfold,Plus,SettingTwo,Help,MoreOne} from '@icon-park/vue-next';
 	import Header from "./components/header.vue"
 	import {useRouter } from 'vue-router'
@@ -165,10 +172,9 @@
 	import NullTransform from"@/utils/null-transform";
 	import materialApi from '@/api/erp/material/materialApi.js';
 	import {getAllTags} from '@/api/sys/admin/tag.js';
+	import {dateFormat} from "@/utils/index";
 	import inventoryApi from '@/api/erp/inventory/inventoryApi.js';
-	onMounted(()=>{
-		
-	})
+	const emitter = inject("emitter");
 	const headerRef=ref();
 	let router = useRouter()
 	const globalTable=ref();
@@ -188,6 +194,21 @@
 		})
 		let {loading,tableData,tagsList,markprops,tagsValue,checkTags,nowTagProRow,markVisable,queryParams,defaultSort,
 		inventoryList,pricelist}=toRefs(state)
+		  function handleRowClick(row,field){
+			  if(field.property=="image"||field.property=="sku"
+			  ||field.property=="category"||field.property=="createdate"
+			  ||field.property=="supplier"||field.property=="remark"){
+				  router.push({
+				  	path:'/material/details',
+				  	query:{
+				  	  title:"产品详情",
+				  	  path:'/material/details',
+					  details:row.id,
+					  type:"product"
+				  	}
+				  });
+			  }
+		  }
 		  function productDetails(row){
 			  router.push({
 			  	path:'/material/details',
@@ -200,6 +221,7 @@
 			  })
 		  }
 		  function productEdit(row){
+			     emitter.emit("removeCache", "编辑产品"+row.sku);
 				 router.push({
 				 	path:'/localproduct/editinfo',
 				 	query:{
@@ -232,6 +254,7 @@ function Addtag(){
 		}
 	})
 }
+
 function loadData(params){
 	state.queryParams=params;
 	state.queryParams.sort=state.defaultSort.prop;
@@ -306,6 +329,16 @@ function deleteInfo(row){
 		}
 	})
 }
+   function handleRowClassName({row,rowindex}){
+	   if(row.issfg=="0"){
+	   		   return 'dandu';
+	   } else if(row.issfg=="1"){
+		      return 'zuhe';
+	   }else if(row.issfg=="2"){
+		   return 'daizu';
+	   }
+	  
+   }
 function recoverRows(row){
 		if(row.isDelete==true || row.isDelete==1){
 			materialApi.recoverData({"id":row.id,"sku":row.sku}).then((res)=>{
@@ -324,7 +357,6 @@ function selectChange(selection) {
 }
 
 </script>
-
 <style >
 	.el-dropdown-link .i-icon svg{vertical-align:text-top;}
 	.tag-mr{margin-right:4px;margin-bottom:4px;display:inline-block}
@@ -343,4 +375,65 @@ function selectChange(selection) {
 	.font-12{
 		font-size:12px;
 	}
+	.el-table__row.daizu  td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_daizu.png) no-repeat top right !important;
+		background-color: #fff!important;
+	}
+	
+	.el-table__row.dandu  td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_dandu.png) no-repeat top right !important;
+		background-color: #fff!important;
+	}
+	
+	.el-table__row.zuhe td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_zuhe.png) no-repeat top right !important;
+		background-color: #fff!important;
+	}
+	.dark .el-table__row.daizu  td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_daizu.png) no-repeat top right !important;
+		background-color: #000!important;
+	}
+	
+	.dark .el-table__row.dandu  td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_dandu.png) no-repeat top right !important;
+		background-color: #000!important;
+	}
+	
+	.dark .el-table__row.zuhe td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_zuhe.png) no-repeat top right !important;
+		background-color: #000!important;
+	}
+	.el-table__row.el-table__row--striped.zuhe td:last-child {
+		background: url(~@/assets/image/pages/material/chanpin_zuhe.png) no-repeat top right !important;
+	    background-color: var(--el-fill-color-lighter) !important;
+	}
+	.el-table__row.el-table__row--striped.dandu  td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_dandu.png) no-repeat top right !important;
+		background-color: var(--el-fill-color-lighter) !important;
+	}
+	.el-table__row.el-table__row--striped.daizu  td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_daizu.png) no-repeat top right !important;
+		background-color: var(--el-fill-color-lighter) !important;
+	}
+	.el-table__row.el-table__row--striped.hover-row.zuhe td:last-child, 
+	.el-table__row.hover-row.zuhe td:last-child{
+		background: url(~@/assets/image/pages/material/chanpin_zuhe.png) no-repeat top right !important;
+	    background-color: var(--el-table-row-hover-bg-color)!important;
+	}
+	.el-table__row.el-table__row--striped.hover-row.dandu  td:last-child,
+	.el-table__row.hover-row.dandu  td:last-child
+	{
+		background: url(~@/assets/image/pages/material/chanpin_dandu.png) no-repeat top right !important;
+		background-color: var(--el-table-row-hover-bg-color)!important;
+	}
+	.el-table__row.el-table__row--striped.hover-row.daizu  td:last-child,
+	.el-table__row.hover-row.daizu  td:last-child
+	{
+		background: url(~@/assets/image/pages/material/chanpin_daizu.png) no-repeat top right !important;
+		background-color: var(--el-table-row-hover-bg-color)!important;
+	}
+	
+ 
 </style>
+
+ 

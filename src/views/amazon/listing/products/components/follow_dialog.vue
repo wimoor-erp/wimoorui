@@ -119,7 +119,7 @@
 		defineExpose({ show });
 	</script>
 	
-	<style >
+	<style scoped>
 		.fllow .product-img img{
 			width:80px;
 			height:80px;

@@ -36,7 +36,7 @@
 	  								            	  tablehead.addClass("floathead");
 	  								              }else{
 	  								            	   tablebody.css("margin-top",0) ;
-													   tablehead.css("width",headWidth+ "px");
+													   tablehead.css("width", "inherit");
 	  								            	   tablehead.removeClass("floathead");
 	  								              }	
 												  if($ScrollBottom>60){
@@ -44,7 +44,7 @@
 													scrollbar.addClass("floatfooter");
 												  }else{
 													  scrollbar.css("margin-left",0+"px");
-													scrollbar.removeClass("floatfooter");
+													  scrollbar.removeClass("floatfooter");
 												  }	
 															
 	  									    }

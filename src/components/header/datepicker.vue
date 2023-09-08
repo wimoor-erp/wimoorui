@@ -126,8 +126,16 @@
 			})
 		 
 			function dateChange(val){
-				datas.start=val[0].format("yyyy-MM-dd");
-				datas.end=val[1].format("yyyy-MM-dd")+" 23:59:59";
+				var value={start:val[0],end:val[1]};
+				if(val[0].$d){
+					value.start=val[0].$d;
+				}
+				if(val[1].$d){
+					value.end=val[1].$d;
+				}
+				console.log(value);
+				datas.start=value.start.format("yyyy-MM-dd");
+				datas.end=value.end.format("yyyy-MM-dd")+" 23:59:59";
 				context.emit("changedate",datas,val);
 			}
 			function getValue(){

@@ -51,9 +51,9 @@
 			  </el-tab-pane>
 			  <el-tab-pane   name="hisrank" label="历史排名" >
 			   </el-tab-pane>
-			 <el-tab-pane v-for="item in queryList" :label="item.name" :name="item.queryfield"  >
+			 <el-tab-pane v-for="item in queryList" :label="item.name" :name="item.id" :class="item.name=='none'?'nopadding':''" :disabled ="item.name=='none'?true:false">
 				 <template #label>
-				        <div @click="showQueryDialog"  class="custom-tabs-label" v-if="item.name=='none'">
+				        <div @click.stop="showQueryDialog"  class="custom-tabs-label pointer font-black " style="padding-left: 10px; padding-right: 10px;margin-left:-10px;margin-right:-10px" v-if="item.name=='none'">
 				          <el-icon><Plus /></el-icon>
 				        </div>
 						<div class="custom-tabs-label" v-else>
@@ -69,17 +69,16 @@
 			      <div class="flex-center-between ">
 					  <el-space>
 			       <el-radio-group v-model="times" @change="changeTimes">
-			             <el-radio-button label="昨天" />
 			             <el-radio-button label="近7天" />
 			             <el-radio-button label="近30天" />
 			             <el-radio-button label="近90天" />
 			           </el-radio-group>
 					   <Datepicker ref="datepickersRef" :days="1"  @changedate="changedate" />
-					   </el-space>
-					    <div>
+					  </el-space>
+					  <!--   <div>
 					      <el-checkbox v-model="checked3" label="同期同比" />
 					      <el-checkbox v-model="checked4" label="同期环比" />
-					    </div>
+					    </div> -->
 			      </div>
 			    </template>
 				<div class="p-a-body">
@@ -103,25 +102,29 @@
 						      <el-radio-button label="复合图" />
 						      <el-radio-button label="单独图" />
 						 </el-radio-group> -->
-						 <div id="mycharts" class="my-chart">
+						 <div id="anaysis-mycharts" class="my-chart">
 						 </div>
 					  </div>
 				</div>
 				
 		</el-card>
 		<el-card style="margin-top:10px;">
+		
+			<el-scrollbar style="width:calc(100vw - 350px);" always>
 		<table class="sd-table">
 			<tr>
-				<td>项目名称</td>
-				<td v-for="label in labels">{{label}}</td>
+				<td  width="80px;">项目名称</td>
+				<td v-for="label in labels" width="60px;">{{label}}</td>
 			</tr>
-			<tr v-for="legend in legends">
-				<td>{{legend}}</td>
-				<td v-if="series && series[0] && series[0].data" v-for="item in series[0].data">
+			<tr v-for="(legend,index) in legends">
+				<td  width="80px;">{{legend}}</td>
+				<td width="60px;" v-if="series && series[index] && series[index].data" v-for="item in series[index].data">
 					{{item}}
 				</td>
 			</tr>
 		</table>
+		</el-scrollbar>
+	
 		</el-card>
 	 </div>
 	 <el-dialog v-model="remarkVisable" title="备注">
@@ -225,7 +228,7 @@
 		if(myChart!=null){
 			myChart.clear()
 		}else{
-			 myChart =echarts.init(document.getElementById('mycharts'));
+			 myChart =echarts.init(document.getElementById('anaysis-mycharts'));
 		}
 		// 指定图表的配置项和数据
 		var option = {
@@ -382,14 +385,20 @@
 		if(val=="近90天"){
 			start.setTime(start.getTime() - 3600 * 1000 * 24 * (90+beforedays))
 		}
-		if(val=="昨天"){
-			start.setTime(start.getTime() - 3600 * 1000 * 24 * (1+beforedays))
-		}
 		datepickersRef.value.dateValue=array;
 		datepickersRef.value.dateChange(array);
 	}
 	function loadChart(){
-		var ftype=state.activeName;
+		var ftype="";
+		if(state.activeName=="hisrank"||state.activeName=="sales"){
+			ftype=state.activeName;
+		}else{
+			state.queryList.forEach(item=>{
+				if(state.activeName==item.id){
+					ftype=item.queryfield;
+				}
+			})
+		}
 		if(ftype!="none"){
 			setTimeout(function(){
 				productAnysApi.getChartData({"sku":state.infoMap.sku,"marketplaceid":state.infoMap.marketplaceid,"groupid":state.infoMap.groupid,
@@ -441,6 +450,10 @@
 							datas.smooth = 0.5; 
 							datas.symbol = 'emptycircle';// 拐点样式
 							datas.data = data[i].data;
+							datas.label={
+	 								show:true,
+	 							};
+	 						datas.showAllSymbol=false;
 							state.series.push(datas);
 						}
 						lineChart();
@@ -470,11 +483,11 @@
 		//加载指标分组记录
 		if(data){
 			state.queryList=JSON.parse(JSON.stringify(data));
-			state.queryList.push({name:"none","queryfield":"none"});
+			state.queryList.push({name:"none","queryfield":"none","id":"none"});
 		}else{
 			queryFieldApi.getMyVersionFieldByUser({"queryname":"analysistarget"}).then((res)=>{
 				state.queryList=res.data;
-				state.queryList.push({name:"none","queryfield":"none"});
+				state.queryList.push({name:"none","queryfield":"none","id":"none"});
 			});
 		}
 		
@@ -496,6 +509,9 @@
 		margin:0;
 		margin-bottom: 1px;
 		border-bottom:0px;
+	}
+	.nopadding{
+		padding:0px;
 	}
 	.card-top-tabs .el-tabs__header .el-tabs__item.is-active{
 		border-bottom: 0px;

@@ -3,7 +3,7 @@
 			<el-col  :span="7" class="el-white-bg">
 				<div class="gird-line-head">
 					<el-space>
-						<el-select v-model="queryParams.searchMarket">
+						<el-select style="width:90px;" v-model="queryParams.searchMarket">
 							<el-option v-for="(item,index) in marketOptions" :value="item.marketplaceid" :label="item.name">
 								<el-space>
 								  <el-image class="flex-center" :src="require('@/assets/image/country/'+item.market+'-flag-small.jpg')">></el-image>
@@ -11,7 +11,7 @@
 								</el-space>
 							</el-option>					  
 						</el-select>
-						<el-input  v-model="queryParams.searchKeywords" placeholder="请输入" class="input-with-select" >
+						<el-input  v-model="queryParams.searchKeywords" clearable placeholder="请输入" class="input-with-select" >
 						   <template #prepend>
 						     <el-select v-model="queryParams.searchType" placeholder="SKU" style="width:80px">
 						       <el-option label="SKU" value="SKU"></el-option>

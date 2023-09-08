@@ -42,6 +42,14 @@
         </div>
     </div>
 	</el-scrollbar>
+	 <el-affix position="bottom" :offset="20">
+		 <div class="text-center filing-number">
+	   <span class="font-extraSmall">
+	   	Copyright © 2017 深圳市万墨信息科技有限公司版权所有 | 粤ICP备19045760号
+	   </span>
+	   </div>
+	  </el-affix>
+
 	</div>
 </template>
 
@@ -113,6 +121,9 @@ import {ElMessage} from "element-plus";
 </script>
 
 <style scoped>
+	.filing-number{
+		opticy:0.8;
+	}
   .login-bg{
 	  background-image: url(../../assets/image/login-bg.png);
 	  background-size: cover;

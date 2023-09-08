@@ -41,10 +41,17 @@
 			  		   </template>
 			  		 </el-table-column>
 			  		 <el-table-column label="出库数量" prop="amount">
-			  			  <!-- <template #default="scope">
-			  				  <el-input v-model="scope.row.amount">
-			  				  </el-input>
-			  			  </template>  -->
+			  			   <template #default="scope">
+			  				  {{scope.row.amount}}
+							  <shelfInvOpt
+							   :materialid="scope.row.materialid"
+							   :formid="scope.row.id"
+							   :warehouseid="warehouseform.warehouseid"
+							   :amount="scope.row.amount"
+							   opt="0"
+							   formtype="otherout"></shelfInvOpt>
+			  			  </template>   
+						
 			  		 </el-table-column>
 			  		 <el-table-column label="可用库存" prop="fulfillable">
 			  		 </el-table-column>
@@ -67,6 +74,7 @@
 	import {ArrowDown,Edit,View,Upload,Download} from '@element-plus/icons-vue';
 	import { ref,reactive,onMounted,watch,defineExpose,toRefs,inject } from 'vue';
 	import { ElMessage, ElMessageBox } from 'element-plus';
+	import shelfInvOpt from "@/views/erp/components/shelfInvOpt.vue";
 	import {dateFormat,dateTimesFormat} from '@/utils/index.js';
 	import outApi from '@/api/erp/inventory/outApi.js';
 	import {useRouter } from 'vue-router';

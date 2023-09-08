@@ -35,7 +35,7 @@
 		<el-table-column prop="disposedQuantity" label="完成数量"  width="100" />
 		
 		<el-table-column prop="removalFee" label="费用"  width="100" />
-		<el-table-column prop="currency" label="完成数量"  width="80" />
+		<el-table-column prop="currency" label="币种"  width="80" />
 	  </template>
 	 </GlobalTable>
 	</el-row>

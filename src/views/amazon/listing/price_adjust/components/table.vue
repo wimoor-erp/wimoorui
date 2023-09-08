@@ -1,6 +1,10 @@
 <template>
  <div>
-	 <GlobalTable  ref="globalTable" :tableData="tableData"  @loadTable="loadTableData" :stripe="true"  :defaultSort="{ prop: 'opttime', order: 'descending' }" >
+	 <GlobalTable  ref="globalTable" 
+	   :tableData="tableData"  
+	   height="calc(100vh - 200px)"
+	  @loadTable="loadTableData" :stripe="true" 
+	  :defaultSort="{ prop: 'opttime', order: 'descending' }" >
 		  <template #field>
 		 <el-table-column  v-if="!isDailog" type="selection" width="38" />
 		 <el-table-column v-if="!isDailog" label="图片" width="60">

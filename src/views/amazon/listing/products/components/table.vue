@@ -3,6 +3,7 @@
 	 <GlobalTable  ref="globalTable" :tableData="tableData"  :size="20" @loadTable="loadtableData" 
 	 :stripe="true" :height="tableheight"
 	 :cellClassName="cellClassName"
+	 
 	 :defaultSort="defaultSort" @selectionChange = "selectRow"    >
 		  <template #field>
 		 <el-table-column  type="selection" width="38" />
@@ -53,8 +54,7 @@
 					</div>
 					 <el-space class="font-extraSmall m-t-8"  :size="16">
 						 <span class="">上架日期：{{scope.row.opendate}} </span>
-						 <span class="">店铺：{{scope.row.groupname}} </span>
-						 <span class="">国家：{{scope.row.marketplacename}} </span>
+						 <span class="pointer" @click.stop="handleSearchSku(scope.row)">站点：{{scope.row.groupname}} - {{scope.row.marketplacename}} </span>
 					</el-space>
 		 			 </template>
 		 </el-table-column>
@@ -393,12 +393,12 @@
 				</el-row>
 			  </template>
 			</el-table-column>
-		   <el-table-column  prop="remark" label="备注" width="150">
+		   <el-table-column  prop="remark" label="备注" min-width="150">
 		   <template #default="scope">
 			   <div class="table-edit-flex" @click="editRemarks(scope.row)">
 				   <el-tooltip placement="left-start"   >
-						 <template #content><div style="max-width:400px;" >{{scope.row.remark}}</div></template>
-				          <span class="text-omit-3">{{scope.row.remark}}</span>
+						 <template #content><div style="max-width:400px;"  v-html="scope.row.htmlremark"></div></template>
+				          <span class="text-omit-3" v-html="scope.row.htmlremark"> </span>
 				         </el-tooltip>
 						   <el-icon ><Edit/></el-icon>
 			   </div>
@@ -408,7 +408,7 @@
 			   <template #default="scope">
 				   <el-space direction="vertical">
 					
-				   <slide class="ic-cen pointer" title="趋势分析"  @click="handleAnalysis"  theme="outline" size="18" fill="#FF6700" :strokeWidth="3"/>
+				   <slide class="ic-cen pointer" title="趋势分析"  @click="handleAnalysis(scope.row)"  theme="outline" size="18" fill="#FF6700" :strokeWidth="3"/>
 			   	<el-dropdown>
 			   	    <el-link type="danger" class="font-Small font-400"  :underline="false">
 			   	     <el-icon class="ic-cen"><MoreFilled /></el-icon>
@@ -458,9 +458,9 @@
  <!-- 操作日志 -->
  <Matching ref ="matchingRef" />
  <!-- 调价弹窗 -->
- <ModifyPriceDialog ref="modifypriceRef" @change="refreshTable"/>
+ <ModifyPriceDialog ref="modifypriceRef" @change="handleAfterModifyPrice"/>
  <!-- 备注弹窗 -->
- <RemarksDialog ref="remarksRef"/>
+ <RemarksDialog ref="remarksRef"   />
 <!-- 销售状态 -->
  <SaleStatusSelect ref="statusRef"/> 
 <!-- 成本明细 -->
@@ -470,7 +470,7 @@
   <FollowDialog ref="followDialogRef"></FollowDialog>
   </template>
 <script>
-	import {ref,reactive,onMounted,watch,h} from 'vue'
+	import {ref,reactive,onMounted,watch,h,inject} from 'vue'
 	import {useRouter } from 'vue-router'
 	import {Help,Plus,MenuUnfold,ChartHistogram,Slide,ChartLine,DownTwo,UpTwo} from '@icon-park/vue-next';
 	import {ElMessage,ElMessageBox,ElDivider} from 'element-plus';
@@ -489,7 +489,7 @@
 	import SaleStatusSelect from "./sale_status_select.vue"
 	import RemarksDialog from "./remarks_dialog.vue"
 	import GlobalTable from "@/components/Table/GlobalTable/index";
-	import {formatFloat,formatPercent,formatInteger} from '@/utils/index';
+	import {formatFloat,formatPercent,formatInteger,decodeText} from '@/utils/index';
 	import NullTransform from"@/utils/null-transform";
 	import inventoryApi from "@/api/erp/inventory/inventoryApi.js";
 	import inventoryRptApi from "@/api/amazon/inventory/inventoryRptApi.js";
@@ -506,8 +506,9 @@
 			RemarksDialog,SaleStatusSelect,PorfitDetails,InfoFilled,
 			CaretTop,ChartLine,ArrivalDialog,OtherCost,OwnerAll,FollowDialog,DownTwo,UpTwo
 		},
-		emits:["checkRow"],
-		setup(props,context) {
+		emits:["checkRow","searchsku"],
+		props:["indialog"],
+		setup(props,context) {			
 			let defaultSort=ref({"prop": 'sku', "order": 'ascending' });
 			let modifypriceRef =ref()
 			let followDialogRef=ref();
@@ -540,7 +541,9 @@
 			var queryParams={};
 			let ownerid=ref();
 			let ownerpid=ref();
-			let tableheight = ref(undefined)
+		 
+			let tableheight = ref(undefined);
+			const emitter = inject("emitter");
 		onMounted(()=>{
 			
 		})
@@ -556,9 +559,38 @@
 		 function selectRow(selection, row){
 			 context.emit("checkRow",selection)
 		 }
-		 function handlesaleChart(row){
-			 salechartRef.value.show(row.groupid,row.marketplaceid,row.amazonAuthId,row.sku,row.msku);
+		 function  handleSearchSku(row){
+			  context.emit("searchsku",row.sku);
 		 }
+		 function handlesaleChart(row){
+			 salechartRef.value.show(row.groupid,row.marketplaceid,null,row.sku,row.msku);
+		 }
+		 function handleAfterModifyPrice(data){
+			   if(data&&data.ftype=="1"){
+				   var paramitem=null;
+				   tableData.records.forEach(item=>{
+				  	 if(item.id==data.pid){
+				  	    item.landedAmount=data.price;
+						paramitem=item;
+				  	 }
+				   });
+				   if(paramitem!=null){
+					   var data={"sku":paramitem.sku,"marketplace":paramitem.marketplaceid,"groupid":paramitem.groupid}
+					   productinfoApi.productList(data).then((res)=>{
+					   	if(res.data.records && res.data.total>0){
+					   		 res.data.records.forEach(item=>{
+								 if(item.id==paramitem.id){
+									 paramitem.newprorate=item.newprorate;
+								 }
+							 })
+					   	}
+					   });	
+				   }
+			   }else{
+			     refreshTable();
+			   }
+		 }
+		 
 		 function matching(row){
 			 var msku=row.sku;
 			 if(row.msku){
@@ -580,6 +612,13 @@
 			data.isparent=params.isparent;
 			if(params.salestatus==""){
 				 params.salestatus="all";
+			}
+			if(data.searchtype=="sku"&&data.search){
+				data.sort="marketindex";
+				data.order="asc";
+			}else{
+				data.sort="sku";
+				data.order="asc";
 			}
 			data.salestatus=params.salestatus;
 			data.disable=params.disable;
@@ -607,9 +646,25 @@
 			 //看不到加载信息
 			 tableheight.value = document.body.clientHeight -250
 			 productinfoApi.productList(data).then((res)=>{
+				 if(res.data&&res.data.records&&res.data.records.length>0){
+				 	res.data.records.forEach(item=>{
+						if(item.remark){
+						    item.htmlremark=decodeText(item.remark);
+						}else{
+							item.htmlremark="";
+						}
+					});
+				 }
 			 	tableData.records = res.data.records
 			 	tableData.total =res.data.total
-				tableheight.value = ''
+				
+				
+				if(props.indialog=="true"){
+					 tableheight.value = document.body.clientHeight -160
+				}else{
+					tableheight.value = '';
+				}
+				
 			 });
 		 }
 		 function modifyPrice(row){
@@ -710,12 +765,17 @@
 		 function openUrl(point,asin){
 			 window.open("https://"+point+"/dp/"+asin+"?th=1&psc=1", '_blank');
 		 }
-		 function handleAnalysis(){
+		 function handleAnalysis(row){
+			 emitter.emit("removeCache", "趋势分析");
 			 router.push({
 				 path:'/amazon/listing/analysis',
 				 query:{
 					   title:'趋势分析',
 					   path:'/amazon/listing/analysis',
+					   marketplaceid:row.marketplaceid,
+					   groupid:row.groupid,
+					   pid:row.id,
+					   sku:row.sku,
 				 }
 			 })
 		 }
@@ -929,7 +989,7 @@
 			formatInteger,modifyPrice,editRemarks,viewProfitDetails,handlarrivalChart,NullTransform,EditStatus,loadData,
 			showCostModal,loadInventory,refreshInventory,refreshProduct,showPrice,openUrl,handleAnalysis,loadEUInventory,submitTags,
 			changeTags,disable,undisable,showOwner,getOwner,updateOwner,cellClassName,handleToMaterial,handleShowFlow,avgrateCalc,
-			showRankInfo,updatePrice,changeFBMInventory ,changeFBMPrice,refreshTable,
+			showRankInfo,updatePrice,changeFBMInventory ,changeFBMPrice,refreshTable,handleSearchSku,handleAfterModifyPrice,
 			//ref
 			salechartRef,matchingRef,modifypriceRef,remarksRef,followDialogRef,
 			porfitRef,arrivalchartRef,statusRef,otherCostRef,ownerRef

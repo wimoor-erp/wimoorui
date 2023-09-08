@@ -30,9 +30,9 @@
 				   	<el-select v-model="dateType" @change="handleQuery">
 				   		<el-option v-for="item in dateOptions" :label="item.label" :value="item.value"></el-option>
 				   	</el-select>
-				   	<Datepicker longtime="ok" ref="datepickersRef" @changedate="changedate" />
+				   	<Datepicker style="width: 240px;" longtime="ok" ref="datepickersRef" @changedate="changedate" />
 				   </div>
-				     <el-input  v-model="searchKeywords" placeholder="请输入" clearable @input="handleQuery" class="input-with-select" >
+				     <el-input  v-model="searchKeywords" placeholder="请输入" clearable @input="handleQuery"  style="min-width:240px;" >
 				        <template #prepend>
 				          <el-select v-model="searchtype" @change='searchTypeChange' placeholder="SKU"  style="width:90px">
 				            <el-option label="SKU" value="sku"></el-option>
@@ -54,7 +54,7 @@
 				                 <FilterIcon></FilterIcon>
 				             </el-button>
 				           </template>
-				  		  <el-form :model="form" label-width="80px">
+				  		  <el-form :model="form" label-width="100px">
 				  		  <el-form-item label="产品标签">
 				  		       <Tags @change="changeTags" ref="tagsRef"></Tags>
 				  		     </el-form-item>
@@ -200,7 +200,7 @@
 			arrivalType:'',
 			payarrivalType:'',
 			paymentType:false,
-			audistatusType:'',
+			audistatusType:'12',
 			dateType:'0',
 			dateOptions:[
 				{label:'创建日期',value:'0',},

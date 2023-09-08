@@ -13,8 +13,13 @@
 		:summary-method="summaryMethod"
 	    :row-class-name="rowClassName"
 		:cell-class-name="cellClassName"
+		:lazy="lazy"
+		:load="load"
+		:tree-props="treeProps"
 		:row-key="rowKey"
 		:highlight-current-row="highlightCurrentRow"
+		:default-expand-all="defaultExpandAll"
+		@cell-click="cellClick"
 		@row-click="rowClick"
 	    @sort-change="tableSort" 
 		@expand-change="expandChange"
@@ -34,12 +39,16 @@
 	        :stripe="stripe" 
 	  		:border="border"
 	  		:height="height"
+			:lazy="lazy"
+			:load="load"
+			:tree-props="treeProps"
 	  		:show-summary="showSummary"
 	  		:summary-method="summaryMethod"
 			:row-key="rowKey"
 			:row-class-name="rowClassName"
 			:cell-class-name="cellClassName"
 			:highlight-current-row="highlightCurrentRow"
+			:default-expand-all="defaultExpandAll"
 			@row-click="rowClick"
 	        @sort-change="tableSort" 
 			@expand-change="expandChange"
@@ -80,16 +89,20 @@
 							   stripe:"",
 							   border:"",
 							   size:"",
+							   lazy:undefined,
 							   height:undefined,
+							   load:undefined,
+							   treeProps:undefined,
 							   showSummary:"",
 							   summaryMethod:"",
 							   rowKey:undefined,
 							   rowClassName:undefined,
 							   cellClassName:undefined,
-							   highlightCurrentRow:undefined
+							   highlightCurrentRow:undefined,
+							   defaultExpandAll:undefined,
   	                       });
-	const { tableData,inDialog,inTable,defaultSort,size,queryParams,
-	        stripe,border,height,showSummary,summaryMethod,rowKey,rowClassName,cellClassName,highlightCurrentRow} = toRefs(props);
+	const { tableData,inDialog,inTable,defaultSort,size,queryParams,lazy,load,treeProps,
+	        stripe,border,height,showSummary,summaryMethod,rowKey,rowClassName,cellClassName,highlightCurrentRow,defaultExpandAll} = toRefs(props);
 	const emit = defineEmits(['loadTable',"selectionChange","row-click","expandChange","currentChange"]);
 	let globalTableRef=ref();
 	const state = reactive({
@@ -164,7 +177,9 @@
 				 state.loading=false;
 		}
 		function refreshTable(){
-			 state.loading=true;
+			 if(!state.loading){
+			      state.loading=true;
+			 }
 			 state.mQueryParams.loadType="refreshTable";
 			 emit("loadTable", state.mQueryParams,callback) ;
 			 if(!props.height){
@@ -173,13 +188,16 @@
 		}
 		
 		function loadTable(param){
-			 state.loading=true;
+			 if(!state.loading){
+			      state.loading=true;
+			 }
 			 state.mQueryParams.currentpage=1;
 			 state.currentPage=1;
 			 if(param){
 			    state.mQueryParams=Object.assign(state.mQueryParams, param);
 			 }
 			 state.mQueryParams.loadType="loadTable";
+			 console.log(state.loading);
 			 emit("loadTable",state.mQueryParams,callback ) ;
 			 if(!props.height){
 			     screenToTop();
@@ -215,7 +233,7 @@
 			 	state.mQueryParams.order=props.defaultSort.order=="ascending"?"asc":"desc";
 			 }
 		 })
-		 defineExpose({ loadTable,refreshTable,toggleRowExpansion,toggleRowSelection,setCurrentRow })
+		 defineExpose({ loadTable,refreshTable,handleCurrentChange,toggleRowExpansion,toggleRowSelection,setCurrentRow })
 		 watch(props.queryParams,(val)=>{
 			loadTable(props.queryParams);
 		 });
@@ -234,7 +252,9 @@
 		 			  }
 		       },{ immediate: true });
 		 watch(props.tableData,(val)=>{
-		 		   state.loading = false;
+			       if(state.loading){
+		 		        state.loading = false;
+				   }
 				  if(!props.height&&!props.inTable){
 					  tableHeaderFloat(state.uuid);
 		           }

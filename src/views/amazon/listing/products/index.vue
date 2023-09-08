@@ -1,7 +1,6 @@
 <template>
 	<div class="main-sty" >
 		<div class="con-header">
-					
 			<el-row>
 				<Group @change="getGroup" isproduct="ok"  ref="groupRef" />
 				<el-space>
@@ -200,9 +199,18 @@
 		
 		<div class="con-body">
 			
-			<Table @checkRow="checkRows"  ref="tableRef"  />
+			<Table @checkRow="checkRows"  ref="tableRef" @searchsku="handleSearchSku" />
 		</div>
 	</div>
+	<el-dialog
+     top="3vh"
+	 width="95%"
+	 class="skusearchdialog"
+	 v-model="visable" 
+	 title="商品信息" 
+	 destroy-on-close='true' >
+		 <Table @checkRow="checkRows" indialog="true"   ref="tableSkuRef"   />
+	</el-dialog>
 	<BatchModifypriceDialog ref="priceDialogRef"/>
 	<!-- 日均销量公式 -->
 	<SaleFormula ref = "SaleFormulaRef"/>
@@ -246,7 +254,9 @@
 			const filterBtnColor = ref()
 			let cateRef=ref();
 			let tagsRef=ref();
+			let visable=ref(false);
 			let groupRef=ref();
+			let tableSkuRef=ref();
 			let ownerRef=ref();
 			let statusRef=ref();
 			let refreshRef=ref();
@@ -381,7 +391,19 @@
 			queryParam.order=currentSolt.value;
 			refreshTable();
 		}
- 
+        function handleSearchSku(sku){
+			visable.value=true;
+		     var param=JSON.parse(JSON.stringify(queryParam));
+		     param.searchtype="sku";
+			 param.search=sku;
+			 param.groupid="";
+			 param.marketplaceid="";
+			 var timeout= setTimeout(function(){
+				 tableSkuRef.value.loadData(param);
+				 clearTimeout(timeout);
+			 },300);
+			  
+		}
 		function soltChange(val){
 			currentSolt.value =val;
 			queryParam.sort=currentRank.value;
@@ -619,8 +641,8 @@
 			submitSearch();
 		}
 			return {
-				options,props,salerange,salerangecheck,
-				filterBtnColor,
+				options,props,salerange,salerangecheck,visable,
+				filterBtnColor,handleSearchSku,
 				radio2,modifyPrice,checkRows,selection,
 				priceDialogRef,rankData,currentRank,rankChange,handleToOutSearch,
 				currentSolt,soltData,soltChange,getGroup,getOwner,getStatus,searchtype,
@@ -629,13 +651,19 @@
 				SaleFormulaRef,EditSaleFormula,disabletype,disabletypeChange,percentInput,
 				isbadreview,proname,columnList,dataColumn,mark,dataValue,submitDataForm,resetDataForm,
 				addColumn,clearColumn,columntext,columnval,showRefreshDialog,refreshRef,refreshFBAInv,
-				changeTag,getCategory,clearSearch,groupRef,statusRef,ownerRef,tagsRef,cateRef
+				changeTag,getCategory,clearSearch,groupRef,statusRef,ownerRef,tagsRef,cateRef,tableSkuRef
 			}
 		},
 	}
 </script>
 
 <style>
+	.skusearchdialog .el-dialog__body{
+		padding:0 0 10px 0;
+	}
+	.skusearchdialog {
+			 margin: var(--el-dialog-margin-top,15vh) auto 10px !important;
+	}
 	.r_active{
 		background-color: var(--el-dropdown-menuItem-hover-fill);
 	    color: var(--el-dropdown-menuItem-hover-color);

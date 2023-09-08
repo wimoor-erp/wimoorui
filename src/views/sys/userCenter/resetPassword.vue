@@ -1,7 +1,14 @@
 <template>
 	<div class="gary-bg bg-height" >
 	<el-row>
-		<el-col :span="12" :offset="6">
+		<el-col 
+		:xs="24" 
+		:sm ="24" 
+		:md ="12" 
+		:lg ="12" 
+		:xl="6"
+		 style="margin:0 auto"
+		 >
 			<el-card class="box-top">
 			<h3>忘记密码</h3>
 			  <el-steps :active="active" finish-status="success">
@@ -13,22 +20,23 @@
 			  <el-col :span="12" :offset="6">
 			  <el-form ref="myform" label-width="100px" :model="form" :rules="rules">
 				    <el-form-item v-if="active<1" label="手机号/邮箱" prop="account">
-				        <el-input v-model="form.account" />
+				        <el-input style="min-width:200px;"  v-model="form.account" />
 				      </el-form-item>
 				    <el-form-item v-if="active<1" label="验证码">
 						<el-space>
-							<el-input v-model="form.code">
+							<el-input style="min-width:100px;" v-model="form.code">
 							</el-input>
 							<el-button v-if="waitSecond>0" disabled type="primary" loading plain>重新获取等待<span>（{{waitSecond}}s)</span> </el-button>
 							<el-button v-else type="primary" @click.stop="sendSMSCode" plain>获取验证码 </el-button>
 						</el-space>
 				      </el-form-item>
 					  <el-form-item v-if="active>0&&active<2" 
-							prop="password" 
+							prop="password"
 	                        label="新密码">
 					      <el-input 
 						   v-model="form.password"
 							type="password"
+							style="min-width:100px;" 
 							placeholder="请输入密码"
 							show-password
 							/>
@@ -40,6 +48,7 @@
 							>
 					      <el-input v-model="form.repassword"
 								   type="password"
+								   style="min-width:100px;" 
 								   placeholder="请输入确认密码"
 								   show-password
 								   />

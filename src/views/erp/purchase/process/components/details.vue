@@ -48,6 +48,7 @@
 								     placement="top-start"
 								     title="修改加工数量"
 								     :width="200"
+									  v-hasPerm="'erp:po:ass:update'"
 								   >
 								    <el-input-number v-model="edit_handlecount" :precision="0" :step="1" :min="1" placeholder="请输入" />
 									<el-button size="small" @click="changeAmount"
@@ -76,6 +77,7 @@
 							   title="产品入库"
 							   :width="200"
 							   trigger="click"
+							   v-hasPerm="'erp:po:ass:in'"
 							 >
 							  <el-input-number v-model="stockAmount" :min="1" :step="1" :precision="0" placeholder="数量" />
 								<el-button  @click="handleInstock"
@@ -150,7 +152,7 @@
 							  <el-table-column label="备注" prop="remark" />
 							  <el-table-column label="操作" v-if="warehouseform.auditstatus==2">
 								  <template #default="scope" >
-									<el-button  
+									<el-button  v-hasPerm="'erp:po:ass:in'"
 									 link type="primary"  @click.stop="cancelStock(scope.row)">撤销入库</el-button>
 								  </template>
 							  </el-table-column>
@@ -162,7 +164,7 @@
 							 <div style="padding-top:10px;">
 								<el-space>
 									<el-button @click="closeTab">关闭</el-button>
-									<el-button v-if="active==2" @click="stopAssembly()">终止单据</el-button>
+									<el-button  v-hasPerm="'erp:po:ass:stop'" v-if="active==2" @click="stopAssembly()">终止单据</el-button>
 									<el-button v-if="warehouseform.auditstatus==4||warehouseform.auditstatus==3" type="primary" @click="restartAssembly()">重启单据</el-button>
 									<el-button v-if="active==1" type="primary" @click="handleStart">开始加工</el-button>
 								</el-space>

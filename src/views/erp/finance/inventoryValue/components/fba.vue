@@ -3,7 +3,7 @@
 	<div class=" flex-center-between" style="margin-bottom:10px;">
 	<el-space>
 	  <el-button @click="download">导出</el-button>
-	  <Group  ref="groups" @change="changeGroup" />
+	  <Group  ref="groups" @change="changeGroup" isproduct="ok" defaultValue="onlyEU"/>
 	  <el-space :size="4">
 	  <span class="font-extraSmall">库存日期：</span>
 	  <el-date-picker

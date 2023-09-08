@@ -8,6 +8,10 @@
 						<el-space :spacer="spacer">
 							<span>计划编码：{{plandata.number}}</span>
 							<span>货件数：{{plandata.shipmentnum}}</span>
+							<el-link title="复制新增"  class="icon-text-center" 
+							:underline="false" @click="copyPlan(plandata.id)">
+								 <el-icon  style="font-size: 16px;"><CopyDocument /> </el-icon>&nbsp;复制
+							</el-link>
 						</el-space>
 					</div>
 				</div>
@@ -102,11 +106,11 @@
 	import shipmentplanApi from '@/api/erp/ship/shipmentplanApi.js';
 	import {formatFloat} from '@/utils/index';
 	import {ElMessage } from 'element-plus'
-	import {Stamp} from '@element-plus/icons-vue'
+	import {CopyDocument,Stamp} from '@element-plus/icons-vue'
 	
 	export default {
 		name: 'index',
-		components: {List,Table,Help,Stamp},
+		components: {List,Table,Help,Stamp,CopyDocument,},
 		setup() {
 			let spacer = h(ElDivider, {direction: 'vertical'})
 			let router = useRouter();
@@ -136,6 +140,17 @@
 					path: '/erp/ship/shipment_add/list',
 					query:query,
 				})
+			}
+			function copyPlan(shipmentid){
+				emitter.emit("removeCache", "添加货件");
+				router.push({
+					path:'/invoice/addshipment',
+					query:{
+						inboundplanid:shipmentid,
+						title:'添加货件',
+						path:'/invoice/addshipment',
+					}
+				}) 
 			}
 			function loadData(){
 				if(planid){
@@ -213,7 +228,7 @@
 				//最后更新一下plan的状态
 			}
 			return {
-				spacer,loadData,listRef,tableRef,plandata,approvePlan,closePage,
+				spacer,loadData,listRef,tableRef,plandata,approvePlan,closePage,copyPlan,
 				approveVisible,submitplan,shipmentList,approves,confirmloading,formatFloat
 			}
 		}

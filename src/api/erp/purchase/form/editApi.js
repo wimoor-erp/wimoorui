@@ -32,8 +32,24 @@ function getConsumableByMainSKU(data){
 function getBatchList(data){
 	return request.get('/erp/api/v1/purchase/plan/item/getBatchList',{params:data});
 }
+ function downloadItemList(data,callback){
+ 	  return request({url:"/erp/api/v1/purchase/plan/item/downloadItemList",
+ 	                responseType:"blob",
+ 					params:data,
+ 					method:'get'}).then(res => {
+ 						downloadhandler.downloadSuccess(res,"purchaseItemSelectList.xlsx");
+ 						if(callback){
+ 							callback();
+ 						}
+ 				}).catch(e=>{
+ 					    downloadhandler.downloadFail(e);
+ 						if(callback){
+ 							callback(e);
+ 						}
+ 				});;
+ } 
 
 
 export default{
-	 saveData,getPriceBySupplier,downExcelTemp,uploadExcel,getConsumableByMainSKU,getBatchList,
+	 saveData,getPriceBySupplier,downExcelTemp,uploadExcel,getConsumableByMainSKU,getBatchList,downloadItemList,
 }

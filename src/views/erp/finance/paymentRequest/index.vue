@@ -11,7 +11,7 @@
 			<el-row>
 			 <el-space>
 			 <Supplier ref="supplierRef" @change="changeSupplier"  />
-			 <el-select v-model="queryParam.paymethod" placeholder="支付方式" @change="handleQuery">
+			 <el-select class="width120" v-model="queryParam.paymethod" placeholder="支付方式" @change="handleQuery">
 				 <el-option  v-for="item in payMethodList"   :key="item.id"  :label="item.name" :value="item.id"  ></el-option>
 			 </el-select>
 			<!-- <el-select placeholder="请款类型">
@@ -476,6 +476,9 @@
 	</script>
 	
 	<style scoped="scoped">
+		.width120{
+			width:120px;
+		}
 		.text-orange{
 			color:var(--el-color-primary);
 			font-size:12px;

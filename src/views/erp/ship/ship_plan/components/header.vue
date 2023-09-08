@@ -106,7 +106,12 @@
 						       <el-radio label="showhid">隐藏</el-radio>
 						     </el-radio-group>
 						 </el-form-item>
-						 
+						 <el-form-item label="销售预估">
+						   <el-radio-group v-model="queryParams.different">
+						       <el-radio label="">不限</el-radio>	 
+						       <el-radio label="avgsales">系统预估大于手动干预</el-radio>
+						     </el-radio-group>
+						 </el-form-item>
 				 		 <el-form-item >
 				 			 <el-button type="primary" @click="handleQuery();moreSearchVisible=false">搜索</el-button>
 				 			 <el-button @click="resetForm(formRef)">取消</el-button>	
@@ -128,12 +133,20 @@
 				</el-space >
 					
 				<div class='rt-btn-group'>
-					<div class="flex-center font-small m-r-16">
+					<div class="flex-center font-small ">
+						<el-checkbox style="margin-right:0px;" v-model="queryParams.expendall" label="默认展开"  @change="handleExpendAll"/>
+						<el-divider direction="vertical" />
 						<el-checkbox v-model="queryParams.selected" label="显示已选"  @change="handleQuery"/>
 						<el-divider direction="vertical" />
+						<el-affix :offset="80" class="affix">
+						<span class="affix-s">	
 						<span>已选 <span class="text-orange font-bold"> {{summary.skunum}} </span>个SKU</span>
 						<el-divider direction="vertical" />
 						<span>发货总数 <span class="text-orange font-bold"> {{summary.amount}}</span></span>
+						<el-divider direction="vertical" />
+						<span v-if="summary.weight">发货重量 <span class="text-orange font-bold">{{formatFloat(summary.weight)}}</span>kg</span>
+						</span>
+						</el-affix>
 					</div>
 					<el-space v-if="queryParams.marketplaceids&&queryParams.marketplaceids.length>0" >
 					<el-checkbox v-model="queryParams.plansimple" label="简约计划"  @change="handleQuery"/>
@@ -179,6 +192,7 @@
 	import Category from '@/components/header/category.vue';
 	import DeliveryDialog from "./delivery_dialog";
 	import ShipmarketRank from "./shipmarket_rank";
+	import {formatFloat} from '@/utils/index';
 	import Status from '@/views/amazon/listing/products/components/prostatus.vue';
 	import CheckDataDialog from "./check_data_dialog";
 	import {downExcelSales} from "@/api/amazon/listing/preSalesApi.js";
@@ -261,7 +275,7 @@
 					    })
 				}
 				
-			let  emits = defineEmits(['change'])	
+			let  emits = defineEmits(['change','expendNone'])	
 			function handleQuery(type){
 				     if(type&&type=="opt"){
 						 if(state.queryParams.warehouseid&&state.queryParams.groupid){
@@ -301,6 +315,10 @@
 				state.queryParams.status=id;
 				handleQuery();
 			}
+			function handleExpendAll(value){
+				      state.queryParams.expendall=value;
+					  emits("expend",value);
+			}
 			function getOwner(id){
 				state.queryParams.owner=id;
 				handleQuery();
@@ -319,7 +337,6 @@
 				}else{
 					state.queryParams.isOversea=false;
 				}
-				console.log(state.queryParams);
 				handleQuery();
 				handleQuerySummary();
 			}
@@ -330,14 +347,24 @@
 				tagsRef.value.reset();
 				var groupid=state.queryParams.groupid;
 				var warehouseid=state.queryParams.warehouseid;
-				state.queryParams={'groupid':groupid,'warehouseid':warehouseid,shortdays:'',
-				                   searchtype:'sku',selected:false,categoryid:"",isOversea:false,
-								   status2:"shownormal",
-								   owner:'',search:"",
-								   tags:[],marketplaceid:'',status:'',
-								   hasAddFee:"",issfg:"",
-								   currentSolt:"desc",
-								   currentRank:"",skuarray:""} ;
+				state.queryParams.searchtype="sku";
+				state.queryParams.selected=false;
+				state.queryParams.categoryid="";
+				state.queryParams.shortdays=false;
+				state.queryParams.status2="shownormal";
+				state.queryParams.owner="";
+				state.queryParams.search="";
+				state.queryParams.name="";
+				state.queryParams.remark="";
+				state.queryParams.tags=[];
+				state.queryParams.marketplaceids=[];
+				state.queryParams.status='';
+				state.queryParams.hasAddFee="";
+				state.queryParams.issfg="";
+				state.queryParams.different="";
+				state.queryParams.currentSolt="desc";
+				state.queryParams.currentRank="";
+				state.queryParams.skuarray="";
 				handleQuery();
 			}
 			function resetForm(){
@@ -450,5 +477,17 @@
 	}
 	.m-b-4{
 		margin-bottom:4px;
+	}
+	.affix .el-affix--fixed{
+		background-color:rgba(0,0,0,0.8);
+		border-radius: 4px;
+		padding:4px 0px;
+		height:24px!important;
+		white-space: nowrap;
+		color:#fff;
+	}
+	.affix-s{
+		margin-right:8px;
+		margin-left:8px;
 	}
 </style>

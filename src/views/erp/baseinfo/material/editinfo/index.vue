@@ -38,7 +38,7 @@
 			</el-col>
 			<el-col :xl="16" :lg="21">
 				<el-card class="fr-con">
-					 <el-scrollbar class="he-scr-car" @scroll="scroll">
+					 <el-scrollbar class="he-scr-car" ref="scorollbarRef" @scroll="scroll">
 					 <el-form ref="globalFormRef" :model="forms"  label-width="100px">
 						 <!-- 基础信息 -->
 						 <Base  ref="baseRef" :tagsValue="tagsValue"  :dataForms="forms.baseforms"   />
@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref,reactive,onMounted,watch,onUnmounted,toRefs,inject} from 'vue'
+import { ref,reactive,onMounted,watch,onUnmounted,toRefs,inject,nextTick} from 'vue'
 import Base from"./components/base.vue"
 import Purchase from"./components/purchase.vue"
 import Logistics from"./components/logistics.vue"
@@ -98,12 +98,13 @@ import {useRouter } from 'vue-router'
 import {checkVisiable} from '@/utils/jquery/table/float-header';
 import { ElMessage } from 'element-plus'
 import materialApi from '@/api/erp/material/materialApi.js';
-
+      const scorollbarRef=ref();
       const emitter = inject("emitter"); // Inject `emitter`
 	  let router = useRouter()
 	  const mid=router.currentRoute.value.query.details;
 	  const iscopy=router.currentRoute.value.query.iscopy;
 	  const type=router.currentRoute.value.query.type;
+	  const scrolltopobj=router.currentRoute.value.query.scrolltopobj;
 	  const baseRef=ref({});
 	  const globalFormRef=ref();
 	  onMounted(()=>{
@@ -204,7 +205,6 @@ import materialApi from '@/api/erp/material/materialApi.js';
 						 state.forms.assemblyforms.list=res.data.assemblyList;
 						 state.forms.assemblyforms.assemblyTime=state.forms.baseforms.assemblyTime;
 					 }
-					 
 				}
 				var arrs=[];
 				materialApi.findMaterialTags({"mid":mid}).then((ress)=>{
@@ -217,6 +217,15 @@ import materialApi from '@/api/erp/material/materialApi.js';
 						   state.tagsValue=arrs;
 					  }else{
 						   state.tagsValue=[];
+					  }
+					  if(scrolltopobj){
+						  nextTick(()=>{
+							  var top=parseInt(scrolltopobj);
+							  if(top-30>0){
+								  top=top-30;
+							  }
+						  	 scorollbarRef.value.setScrollTop(top);
+						  })
 					  }
 				});
 			});
@@ -256,6 +265,9 @@ import materialApi from '@/api/erp/material/materialApi.js';
 						var ispass=true;
 						var nowcountry=""; 
 						datas.customsItemList.forEach(function(cust){
+							if(cust.code=="" || cust.code==null || cust.code==undefined){
+								ispass=false;
+							}
 							if(nowcountry==cust.country){
 								ispass=false;
 							}else{
@@ -264,7 +276,7 @@ import materialApi from '@/api/erp/material/materialApi.js';
 						});
 						if(ispass==false){
 							ElMessage({
-							    message: '海关信息不能添加相同的国家!',
+							    message: '海关信息不能添加相同的国家或没填写海关编码!',
 							    type: 'error'
 							})
 							return;

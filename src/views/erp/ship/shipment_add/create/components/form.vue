@@ -73,10 +73,10 @@
 							</el-form-item>
 						</el-col>
                         <el-col :span="24">
-							<el-form-item label="发货地址" prop="region">
+							<el-form-item label="发货地址" class="myformitem" prop="region">
 								<el-radio-group  v-model="formData.shipfromaddressid" size="large" @change="radioChange">
 									<el-row :gutter="16">
-										<el-col  :span="8" v-for="(item,index) in addressData"  v-show="index<addrIndex" >
+										<el-col  :span="addressData.length>3?8:24/addressData.length" v-for="(item,index) in addressData"  v-show="index<addrIndex" >
 								      <el-radio-button class="m-b-16" :label="item.id">
 										  <div class="addr-info">
 											  <div class="addr-header">
@@ -85,9 +85,9 @@
 												  <span>{{item.phone}}</span>
 											  </div>
 											  <div class="addr-body">
-												  <p>{{item.addressline1}}</p>
-												  <p>{{item.addressline2}}</p>
-												  <p>{{item.stateorprovincecode}},{{item.city}},{{item.districtorcounty}}</p>
+												  <p style="max-width:200px;white-space: pre-wrap;">{{item.addressline1}}</p>
+												  <p style="max-width:200px;white-space: pre-wrap;">{{item.addressline2}}</p>
+												  <p style="max-width:200px;white-space: pre-wrap;">{{item.stateorprovincecode}},{{item.city}},{{item.districtorcounty}}</p>
 												  <span>{{item.countrycode}},{{item.postalcode}}</span>
 											  </div>
 											  <div class="addr-footer">
@@ -302,6 +302,10 @@ let state=reactive({
 let router = useRouter();
 //请求头
 let headers=ref({"Content-Type": "multipart/form-data" }) 
+ const emitter = inject("emitter"); // Inject `emitter`
+ function closeTab(){
+ 			 	emitter.emit("removeTab", 100);
+ 			 };
 function initQueryData(){
 	state.queryData.planid=router.currentRoute.value.query.planid;
 	state.queryData.warehouseid=router.currentRoute.value.query.warehouse;
@@ -309,6 +313,7 @@ function initQueryData(){
 	state.queryData.issplit=router.currentRoute.value.query.issplit;
 	state.queryData.groupid=router.currentRoute.value.query.group;
 	state.queryData.shipmentid=router.currentRoute.value.query.shipmentid;
+	state.queryData.inboundplanid=router.currentRoute.value.query.inboundplanid;
 	state.queryData.batchnumber=router.currentRoute.value.query.batchnumber;	
 }
 	
@@ -549,12 +554,13 @@ onMounted(()=>{
  					    type: 'success'
  					  });
  					  state.submitloading=false;
- 					  closeTab();
+ 					   // closeTab();
  						router.push({
  							path: '/shipmentdetails',
  							query: {
  								id: res.data,
  								title: "货件详情",
+								replace:true,
  								path: '/shipmentdetails',
  							}
  						})
@@ -562,10 +568,7 @@ onMounted(()=>{
 					  state.submitloading=false;
 				 })
  			 }
- 			 const emitter = inject("emitter"); // Inject `emitter`
- 			 function closeTab(){
- 			 	emitter.emit("removeTab", 100);
- 			 };
+ 			
  			 function cancelPlan(){
  				 state.productlist=[];
  				  state.totalproducts=0;
@@ -593,6 +596,7 @@ onMounted(()=>{
 </script>
 
 <style >
+	 
 	.m-b-16{
 		margin-bottom:16px;
 	}
@@ -625,6 +629,9 @@ onMounted(()=>{
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+	}
+	.myformitem .el-form-item__content,.myformitem .el-radio-group{
+		display:block;
 	}
 	.fro-head{
 		margin:16px 24px;

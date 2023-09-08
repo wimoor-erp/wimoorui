@@ -18,6 +18,7 @@
 				      </keep-alive>
 				      <component :is="Component" v-if="!$route.meta.keepAlive" :key="$route.query.title"/>
 				  </router-view>
+				   <el-backtop :right="50" :bottom="50" />
 			</el-main>
 	      </el-container>
 	    </el-container>
@@ -97,5 +98,12 @@ emitter.on("removeCache", (value) => { // 监听事件
     background-color:#313131 ;  
     align-items: center;
     box-shadow: 0px 1px 6px rgba(0,0,0,0.1);
+}
+.el-backtop{
+	color:#fff;
+	background-color:rgb(0 0 0 / 62%);
+}
+.el-backtop:hover{
+	background-color:rgb(0 0 0 / 80%);
 }
 </style>

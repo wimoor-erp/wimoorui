@@ -45,18 +45,25 @@
 		   <el-col :span="12" class="search-history">
 			   <h5>我的搜索条件</h5>
 			   <el-table :data="tableData" class="m-t-8">
-				   <el-table-column label="搜索条件"></el-table-column>
-				   <el-table-column label="操作" width="80">
-					   <template #defalut="scope">
-						   <button link type="primary">筛选</button>
+				   <el-table-column label="搜索条件" prop="fcondition">
+					    <template #default="scope">
+							<span v-if="scope.row.isactive" class="text-orange">{{scope.row.fcondition}}</span>
+							<span v-else  >{{scope.row.fcondition}}</span>
+						</template>
+				   </el-table-column>
+				   <el-table-column label="操作"   width="110">
+					   <template #default="scope">
+						   <el-button link type="primary"  @click.stop="handleThisQuery(scope.row)">筛选</el-button>
+						   <el-button link    @click.stop="handleRemove(scope.row.id)">删除</el-button>
 					   </template>
 				   </el-table-column>
 			   </el-table>
 		   </el-col>
 	   </el-row>
 	   <div class="footer-popover">
-		   <el-button @click="visible=false">取消</el-button>
-		   <el-button type="primary">筛选</el-button>
+		   <el-button @click="visible=false">关闭</el-button>
+		   <el-button @click.stop="clearSearch">清除</el-button>
+		   <el-button type="primary" @click.stop="handleQuery">筛选</el-button>
 	   </div>
 	    <template #reference>
 	     <el-button @click="visible=true">筛选器</el-button>
@@ -66,24 +73,34 @@
 </template>
 
 <script setup>
-	import {ref ,reactive,onMounted,toRefs} from 'vue'
-	import {Plus,CloseBold,Delete} from '@element-plus/icons-vue'
+	import {ref ,reactive,onMounted,toRefs} from 'vue';
+	import {Plus,CloseBold,Delete} from '@element-plus/icons-vue';
+	import {ElMessage,ElDivider} from 'element-plus';
+	import {dateFormat,formatFloat,getValue,formatPercent} from '@/utils/index';
+	import advertApi from '@/api/amazon_adv/advertApi.js';
+	const emit = defineEmits(['change']);
+	let props = defineProps({ activeName:"" })
+	const { activeName } = toRefs(props);
 	const state = reactive({
 		visible:false,
 		dataList:[
-			{dataType:1,symbolType:1,dataVal:'',chartype:true,},
+			{dataType:'CSRT',symbolType:'>',dataVal:'',chartype:true,},
 		],
+		ftype:"",
 		optionsList:[
-			{name:'转化率',value:1,chartype:true,},
-			{name:'曝光量',value:2,chartype:false,},
-			{name:'ACOS',value:3,chartype:true,},
-			{name:'点击率',value:4,chartype:true,},
+			{name:'转化率',value:'CSRT',chartype:true,},
+			{name:'曝光量',value:'impressions',chartype:false,},
+			{name:'ACOS',value:'ACOS',chartype:true,},
+			{name:'ROAS',value:'ROAS',chartype:true,},
+			{name:'花费',value:'cost',chartype:false,},
+			{name:'点击率',value:'CTR',chartype:true,},
 		],
 		symbolList:[
-			{name:'大于',value:1,},
-			{name:'等于',value:2,},
-			{name:'小于',value:3,},
+			{name:'大于',value:'>',},
+			{name:'等于',value:'=',},
+			{name:'小于',value:'<',},
 		],
+		tableData:[],
 	})
 	
 	const{
@@ -91,16 +108,21 @@
 		dataList,
 		optionsList,
 		symbolList,
+		tableData,
+		ftype,
 	}=toRefs(state)
 	
 	function handleAdd(){
 		state.dataList.push(
-		   {dataType:1,symbolType:1,dataVal:'',chartype:true,}
+		   {dataType:'CSRT',symbolType:'>',dataVal:'',chartype:true,}
 		)
 	}
-	
+	function clearSearch(){
+		clearActive();
+		emit("change","");	
+	}
 	function handleChangeOptios(e,item){
-		if(e==2){
+		if(e=='impressions' || e=='cost'){
 			item.chartype = false
 		}else{
 			item.chartype = true
@@ -111,12 +133,121 @@
 	}
 	
 	function removeAll(){
-		state.dataList = [{dataType:1,symbolType:1,dataVal:'',chartype:true,}]
+		state.dataList = [ {dataType:'CSRT',symbolType:'>',dataVal:'',chartype:true,}];
+		clearSearch();
 	}
-	
+	function handleRemove(id){
+		advertApi.deleteSerchHistory({"id":id}).then((res)=>{
+			if(res.data=="SUCCESS"){
+				ElMessage.success("删除成功！");
+				loadSearchHistory();
+			}else{
+				ElMessage.error("删除失败！");
+			}
+		});
+	}
 	function handleSave(){ 
-		
+		var paralist="";
+		if(state.dataList && state.dataList.length>0){
+			state.dataList.forEach(item=>{
+				if(item.dataVal && item.dataVal!="" && item.dataVal!=undefined){
+					var value=item.dataVal;
+					if(item.chartype==true){
+						value=Number(value.toString()).toPrecision(5);
+						value= value/100;
+					}
+					paralist+=(item.dataType+item.symbolType+value+",");
+				}
+			});
+		}
+		if(paralist!=""){
+			paralist=paralist.substring(0,paralist.length-1);
+			paralist = paralist.replaceAll("CSRT","转化率").replaceAll("bid","默认竞价").replaceAll("ACOS","ACOS").replaceAll("ROAS","ROAS")
+						 .replaceAll("cost","花费").replaceAll("impressions","曝光量").replaceAll("sumUnits","销售数量");
+			advertApi.addSerchHistory({"condition":paralist,"ftype":state.ftype}).then((res)=>{
+				if(res.data=="SUCCESS"){
+					ElMessage.success("操作成功！");
+					loadSearchHistory();
+				}else{
+					ElMessage.error("操作失败！");
+				}
+			});			 
+					 
+		}else{
+			ElMessage.error("请正确输入筛选条件！");
+		}
 	}
+	function clearActive(){
+		state.tableData.forEach(item=>{
+			item.isactive=false;
+		});
+	}
+	function handleThisQuery(row){
+		var paralist=row.fcondition;
+		clearActive();
+		if(row.fcondition){
+			if(paralist!=""){
+				paralist = paralist.replaceAll("转化率","CSRT").replaceAll("默认竞价","bid").replaceAll("ACOS","ACOS").replaceAll("ROAS","ROAS")
+							 .replaceAll("花费","cost").replaceAll("曝光量","impressions").replaceAll("销售数量","sumUnits").replaceAll(","," and ");
+				row.isactive=true;
+				emit("change",paralist);		 
+			}else{
+				ElMessage.error("请查看筛选条件是否正确！");
+			}
+		}else{
+			ElMessage.error("请查看筛选条件是否正确！");
+		}
+	}
+	function handleQuery(){
+		var paralist="";
+		clearActive();
+		if(state.dataList && state.dataList.length>0){
+			state.dataList.forEach(item=>{
+				if(item.dataVal && item.dataVal!="" && item.dataVal!=undefined){
+					var value=item.dataVal;
+					if(item.chartype==true){
+						value=Number(value.toString()).toPrecision(5);
+						value= value/100;
+					}
+					paralist+=(item.dataType+item.symbolType+value+",");
+				}
+			});
+		}
+		if(paralist!=""){
+			paralist=paralist.substring(0,paralist.length-1);
+			paralist = paralist.replaceAll("转化率","CSRT").replaceAll("默认竞价","bid").replaceAll("ACOS","ACOS").replaceAll("ROAS","ROAS")
+						 .replaceAll("花费","cost").replaceAll("曝光量","impressions").replaceAll("销售数量","sumUnits").replaceAll(","," and ");
+			emit("change",paralist);		 
+		}else{
+			ElMessage.error("请正确输入筛选条件！");
+		}
+	}
+	 
+	function loadSearchHistory(){
+		var ftype="advcams";
+		if(props.activeName==1){
+			ftype="advcams";
+		}else if(props.activeName==2){
+			ftype="advadgs";
+		}else if(props.activeName==3){
+			ftype="advpros";
+		}else if(props.activeName==4){
+			ftype="advkeys";
+		}else if(props.activeName==6){
+			ftype="advtarget";
+		}else if(props.activeName==5 || props.activeName==7){
+			ftype="advsehs";
+		}else if(props.activeName==8){
+			ftype="advsehstarget";
+		}
+		state.ftype=ftype;
+		advertApi.getSerchHistory({"ftype":ftype}).then((res)=>{
+			state.tableData=res.data;
+		});
+	}
+	onMounted(()=>{
+		loadSearchHistory();
+	});
 </script>
 
 <style>

@@ -49,7 +49,7 @@
 			  <el-col :span="24">
 			<div class='flex-center-between'>
 				<el-space>
-			  <DatepickerMonth ref="datepickersRef" :days="1" class="date-picker-width"   @changedate="changedate" />
+			  <Datepicker  type="monthrange"  ref="datepickersRef" :days="1" class="date-picker-width"   @changedate="changedate" />
 			  <AdGroup  :border="true"/>
 			  </el-space>
 			  <el-radio-group class="el-radio-group-button" v-model="times" @change="changeTimes">
@@ -88,7 +88,6 @@
 <script setup>
 	import{ref,reactive,toRefs,onMounted}from'vue'
 	import Datepicker from '@/components/header/datepicker.vue';
-	import DatepickerMonth from '@/components/header/datepicker_month.vue';
 	import '@/assets/css/packbox_table.css'
 	import AdGroup from '@/components/header/ad_group.vue';
 	import * as echarts from 'echarts';

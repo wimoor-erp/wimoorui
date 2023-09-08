@@ -1,7 +1,6 @@
 <template>
  <div class="el-white-bg">
-	 <Header ref="myHeaderRef" @change = "handleQuery"/>
-	 	 
+	 <Header ref="myHeaderRef" @change = "handleQuery" @expend="handlerExpend"/>
 	 <div class=" expand-table"  style="padding-bottom:16px;">
 		 <GlobalTable ref="globalTableRef"
 		 :tableData="tableData"  
@@ -9,6 +8,7 @@
 		 @loadTable="loadTableData" 
 		 :defaultSort="{ prop: 'marketneedship', order: 'descending' }"  
 		 rowKey="id"
+		 :defaultExpandAll="expendall"
 		 @row-click="tableRowClick"
 		 :rowClassName="handleRowClassName"
 		 @expandChange="handleExpandChange"
@@ -17,9 +17,9 @@
 		<template #field>
 		<el-table-column type="expand" width="48">
 			 <template #header>
-				  <el-button v-if="isExpendAll" @click="expendAll()" key="true" :loading="exploading" type="info"  link
+				  <el-button v-if="isExpendAll&&expendall==false" @click="expendAll()" key="true" :loading="exploading" type="info"  link
 				       > <el-icon><ArrowDownBold /></el-icon></el-button>
-				  <el-button v-else @click="expendAll()" :loading="closeloading" key="false" type="info"  link
+				  <el-button v-else-if="expendall==false" @click="expendAll()" :loading="closeloading" key="false" type="info"  link
 				     > <el-icon><ArrowRightBold /></el-icon></el-button>
 			 </template>
 			 <template #default="props">
@@ -78,28 +78,21 @@
 		</el-table-column>
 		<el-table-column label="报表" width="80">
 			<template #default="scope">
-				<el-space :size="12">
-					   <el-link :underline="false" @click.stop="handlesaleChart(scope.row)">
-						   <el-tooltip content="销量报表" placement="top" :hide-after="0" :show-after="200">
+				<el-space :size="3" direction="vertical">
+					   <el-button text :underline="false" @click.stop="handlesaleChart(scope.row)">
+						   <el-tooltip content="销量报表" placement="right" :hide-after="0" :show-after="200">
 					   <chart-histogram class="ic-cen" theme="outline" size="16" fill="#ff6700" :strokeWidth="4"/>
 					   </el-tooltip>
-					   </el-link>   
-					   <el-link :underline="false"  @click.stop="handlarrivalChart(scope.row)">
-						   <el-tooltip content="预计到货报表" placement="top" :hide-after="0" :show-after="200">
-					  <chart-line class="ic-cen" theme="filled" size="15" fill="#529b2e"/>
-					   </el-tooltip>
-					   </el-link>
-				</el-space>	
+					   </el-button>   
+				</el-space>
+					<el-button text :underline="false"  @click.stop="handlarrivalChart(scope.row)">
+											   <el-tooltip content="预计到货报表" placement="right" :hide-after="0" :show-after="200">
+					<chart-line class="ic-cen" theme="filled" size="15" fill="#529b2e"/>
+					 </el-tooltip>
+					 </el-button>
 			</template>
 		</el-table-column>
-		<el-table-column label="公告" >
-			<template #default="scope">
-					<span class="table-edit-flex" >
-						<span style="color: #888;">{{scope.row.notice}}</span>
-						<el-icon @click.stop="editRemarks(scope.row)"><Edit/></el-icon>
-					</span>
-			</template>
-		</el-table-column>
+		
 		<el-table-column label="发货需求量" 
 		:sort-orders="sortOrders" prop="marketneedship"  
 		sortable='custom'  width="125">
@@ -123,6 +116,11 @@
 				<div v-else>
 				<div class="font-bold" v-if="scope.row.amount">{{scope.row.amount}}</div>
 				<div class="font-bold" v-else>0</div>
+				<div  v-if="scope.row.otheramount" title="已经在其他计划被使用的数量">
+				 <span class="font-extraSmall" >已使用:</span>
+				 <span class="text-red font-small">{{scope.row.otheramount}}</span>
+				</div>
+				
 				</div> 
 			</template>
 		</el-table-column>
@@ -140,6 +138,14 @@
 					<div v-if="scope.row.canAssembly">
 					  <span class="font-extraSmall" >可组装:{{scope.row.canAssembly}} </span>
 					</div>
+			</template>
+		</el-table-column>
+		<el-table-column label="公告" >
+			<template #default="scope">
+					<span class="table-edit-flex" >
+						<span class="font-small" v-html="scope.row.htmlnotice"></span>
+						<el-icon @click.stop="editRemarks(scope.row)"><Edit/></el-icon>
+					</span>
 			</template>
 		</el-table-column>
 		<el-table-column label="操作" width="160">
@@ -307,7 +313,7 @@
 	 		 	</span>
 	 		 </template>
 	 	</el-dialog>
-	 
+	 <Confirm ref="confirmRef"></Confirm>
 </template>
 <script setup>
 	import { ref ,watch,reactive,onMounted,toRefs,nextTick} from 'vue'
@@ -321,21 +327,25 @@
 	import SplitPlanDialog from "./components/split_plan_dialog"
 	import GoodsDeatils from "@/views/amazon/listing/common/goods_deatils"
     import Header from "./components/header";
+	import Confirm from "@/components/dialog/confirm";
 	// API依赖
 	import * as echarts from 'echarts';
 	import planApi from '@/api/erp/ship/planApi.js';
 	import inventoryApi from '@/api/erp/inventory/inventoryApi.js';
 	import {Edit,ArrowRightBold,ArrowDownBold} from '@element-plus/icons-vue';
 	import { ElMessage ,ElMessageBox} from 'element-plus'
+	import {decodeText} from '@/utils/index';
 	import transportationApi from '@/api/erp/ship/transportationApi';
 	import markApi from '@/api/erp/material/markApi';
 	import {Help,MoreOne,ChartHistogram,ChartLine} from '@icon-park/vue-next';
 	import {sublit} from "@/api/erp/assembly/assemblyApi";
-	import { useRouter } from 'vue-router'
+	import { useRouter } from 'vue-router';
+ 
    const router = useRouter()
    const expendTableRef = ref()
    const globalTableRef=ref();
-   const salechartRef =ref()
+   const salechartRef =ref();
+   const confirmRef=ref();
    const arrivalchartRef =ref()
    const saleAdjustDialogRef=ref();
    const goodsDeatilsRef=ref();
@@ -351,6 +361,7 @@
    const state = reactive({
 	 fbaInvWarning:{row:{},visible:false},
 	 editRow:{},
+	 expendall:false,
 	 expenditem:{stockVisible:false},
      // 表格树数据
      tableData: {records:[],total:0}  ,
@@ -377,6 +388,7 @@
 	 exploading,
 	 closeloading,
 	 isExpendAll,
+	 expendall,
      formData,
 	 expenditem,
 	 editRow,
@@ -451,6 +463,7 @@
 	   state.tableData.records.forEach(row=>{
 		   if(row.id==formdata.materialid){
 			   row.notice=formdata.mark;
+			   row.htmlnotice=decodeText(row.notice);
 		   }
 	   })
    }
@@ -484,20 +497,40 @@
 			})
 		}
 	}
+	function handlerExpend(value){
+		if(value){
+			state.expendall=value;
+			state.queryParams.expendall=true;
+			handleQuery(state.queryParams);
+		}else{
+			state.queryParams.expendall=false;
+			state.expendall=false;
+			state.isExpendAll=false;
+			state.tableData.records.forEach((row,index)=>{
+				  if(state.expendRows.includes(row.id)){
+					  globalTableRef.value.toggleRowExpansion(row,false);
+				  }
+			});
+			state.expendRows=[];
+			handleQuery(state.queryParams);
+		}
+		
+	}
 	function expendAll(){
 		if(state.isExpendAll==true){
 			state.closeloading=true;
 			state.isExpendAll=false;
 			state.tableData.records.forEach((row,index)=>{
-				   if(row.rowstatue.isexpends==true){
+				   if(state.expendRows.includes(row.id)){
 				      globalTableRef.value.toggleRowExpansion(row);
 				   }
 			});
+			state.expendRows=[];
 		}else{
 		   state.exploading=true;
 		   state.isExpendAll=true;
 		   state.tableData.records.forEach((row,index)=>{
-			     if(row.rowstatue.isexpends==false){
+			     if(!state.expendRows.includes(row.id)){
 			        globalTableRef.value.toggleRowExpansion(row);
 				 }
 		   })
@@ -605,28 +638,44 @@
    }
  
    function loadTableData(params,callback){
-	if(state.isExpendAll==true){
-	   expendAll();
+	if(!state.expendall&&state.isExpendAll==true){
+	      expendAll();
 	   }
+	   state.expendRows=[];
+	   state.closeloading=false;
 	   params.plantype="ship";
 	   planApi.getPlanList(params).then(res=>{
 		   state.tableData.records=res.data.records;
 		   state.tableData.total=res.data.total;
-		   if(res.data.records){
-			   res.data.records.forEach(item=>{
-				   item.rowstatue={
-					   isplan:false,
-					   isexpends:false,
-					   isEdit:false,
-					   loading:false,
-					   showeu:false,
-				   };
-				   item.expendData=[];
-				   if(item.amount&&parseInt(item.amount)){
-						item.rowstatue.isplan=true;
-				   }
-			   });
+		   if(state.tableData.records){
+		   			   state.tableData.records.forEach(item=>{
+		   				   if(item.notice){
+		   					   item.htmlnotice=decodeText(item.notice);
+		   				   }
+						  
+		   				   item.rowstatue={
+		   					   isplan:false,
+		   					   isexpends:false,
+		   					   isEdit:false,
+		   					   loading:false,
+		   					   showeu:false,
+		   				   };
+		   				   if(item.amount&&parseInt(item.amount)){
+		   						item.rowstatue.isplan=true;
+		   				   }
+		   				   if(state.queryParams.expendall){
+		   						handleDetail(item,item.expendData);
+								state.expendRows.push(item.id);
+		   				   }else{
+							    item.expendData=null;
+						   }
+		   			   });
+		   			    if(state.queryParams.expendall){
+		   			 		 state.isExpendAll=true
+		   			    }
 		   }
+		 
+		 
 	   }); 
    }
    function expendRow(row){
@@ -715,26 +764,25 @@
 		   		}
 				   
 		   });
+		   var type=null;
 		   if(quantity<0){
 			   error=error+"库存不足，";
+			   type="planinventory";
 		   }
 		   if(boxerror==true){
 		   	  error=error+"不符合箱规【"+row.boxnum+"】，";
+			  if(type==null){
+				  type="boxmessageship";
+			  }
 		   }
 		   if(planData.length==0){
 			   ElMessage({ message: '没有可以保存的发货计划', type: 'warning', });
 			   return ;
 		   }
 		   if(error!=""){
-			   ElMessageBox.confirm(
-			   	    error+'您确定要加入发货计划吗?',
-			   	    '加入计划',
-			   	    {
-			   	      confirmButtonText: '确定',
-			   	      cancelButtonText: '取消',
-			   	      type: 'warning',
-			   	    }
-			   	  ).then( () => {savePlanItem(planData,row);})
+			   confirmRef.value.show("warning_"+type,'加入计划', error+'您确定要加入发货计划吗?',()=>{
+			   				   savePlanItem(planData,row);
+			   })
 		   }else{
 			   savePlanItem(planData,row);
 		   }
@@ -795,7 +843,8 @@
    			  	query:{
    			  	  title:"产品详情",
    			  	  path:'/material/details',
-   				  details:row.id
+   				  details:row.id,
+				  type:"product"
    			  	}
    			  })
    }
@@ -803,67 +852,102 @@
    function tableRowClick(row){
 	   globalTableRef.value.toggleRowExpansion(row);
    }
+   function freezeItem(item){
+	   Object.freeze(item.asin);
+	   Object.freeze(item.openDate);
+	   Object.freeze(item.mincycle);
+	   Object.freeze(item.needpurchase);
+	   Object.freeze(item.asin);
+	   Object.freeze(item.shopid);
+	   Object.freeze(item.sumweek);
+	   Object.freeze(item.url);
+	   Object.freeze(item.groupname);
+	   Object.freeze(item.groupid);
+	   Object.freeze(item.statuscolor);
+	   Object.freeze(item.salesday);
+	   Object.freeze(item.sum15);
+	   Object.freeze(item.shipday);
+	   Object.freeze(item.summonth);
+	   Object.freeze(item.country);
+	   Object.freeze(item.sumseven);
+	   Object.freeze(item.needshipfba);
+	   Object.freeze(item.cycle);    
+	   Object.freeze(item.marketname);           
+	   Object.freeze(item.msku);  
+	   Object.freeze(item.marketplaceid);  
+	   Object.freeze(item.sku);  
+	   Object.freeze(item.warehouseid);  
+	   Object.freeze(item.amazonauthid); 
+	   Object.freeze(item.afn_reserved_future_supply); 
+	   Object.freeze(item.afn_inbound_shipped_quantity); 
+	   Object.freeze(item.afn_reserved_quantity); 
+	   Object.freeze(item.afn_researching_quantity); 
+	   Object.freeze(item.afn_fulfillable_quantity); 
+	   Object.freeze(item.afn_unsellable_quantity); 
+   }
+   function handleDetail(row,expendData){
+	   var subrow=[];
+	    var quantity=row.quantity?parseInt(row.quantity):0;
+	    if(row["canAssembly"]){
+	    		  quantity=quantity+parseInt(row.canAssembly); 
+	    }
+	    row.rowstatue.showeu=false;
+	    row.expendEuData=null;
+	   var reallyamount=0;
+	   var needship=0;
+	   expendData.forEach(item=>{
+	   	if(!parseInt(item.amount)){
+	   		item.amount=0;
+	   	}
+	   	if(item.needship&&parseInt(item.needship)){
+	   		needship=needship+parseInt(item.needship);
+	   	}
+	   	if(item.reallyamount&&parseInt(item.reallyamount)){
+	   		item.amount=parseInt(item.reallyamount);
+	   		quantity=quantity-parseInt(item.amount);
+	   		reallyamount+=parseInt(item.reallyamount);
+	   	}else if(quantity-parseInt(item.amount)>0){
+	   		item.amount=parseInt(item.amount);
+	   		quantity=quantity-parseInt(item.amount);
+	   	}else if(parseInt(quantity)>0){
+	   		item.amount=quantity;
+	   		quantity=0;
+	   	}else{
+	   		item.amount=0;
+	   		quantity=0;
+	   	}
+	   	item.setstockingcycles=item.cycle.stockingCycle;
+	   	item.iseu=false;
+	   	item.visible=false;
+	   	if(item.marketplaceid=='EU'&&item.subnum>1){
+	   		handleShowEUData(item,row);
+	   	}
+		freezeItem(item);
+	   	subrow.push(item);
+	   });
+	   row.amount=reallyamount;
+	   row.needship=needship;
+	   row.expendData=  Object.freeze(subrow);
+   }
    function loadDetail(row){
-			 	row.rowstatue.loading=true;
-				var subrow=[];
-				 var quantity=row.quantity?parseInt(row.quantity):0;
-				 if(row["canAssembly"]){
-				 		  quantity=quantity+parseInt(row.canAssembly); 
-				 }
-				 row.rowstatue.showeu=false;
-				 row.expendEuData=null;
-			 	 var param={"groupid":row.groupid,
-				            "msku":row.sku,
-				            "warehouseid":state.queryParams.warehouseid,
-						    "plantype":"ship",
-							"plansimple":state.queryParams.plansimple,
-							"marketplaceids":state.queryParams.marketplaceids,
-							"iseu":false,
-							"amount":0};
-				 planApi.getExpandCountryData(param).then(res=>{
-			 	    row.rowstatue.loading=false;
-			 		if(res.data){
-						var reallyamount=0;
-						var needship=0;
-			 			res.data.forEach(item=>{
-			 				if(!parseInt(item.amount)){
-			 					item.amount=0;
-			 				}
-							if(item.needship&&parseInt(item.needship)){
-								needship=needship+parseInt(item.needship);
-							}
-							if(item.reallyamount&&parseInt(item.reallyamount)){
-								item.amount=parseInt(item.reallyamount);
-								quantity=quantity-parseInt(item.amount);
-								reallyamount+=parseInt(item.reallyamount);
-							}else if(quantity-parseInt(item.amount)>0){
-								item.amount=parseInt(item.amount);
-								quantity=quantity-parseInt(item.amount);
-							}else if(parseInt(quantity)>0){
-								item.amount=quantity;
-								quantity=0;
-							}else{
-								item.amount=0;
-								quantity=0;
-							}
-							
-							item.setstockingcycles=item.cycle.stockingCycle;
-							item.iseu=false;
-							item.visible=false;
-							if(item.marketplaceid=='EU'&&item.subnum>1){
-								handleShowEUData(item,row);
-							}
-							subrow.push(item);
-			 			});
-						row.amount=reallyamount;
-						row.needship=needship;
-						row.expendData=subrow;
-						
-			 		}
-			 	 })
-			 }
+			   row.rowstatue.loading=true;
+			   var param={"groupid":row.groupid,
+			              "msku":row.sku,
+			              "warehouseid":state.queryParams.warehouseid,
+			   						    "plantype":"ship",
+			   							"plansimple":state.queryParams.plansimple,
+			   							"marketplaceids":state.queryParams.marketplaceids,
+			   							"iseu":false,
+			   							"amount":0};
+			   planApi.getExpandCountryData(param).then(res=>{
+			      row.rowstatue.loading=false;
+			   			 		if(res.data){
+										handleDetail(row,res.data);
+			   			 		}
+			   })
+			  
+	    }
    function handleExpandChange(row,expandedRows){
-		 state.expendRows=[];
 		 expandedRows.forEach(item=>{
 			 state.expendRows.push(item.id);
 		 });
@@ -873,16 +957,12 @@
 		if(expandedRows.length==0){
 			state.closeloading=false;
 		}
-		 if(row.rowstatue.isexpends==false){
-			 if(row.expendData.length>0){
-				  row.rowstatue.isexpends=true
-			 }else{
-				 loadDetail(row);
-				 row.rowstatue.isexpends=true
-			 }
-		 }else{
-			  row.rowstatue.isexpends=false
-		 }
+		if(state.expendRows.includes(row.id)){
+			if(row.expendData==null||row.expendData.length==0){
+			    loadDetail(row);
+		     }
+		}
+		
    }
 
    function loadTransTypeAllList(){
@@ -937,9 +1017,6 @@
 	.expand-table{
 		padding-left:16px;
 		padding-right:16px;
-	}
-	.el-table__expanded-cell td,.el-table__expanded-cell th{
-	    font-size:12px;
 	}
 	.flex-center-bew{
 		display: flex;

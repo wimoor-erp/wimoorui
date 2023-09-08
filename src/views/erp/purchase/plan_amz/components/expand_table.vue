@@ -46,7 +46,9 @@
 				     <div class="table-edit-flex"
 					 @click="e=>editStockCycle(e,scope.row)"
 					 >
-				     	<span>{{scope.row.shipday}}|{{getTransName(scope.row.transtype,transtypeOptions)}}</span>
+				     	<span>{{scope.row.shipday}}|
+						<span class="font-extraSmall">{{getTransName(scope.row.transtype,transtypeOptions)}}</span>
+						</span>
 				     	<el-icon ><Edit/></el-icon>
 				     </div>
 			</template>

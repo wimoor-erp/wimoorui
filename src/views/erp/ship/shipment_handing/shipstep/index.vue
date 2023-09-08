@@ -1,30 +1,36 @@
 <template>
-	<div class="main-sty" >
-	<div class="con-header">
+	<div class="box-margin">
+		<div   v-loading="loading">
+	<div class="pag-radius-bor mar-bot">
 		<el-row>
-	  <el-col :span="24">
-	  <el-steps :active="step" align-center  > 
-	    <el-step  @click="stepChange(0)" title="配货" />
-	    <el-step  @click="stepChange(1)" title="装箱"  />
-	    <el-step  @click="stepChange(2)" title="发货出库" />
-	    <el-step  @click="stepChange(3)" title="亚马逊接收" />
-	  </el-steps>
-	  </el-col>
-	  </el-row>
-	 </div>	
-	 <div   v-loading="loading">
+		<el-col :span="24">
+		<el-steps :active="step" align-center  > 
+		  <el-step class="pointer"  @click="stepChange(0)" title="配货" />
+		  <el-step class="pointer"  @click="stepChange(1)" title="装箱"  />
+		  <el-step  class="pointer" @click="stepChange(2)" title="发货出库" />
+		  <el-step class="pointer"  @click="stepChange(3)" title="亚马逊接收" />
+		</el-steps>
+		</el-col>
+		</el-row>
+	</div>
+	<div class="pag-radius-bor mar-bot" >
 	  <div class="con-body">
+		  <h3 class="m-b-8"><span v-if="step==0">配货</span>
+		  <span v-if="step==1">装箱</span>
+		  <span v-if="step==2">发货出库</span>
+		  <span v-if="step==3">亚马逊接收</span>
+		  </h3>
 		  <OnePicking @stepdata="stepChange" ref="oneRef"  v-if="step==0"/>
 		  <TwoBox @stepdata="stepChange" ref="twoRef"  @change="stepChange(1)" v-if="step==1" />
 		  <ThreeDeliver @stepdata="stepChange" ref="threeRef" @change="stepChange(3)" v-if="step==2" />
 		  <FourReceive ref="fourRef" v-if="step==3"/> 
 	  </div>
-	 <el-divider />
-	  <div class="con-footer"  >
-		  <ShipmentInfo ref="shipmentRef" @change="handleShipmentInfo" />
-	  </div>
-	</div>  
 	</div>
+	  <div class="pag-radius-bor"  >
+	  		  <ShipmentInfo ref="shipmentRef" @change="handleShipmentInfo" />
+	  </div>
+</div>
+</div>
 </template>
 
 <script setup>
@@ -122,4 +128,9 @@
 	.mar-bot{
 		margin-bottom:16px;
 	}
+	.box-margin{
+		padding:16px;
+		min-height:calc(100vh - 36px)
+	}
+	
 </style>

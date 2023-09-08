@@ -16,7 +16,14 @@
 			 </div>
 		  </template>
 			<div class="flex-center">
-				 <div class="font-Small" >  <span class="font-extraSmall">总销量：</span>{{totalsales}} </div>
+				 <div class="font-Small" >  
+				       <el-checkbox-button    class="mybtn-radio"  label="销量">
+				          销量 <span v-if="totalsales" > {{totalsales}}</span>
+				       </el-checkbox-button>
+					   <el-checkbox-button v-model="ordercheck" :checked="ordercheck" class="mybtn-radio"  @change="handleOrderLine" label="订单">
+					       订单 <span v-if="totalorder"> {{totalorder}}</span>
+					   </el-checkbox-button>
+                 </div>
 						 <el-radio-group v-model="radiotime" @change="changeTimeType" size="small">
 						       <el-radio-button label="30天" />
 						       <el-radio-button label="60天" />
@@ -38,13 +45,17 @@
 	import saleschartApi from '@/api/amazon/order/saleschartApi.js';
 		let activeMarket = ref();
 		let saleVisable = ref(false)
+		let ordercheck=ref(false);
 		let productData = reactive({})
 		let radiotime =ref("30天")
 		let spacer = h(ElDivider, { direction: 'vertical' })
 		let marketList=ref([]);
 		let chart;
+		let chartorder;
+		let linetype=ref(['销量']);
 		let skuname=ref("");
 		let totalsales=ref(0);
+		let totalorder=ref(0);
 		var myChart = null;
 		function handleClose(){
 				 if(myChart!=null){
@@ -58,51 +69,77 @@
 				myChart = echarts.init(document.getElementById('salechart'));
 				var myseries=[];
 				totalsales.value=0;
+				totalorder.value=0;
 				var legends=[];
-				chart.lines.forEach((line,index)=>{
-					skuname.value=line.name;
-					legends.push(line.name);
-					totalsales.value=totalsales.value+line.summary;
-					myseries.push({
-									smooth: 0.5,
-									type: 'line',
-									data: line.data,
-									name:line.name,
-									lineStyle:{
-										color:'#ffa400',
-									},
-									itemStyle:{
-										color:'#ffa400',
-									},
-									label:{
-										show:true,
-									},
-									showAllSymbol:true,
-									markLine:{
-													data : [ {
-														silent:false,  
-														type : 'average',
-														name : '平均值'
-													} ],
-													itemStyle : {
-														normal : {
-															color : '#ffa400',
-															lineStyle : {
-																color : '#ffa400'
-															},
-															label : {
-																show : true,
-																textStyle : {
-																	color : '#ffa400',
-																	fontWeight : 'bold',
-																}
-															},
-														},
-													}
-												},
-				                   })
-				}) 
+				if(chartorder){
+					chartorder.lines.forEach((line,index)=>{
+						skuname.value=line.name;
+						legends.push(line.name);
+						totalorder.value=totalorder.value+line.summary;
+						myseries.push({
+										smooth: 0.8,
+										type: 'line',
+										data: line.data,
+										name:line.name,
+										lineStyle:{
+											color:'#409eff',
+										},
+										itemStyle:{
+											color:'#409eff',
+										},
+										label:{
+											show:false,
+										},
+					                   })
+					}) 
+				}
 				
+				if(chart){
+					chart.lines.forEach((line,index)=>{
+						skuname.value=line.name;
+						legends.push(line.name);
+						totalsales.value=totalsales.value+line.summary;
+						myseries.push({
+										smooth: 0.5,
+										type: 'line',
+										data: line.data,
+										name:line.name,
+										lineStyle:{
+											color:'#ffa400',
+										},
+										itemStyle:{
+											color:'#ffa400',
+										},
+										label:{
+											show:true,
+										},
+										showAllSymbol:radiotime.value=="30天"?true:false,
+										markLine:{
+														data : [ {
+															silent:false,  
+															type : 'average',
+															name : '平均值'
+														} ],
+														itemStyle : {
+															normal : {
+																color : '#ffa400',
+																lineStyle : {
+																	color : '#ffa400'
+																},
+																label : {
+																	show : true,
+																	textStyle : {
+																		color :'#ffa400',
+																		fontWeight : 'bold',
+																	}
+																},
+															},
+														}
+													},
+					                   })
+					}) 
+				}
+			
 				var option = {
 					visualMap : {
 								show: false,
@@ -127,7 +164,7 @@
 				     },  
 				      xAxis: {
 								boundaryGap:false,
-								data: chart.labels,
+								data: chart?chart.labels:chartorder.labels,
 								axisLine:{   show: false },
 								axisTick:{ show: false },
 								axisLabel:{  color:"#acb0b9" },
@@ -179,21 +216,51 @@
 				}
 			}
 			function handleClick(){
-				productData.marketplaceid=activeMarket.value;
+				if(productData.marketplaceid!=activeMarket.value){
+					productData.marketplaceid=activeMarket.value;
+					handleChartSaleLine();
+				}
+			}
+			function handleOrderLine(value){
+				if(value==true){
+					linetype.value=['销量','订单'];
+				}else{
+					linetype.value=['销量'];
+				}
 				handleChartSaleLine();
 			}
-			function handleChartSaleLine(){
-				saleschartApi.salesLine(productData).then((res)=>{
-					if(res.data){
-						 chart=res.data;
-						 saleChart();
-					}
-				});
+			async function handleChartSaleLine(){
+			
+				if(linetype.value.includes('销量')){
+						productData.lineType="sales";
+						await saleschartApi.salesLine(productData).then((res)=>{
+							if(res.data){
+								 chart=res.data;
+							}
+						});
+				}else{
+					chart=null;
+					
+				}
+				if(linetype.value.includes('订单')){
+						productData.lineType="order";
+						await saleschartApi.salesLine(productData).then((res)=>{
+							if(res.data){
+								 chartorder=res.data;
+							}
+						});
+				}else{
+					chartorder=null;
+					 
+				}
+				saleChart();
 			}
 			function show(groupid,marketplaceid,amazonAuthId,sku,msku){
 				saleVisable.value=true;
 				radiotime.value="30天";
 				productData.groupid=groupid;
+				linetype.value=['销量'];
+				ordercheck.value=false;
 				productData.marketplaceid=marketplaceid;
 				productData.daysize=30;
 				productData.amazonAuthId=amazonAuthId;
@@ -231,7 +298,6 @@
 						handleChartSaleLine();
 					});
 				}
-				
 			}
 			defineExpose({
 			  show
@@ -244,12 +310,16 @@
 				}else if(radiotime.value=="90天"){
 					productData.daysize=90;
 				}
-				handleClick();
+				handleChartSaleLine();
 			}
 			 
 </script>
 
 <style >
+	 .mybtn-radio .el-checkbox-button__inner{
+		 padding: 5px 11px;
+		 font-size:12px;
+	 }
 	.saledialog .el-overlay-dialog{
 		text-align: right;
 	}

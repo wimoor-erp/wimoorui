@@ -65,7 +65,7 @@
 				 </el-input>
 			 </template>
 		 </el-table-column>
-		 <el-table-column label="海关编码" >
+		 <el-table-column label="海关编码(必填)" >
 			 <template #default="scope">
 				<el-input v-model="scope.row.code"> </el-input>
 			 </template>

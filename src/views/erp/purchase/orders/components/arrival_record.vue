@@ -3,74 +3,14 @@
 	     <el-table-column prop="amount" label="入库数量" >
 			  <template #default="scope">
 				  <div style="padding-left:5px">{{scope.row.amount}}</div>
-			 <el-popover
-			     placement="left"
-			     title="上架"
-			     :width="240"
-			     :visible="scope.row.showshelf"
-			 	  @show="getOptionsData(scope.row.warehouseid)"
-			   >
-			     <template #reference>
-			  
-			        <el-button
-			        type="primary"
-					@click="scope.row.showshelf=!scope.row.showshelf"
-			        link
-			       >上架
-			      </el-button> 
-			     </template>
-			 				   <el-form>
-			 					   <el-form-item label="库位选择">
-			 						   <el-cascader
-			 						    :teleported = "false"
-			 						    :options="optionsShelf" :props="props1" v-model="scope.row.shelf" filterable clearable placeholder="可搜索" />
-			 					   </el-form-item>
-			 					   <el-form-item label="上架数量">
-			 						   <el-input type="number" v-model="scope.row.shelfNum"></el-input>
-			 					   </el-form-item>
-			 				   </el-form>
-			 				    
-			 					<el-button class="m-t-8" @click="submitShelfUp(scope.row)" type="primary">提交</el-button>
-			   </el-popover>
-			   <el-popover
-			       placement="left"
-			       title="上架"
-			       :width="340"
-			       trigger="click"
-			   	   @show="loadShefRecord(scope.row)" >
-			       <template #reference>
-			    
-			          <el-button
-			          type="primary"
-			          link
-					  v-if="scope.row.recordlist&&scope.row.recordlist.length>0"
-			         >  查看记录
-			        </el-button> 
-					<el-button
-					  type="info"
-					  link
-					  v-else
-					 >  暂无记录
-					</el-button> 
-			       </template>
-				   <el-table :data="scope.row.recordlist" size="small" border>
-				   	<el-table-column label="库位" >
-				   		<template #default="scope">
-				   		      {{scope.row.shelfname}}
-				   		</template>
-				   	</el-table-column>
-				   	<el-table-column label="操作" prop="quantity">
-				   		<template #default="scope">
-				   			<span v-if="scope.row.opt==0">下架：</span>
-				   			<span v-else>上架：</span>
-				   			    {{scope.row.quantity}}
-				   			<p class="font-extraSmall">
-				   			    {{scope.row.opttime}}
-				   			</p>
-				   		</template>
-				   	</el-table-column>
-				   </el-table>
-			     </el-popover>
+			      <shelfInvOpt  
+				   v-if="scope.row.ftype!='clear'"
+				  :materialid="entry.materialid"
+				  :formid="scope.row.id"
+				  :warehouseid="scope.row.warehouseid"
+				  :amount="scope.row.amount"
+				  :opt="scope.row.ftype=='in'?'1':'0'"
+				   formtype="purchase"></shelfInvOpt>
 			   </template>
 			   </el-table-column>
 	     <el-table-column prop="warehousename" label="操作仓库"  />
@@ -94,15 +34,18 @@
 			   <el-button
 	           type="primary"
 			   link
-	           @click.stop="returnReceive(scope.row.id)"
-	          >撤销入库
+			   v-if="scope.row.ftype!='clear'"
+	           @click.stop="returnReceive(scope.row.id,scope.row)"
+	          >
+			  <span v-if="scope.row.ftype=='in'">撤销入库</span>
+			  <span v-if="scope.row.ftype=='out'">撤销出库</span>
 	         </el-button></p>
 	        <p> 
 			 <el-button
 			   type="info"
 			   link
 			   @click.stop="lookRecord(scope.row.id)"
-			  >在线预览
+			  >预览
 			 </el-button>
 			 </p>
 	       </template>
@@ -150,13 +93,8 @@
 	import shelfApi from '@/api/erp/warehouse/shelf';
 	import {dateFormat,dateTimesFormat} from '@/utils/index';
 	import { ElMessage, ElMessageBox } from 'element-plus';
-	import shelfproductApi from '@/api/erp/warehouse/shelfproductApi';
+	import shelfInvOpt from "@/views/erp/components/shelfInvOpt.vue"
 	const emit = defineEmits(['change']);
-	const props1 = {
-	  checkStrictly: true,
-	  value:'id',
-	  label:'name'
-	}
 	const state = reactive({
 		tableData:[],
 		optionsShelf:[],
@@ -172,6 +110,7 @@
 		optionsShelf,
 		nowid,
 		ftype,
+		entry,
 		visible,
 		dataMap,
 		content
@@ -187,110 +126,24 @@
 		state.ftype=null;
 		loadtable();
 	}
-	function loadShefRecord(row){
-		var data={};
-		data.materialid=state.entry.materialid;
-		data.formid=row.id;
-		data.formtype="purchase";
-		shelfproductApi.shelfInventoryOptProList(data).then(res=>{
-			row.recordlist=res.data;
-		});
-	}
-	function submitShelfUp(row){
-		var data=[];
-		var item={};
-		if(row.shelf&&row.shelf.length>0){
-     		item.shelfid=row.shelf[0];
-		}else{
-			ElMessage({
-			  type: 'error',
-			  message: '必须选择库位',
-			})
-			return;
-		}
-		item.materialid=state.entry.materialid;
-		item.formid=row.id;
-		item.formtype="purchase";
-		item.quantity=row.shelfNum;
-		data.push(item);
-		if(row.recordlist&&row.recordlist.length>0){
-			var hasqty=0;
-			row.recordlist.forEach(shelfrecord=>{
-				hasqty=hasqty+parseInt(shelfrecord.quantity);
-			})
-		}
-		if(hasqty+parseInt(row.shelfNum)>parseInt(row.amount)){
-			ElMessageBox.confirm(
-			   '您的上架数量将大于收货数量，请确认是否继续?',
-			   'Warning',
-			   {
-			     confirmButtonText: '确认',
-			     cancelButtonText: '取消',
-			     type: 'warning',
-			   }
-			 )
-			   .then(() => {
-				   shelfproductApi.addShelfInventory(data).then(res=>{
-				   	loadShefRecord(row);
-				   	row.showshelf=false;
-				   	ElMessage({
-				   	  type: 'success',
-				   	  message: '上架成功',
-				   	})
-				   });
-			   })
-		}else{
-			shelfproductApi.addShelfInventory(data).then(res=>{
-				loadShefRecord(row);
-				row.showshelf=false;
-				ElMessage({
-				  type: 'success',
-				  message: '上架成功',
-				})
-			});
-		}
 	
-	}
-	function shelfname(value){
-		if(value&&value.length>0){
-			value.forEach(item=>{
-					item.name=item.number+"-"+item.name;
-					if(item.children){
-						shelfname(item.children);
-					}
-			})
-		}
-	}
-	function getOptionsData(warehouseid){
-		shelfApi.getWarehouseShelf(warehouseid).then(function(res){
-						 if(res){
-							 if(res.data&&res.data.length==1){
-								 state.optionsShelf=res.data[0].children;
-								 shelfname(state.optionsShelf);
-							 }else{
-								 state.optionsShelf=[];
-							 }
-			            }
-		});
-	}
-	
+ 
 	function loadtable(){
 		purchaselistApi.getRecdetail({"id":state.nowid,"ftype":"rec","paytype":state.ftype}).then((res)=>{
 			if(res.data && res.data.receivelist){
-					state.tableData=res.data.receivelist;
-					state.tableData.forEach(row=>{
-						loadShefRecord(row);
-					})
+				state.tableData=res.data.receivelist;
 			}
 		});
 	}
-	function returnReceive(rowid){
+	function returnReceive(rowid,row){
 		purchaselistApi.clearRec({"recid":rowid}).then((res)=>{
 			if(res.data && res.data !=""){
 				ElMessage({
 				  type: 'success',
 				  message: '撤销成功',
 				})
+				row.ftype="clear";
+				row.remark="已撤销【通过撤销入库操作】";
 				loadtable();
 				emit("change");
 			}

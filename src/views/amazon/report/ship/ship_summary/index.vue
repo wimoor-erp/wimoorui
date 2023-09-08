@@ -221,7 +221,7 @@
 		companylist:[],
 		channellist:[],
 		fieldoptions:[
-					{name:"计划发货",key:'readweight'},
+					 {name:"预估运输重量",key:'readweight'},
 		             {name:"计划发货",key:'totalqty'},
 					 {name:"实际发货",key:'totalout'}, 
 					 {name:"实际接收",key:'totalrec'},

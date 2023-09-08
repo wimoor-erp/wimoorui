@@ -2,7 +2,7 @@
  
 	<el-form :inline="true">
 		<el-form-item label="已绑定的1688账号" class="margin-b">
-			<el-select v-model="formData.alibabaAuthid" :disabled="formData.hasbind" @change="handleAuthChange">
+			<el-select style="width:180px;" v-model="formData.alibabaAuthid" :disabled="formData.hasbind" @change="handleAuthChange">
 				<el-option   v-for="item in authList"  :key="item.id"  :label="item.name" :value="item.id"   >
 				</el-option>
 			</el-select>
@@ -25,8 +25,8 @@
 				 <el-button size="small" @click="handleBind"  circle ><el-icon><Refresh /></el-icon></el-button>
 				 </el-descriptions-item> 
 				 <el-descriptions-item   label="订单状态"  >
-				 	<span v-if="OrderStatus[orderInfo.baseInfo.status]">{{OrderStatus[orderInfo.baseInfo.status]}}</span>
-				     <span v-else>orderInfo.baseInfo.status</span>
+				 	<span v-if="OrderStatus[orderInfo.baseInfo.status]">{{OrderStatus[orderInfo.baseInfo.status].name}}</span>
+				     <span v-else>{{orderInfo.baseInfo.status}}</span>
 				 	<span v-if="orderInfo.baseInfo.refundStatus" class="font-extraSmall">
 				 		 (<span v-if="OrderStatus[orderInfo.baseInfo.refundStatus]">{{OrderStatus[orderInfo.baseInfo.refundStatus]}}</span>
 				 	     <span v-else>orderInfo.baseInfo.refundStatus</span>
@@ -78,10 +78,12 @@
 		</template>
 		</el-table-column>
 		<el-table-column  prop="name" label="商品名称" />
-		<el-table-column prop="price" label="单价" width="60">
+		<el-table-column prop="price" label="单价" width="65">
 					<template #default="scope">
 					<div >{{scope.row.price}}</div>	
-						<div ><el-button type="primary" plain @click="bind1688(scope.row)" size="small">
+						<div >
+							<el-tag v-if="scope.row.isbind=='true'" type="info"  size="small">已绑定</el-tag>
+							<el-button v-else type="primary"  plain @click="bind1688(scope.row,orderInfo)" size="small">
 						绑定
 						</el-button></div>	
 			</template>
@@ -242,8 +244,9 @@
 	const open1688OrderRef=ref();
 	const state = reactive({
 		 authList:[],
-		 formData:{alibabaAuthid:"",alibabaOrderid:"",purchaseEntryid:"",hasbind:false,cancelReason:"buyerCancel",entry:{}},
+		 formData:{alibabaAuthid:"",alibabaOrderid:"",purchaseEntryid:"",hasbind:false,cancelReason:"buyerCancel"},
 		 orderInfo:{},
+		 entry:{},
 		 payWay:{},
 		 refund:{disputeRequest:"refund",
 		         reasons:[],
@@ -262,12 +265,12 @@
 		 
 	})
 	const {
-	   authList,formData,orderInfo,edit,dialog,paydialog,payWay,refund,refunddialog
+	   authList,entry,formData,orderInfo,edit,dialog,paydialog,payWay,refund,refunddialog
 	}=toRefs(state)
 	const emit = defineEmits(['change','noauth']);
 	function show(entry){
 		 state.formData.purchaseEntryid=entry.id;
-		 state.formData.entry=entry;
+		 state.entry=entry;
 		 handleQuery();
 	}
     function cancelOrder(){
@@ -366,11 +369,13 @@
 			}
 		}
 	}
-	function bind1688(row){
-		state.formData.productCode=row.productID;
-		state.formData.specid=row.specId;
-		purchasealibabaApi.bindProductInfoByEntry(state.formData).then(res=>{
+	function bind1688(row,orderInfo){
+		var data=JSON.parse(JSON.stringify(state.formData));
+		data.productInfo=row;
+		data.orderInfo=orderInfo;
+		purchasealibabaApi.bindProductInfoByEntry(data).then(res=>{
 			state.edit.visible=false;
+			handleQuery();
 		    ElMessage({
 		      type: 'success',
 		      message: '操作成功',
@@ -406,13 +411,14 @@
 	}
 	function handleUnBind(){
 		purchasealibabaApi.unbindAlibabaOrder(state.formData).then(res=>{
+			state.formData.alibabaOrderid="";
 			handleQuery();
 		});
 	}
 	function handleBindOrder(orderid){
 		state.formData.alibabaOrderid=orderid;
 		purchasealibabaApi.bindAlibabaOrder(state.formData).then(res=>{
-			handleQuery();
+			
 		});
 	}
  

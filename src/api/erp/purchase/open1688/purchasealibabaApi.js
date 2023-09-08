@@ -51,7 +51,7 @@ function productInfoByEntry(data){
 return request.get('/erp/api/v1/purchase/alibaba/entry/alibabainfo/productInfoByEntry',{params:data});
 }
 function bindProductInfoByEntry(data){
-return request.get('/erp/api/v1/purchase/alibaba/entry/alibabainfo/bindProductInfoByEntry',{params:data});
+   return request.post('/erp/api/v1/purchase/alibaba/entry/alibabainfo/bindProductInfoByEntry',data);
 }
 function preview(data){
 return request.post('/erp/api/v1/purchase/alibaba/entry/alibabainfo/preview',data);

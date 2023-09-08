@@ -108,7 +108,9 @@
 						    </div>
 						 </div>
 						 
-						 <GlobalTable   ref="globalTable" :tableData="tableData"   height="calc(100vh - 440px)"  border @loadTable="loadTableData" >
+						 <GlobalTable   ref="globalTable" :tableData="tableData" 
+						   height="calc(100vh - 440px)" 
+							border @loadTable="loadTableData" >
 						 	<template #field>
 							 <el-table-column  prop="image" label="图片"  width="70px">
 							    <template #default="scope">
@@ -125,7 +127,12 @@
 							 </el-table-column>
 							 <el-table-column label="成本单价(￥)" prop="price" sortable="custom"/>
 							 <el-table-column  v-if="ftype==1"  label="可用库存" prop="fulfillable" sortable="custom"/>
-							 <el-table-column  v-if="ftype==2"  label="当前库位库存" prop="quantity" sortable="custom"/>
+							 <el-table-column  v-if="ftype==2"  label="当前库位库存" prop="quantity" sortable="custom">
+								   <template #default="scope">
+									   <div>{{scope.row.quantity}}</div>
+									   <div class="font-extraSmall">{{scope.row.addressname}}:{{scope.row.warehousename}}</div>
+								 </template>
+								 </el-table-column>
 							 <el-table-column  v-if="ftype==1"  label="待出库" prop="outbound" sortable="custom"/>
 							 <el-table-column label="盘点数量">
 								  <template #default="scope">
@@ -340,6 +347,7 @@
 		data.stocktakingid=id;
 		data.materialid=row.materialid;
 		data.shelfid=state.activeWarehouse;
+		data.warehouseid=row.warehouseid;
 		data.amount=parseInt(row.amount);
 		var quantity=parseInt(row.quantity);
 		if(data.amount>quantity){

@@ -1,5 +1,7 @@
 <template>
-	<el-dialog :title="operateType.dialogTitle" v-model="dialogVisable" :width="layout.right>1?'90%':'40%'">
+	<el-dialog top="3vh" class="mypaymentdailog" 
+	:title="operateType.dialogTitle" v-model="dialogVisable" :width="layout.right>1?'90%':'40%'">
+		<el-scrollbar height="calc(100vh - 180px)" :always="true" :native="true">
 		<div  class="product-box">
 			<el-image v-if="queryParams.entry.image" :src="queryParams.entry.image" class="img-40"  width="40" height="40"  ></el-image>
 			<el-image v-else :src="require('@/assets/image/empty/noimage40.png')"  class="img-40"  width="40" height="40"  ></el-image>
@@ -20,7 +22,7 @@
 						<div class="flex-center-between">
 						<el-space  :spacer="spacer">
 						 <span ><span class="font-bold">{{payMap.payneed}}</span><p class="font-extraSmall">待付款</p></span>
-						 <span><span class="font-bold">{{payMap.entry.totalpay}}</span><p class="font-extraSmall">已付款</p></span>
+						 <span><span class="font-bold">{{payMap.totalcost}}</span><p class="font-extraSmall">已付款</p></span>
 						 <span><span class="font-bold">{{payMap.totalship}}</span><p class="font-extraSmall">已付运费</p></span>
 						</el-space>
 						<el-tag v-if="queryParams.paystatus==0" type="warning" size="large">待付款</el-tag>
@@ -28,14 +30,21 @@
 						</div>
 					</el-card>	
 					
-					<el-form label-width="100px">
-						<el-form-item label="货物费用">
-							<el-input v-model="formData.cost"  @input="formData.cost=CheckInputFloat(formData.cost)"></el-input>
-						</el-form-item>
+					<el-form label-width="100px" >
+						 <el-row>
+						  <el-col :span="12">
+							<el-form-item label="货物费用">
+								<el-input v-model="formData.cost" clearable @input="formData.cost=CheckInputFloat(formData.cost)"></el-input>
+							</el-form-item>
+						  </el-col>
+						  <el-col :span="12">
 						<el-form-item label="运费">
-							<el-input v-model="formData.ship" @input="formData.ship=CheckInputFloat(formData.ship)"></el-input>
+							<el-input v-model="formData.ship" clearable @input="formData.ship=CheckInputFloat(formData.ship)"></el-input>
 							<p  class="font-extraSmall">预计重量：{{NullTransform(payMap.weight)}}kg</p>
 						</el-form-item>
+						</el-col>
+						 </el-row>
+						 <div style="margin-top:-15px;">
 						<el-form-item label="其他费用">
 						   <el-table :data="otherFeeData" border size="small">
 							   <el-table-column type="index">
@@ -74,6 +83,7 @@
 							   </el-table-column>
 						   </el-table>
 						</el-form-item>
+						</div>
 						<el-form-item label="预计到货日期">
 							<el-radio-group v-model="formData.datetype" >
 							      <el-radio label="1" >
@@ -90,17 +100,23 @@
 								  </el-radio>
 							    </el-radio-group>
 						</el-form-item>
+						<el-row>
+						 <el-col :span="12">
 						<el-form-item label="支付方式">
 							<el-select v-model="formData.paymethod" @change="loadPaymentAccount(formData.paymethod)">
 								 <el-option  v-for="item in payMethodList"   :key="item.id"  :label="item.name" :value="item.id"  ></el-option>
 							</el-select>
 						</el-form-item>
+						</el-col>
+						<el-col :span="12">
 						<el-form-item label="支付账户"  >
 							<el-select v-model="formData.payacc">
 								 <el-option  v-for="item in payAccList"   :key="item.id"  :label="item.name+'['+item.paymethName+']'" :value="item.id"  >
 								 </el-option>
 							</el-select>
 						</el-form-item>
+						</el-col>
+						</el-row>
 						<el-form-item label="备注">
 							<el-input v-model="formData.remark"  :rows="2"
 								type="textarea"></el-input>
@@ -115,7 +131,10 @@
 					</el-col>
 					<el-col v-if="layout.right>1" :span="layout.right" >
 						<!-- 交易订单记录 -->
-						<OrderRecord ref="orderRecordRef" @noauth="layoutChange" @change="handleAlibabaOrderFee"/>
+						<div style="padding:10px;">
+							<OrderRecord ref="orderRecordRef" @noauth="layoutChange" @change="handleAlibabaOrderFee"/>
+						</div>
+						
 					</el-col>
 			</el-row>
 			</el-tab-pane>
@@ -124,12 +143,14 @@
 				 <PayRecord ref="recordRef" />
 			</el-tab-pane>
 		  </el-tabs>
-		  <template #footer>
+		  </el-scrollbar>
+		  <template #footer class="footerbg">
 			  <el-button @click="dialogVisable=false">关闭</el-button>
 			  <el-button type="primary"  v-if="queryParams.entry.paystatus==0"  @click.stop="stopPayment" plain>结束付款</el-button>
 			  <el-button type="primary" v-if="queryParams.entry.paystatus==1" @click="startPayment" plain>继续付款</el-button>
 		  </template>
 	</el-dialog>
+	<FinItem ref="finItemRef" @change="loadFacProject()"></FinItem>
 </template>
 
 <script setup>
@@ -140,13 +161,15 @@
 	import OrderRecord from "./order_record.vue";
 	import purchaselistApi from '@/api/erp/purchase/form/listApi.js';
 	import faccountApi from '@/api/erp/finances/faccountApi.js';
+	import FinItem from '@/views/erp/finance/account/components/finItem.vue';
 	import { ElMessage, ElMessageBox } from 'element-plus';
 	import NullTransform from"@/utils/null-transform";
-	import {CheckInputFloat,CheckInputInt} from '@/utils/index';
-	import {dateFormat,dateTimesFormat} from '@/utils/index.js';
+	import {CheckInputFloat,CheckInputInt,dateFormat,dateTimesFormat} from '@/utils/index';
+	const emitter = inject("emitter");
 	const emit = defineEmits(['change']);
 	const spacer = h(ElDivider, { direction: 'vertical'});
 	const recordRef=ref();
+	const finItemRef=ref();
 	const orderRecordRef=ref();
 	const state = reactive({
 		operateType:{
@@ -170,6 +193,7 @@
 			datetype:'1',
 			cost:0,
 			ship:0,
+			payacc:"",
 			paymethod:null,
 			remark:"",
 		},
@@ -193,7 +217,7 @@
 	}=toRefs(state)
 	function gotoFinPage(){
 		//跳转至fin页面
-		
+		finItemRef.value.show();
 	}
 	function layoutChange(){
 		state.layout={left:23,right:1};
@@ -271,6 +295,7 @@
 						
 					});
 					state.formData.payacc=defaultid==""?normalDefault:defaultid;
+					 
 				}else{
 					state.payAccList=[];
 					state.formData.payacc="";
@@ -345,7 +370,7 @@
 				})
 				emit("change");
 				state.queryParams.entry.paystatus=3;
-				state.dialogVisable=false;
+				//state.dialogVisable=false;
 			}
 		});
 	}
@@ -367,6 +392,7 @@
 		var data={};
 		var sumpay=0;
 		data.paymethod=state.formData.paymethod;
+		data.payacc=state.formData.payacc;
 		data.logisiter=null;
 		data.status="0";
 		data.payid=null;
@@ -430,9 +456,12 @@
 				state.queryParams.entry.paystatus=res.data.entry.paystatus;
 				state.queryParams.entry.auditstatus=res.data.entry.auditstatus;
 				emit("change");
-				if(res.data.entry.paystatus==1){
-					state.dialogVisable=false;
-				}
+				state.activeName="2"
+				handleClick("2");
+				emitter.emit("removeCache", "采购记账");
+				//if(res.data.entry.paystatus==1){
+					//state.dialogVisable=false;
+				//}
 			}
 		});
 	}
@@ -481,7 +510,6 @@
 					 		emit("change");
 					 	}
 					 });
-					 state.dialogVisable=false;
 				 }
 			  }
 			}
@@ -553,7 +581,30 @@
 		show,
 	})
 </script>
-
+<style>
+	.mypaymentdailog .el-dialog__footer{
+		background:#f5f5f5;
+		border-bottom-right-radius:2px;
+		border-bottom-left-radius:2px;
+		text-align:center;
+	}
+	.dark .mypaymentdailog .el-dialog__footer{
+		background:#1b1b1b;
+		border-bottom-right-radius:2px;
+		border-bottom-left-radius:2px;
+		text-align:center;
+	}
+	 .mypaymentdailog .el-dialog__body{
+		 padding-top:2px;
+		 padding-bottom:0px;
+	 }
+	 .mypaymentdailog {
+		 margin: var(--el-dialog-margin-top,15vh) auto 10px;
+	 }
+	 .mypaymentdailog .product-box{
+		 margin-bottom: 10px !important;
+	 }
+</style>
 <style scoped="scoped">
 .el-progress-bar{
 	width: 200px;
@@ -576,6 +627,7 @@ color:var(--el-color-blue)
 .m-t-32{
 	margin-top: 32px;
 }
+
 .img-40{width: 40px;
 height: 40px;flex: none;
 margin-right: 8px;}

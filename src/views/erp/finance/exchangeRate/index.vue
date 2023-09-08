@@ -49,7 +49,6 @@
 
 <script setup>
 	import { ref,reactive,onMounted,toRefs} from 'vue'
-	import DatepickerMonth from '@/components/header/datepicker_month.vue';
 	import {Edit} from '@element-plus/icons-vue'
 	import exchangeRateAPI from '@/api/amazon/finances/exchangeRateAPI.js';
 	import {ElMessage} from 'element-plus';

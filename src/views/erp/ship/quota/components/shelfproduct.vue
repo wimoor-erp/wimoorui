@@ -84,7 +84,9 @@
 							<el-table v-if="scope.row.shelfInvList&&scope.row.shelfInvList.length>0" :data="scope.row.shelfInvList" @row-click="shelfRowClick"    size="small" border >
 								<el-table-column  label="库位" prop="shelfname">
 										<template #default="scope">
-										<div @click="radioShelf=scope.$index">{{scope.row.shelfname}}</div>
+										<div @click="radioShelf=scope.$index">{{scope.row.shelfname}}
+										<span class="font-extraSmall" v-if="scope.row.warehousename">({{scope.row.warehousename}})</span>
+										</div>
 										</template>
 								</el-table-column>
 								<el-table-column width="70"  label="库存" prop="quantity">	<template #default="scope">
@@ -101,7 +103,7 @@
 							<div v-else class="font-extraSmall">暂无上架信息</div>
 						</template>
 					</el-table-column>
-					 
+					  
 				</el-table>
 				</div>
 				</template>
@@ -156,7 +158,11 @@
 					   					 <el-table :data="scope.row.shelfInvRecordList" size="small" border>
 					   					 	<el-table-column label="库位" >
 					   					 		<template #default="scope">
-					   					 		      {{scope.row.shelfname}}
+													  <div  >{{scope.row.shelfname}}
+													  <span class="font-extraSmall" v-if="scope.row.warehousename">
+														  ({{scope.row.warehousename}})
+														  </span>
+														  </div>
 					   					 		</template>
 					   					 	</el-table-column>
 					   					 	<el-table-column label="操作" prop="quantity">
@@ -236,6 +242,7 @@
 								var obj={};
 								obj.materialid = item.materialid;
 								obj.shelfid = item.shelfid;
+								obj.warehouseid=item.warehouseid;
 								obj.formid=row.id;
 								obj.formtype="outstockform";
 								obj.quantity =qty;
@@ -261,6 +268,7 @@
 						 				var obj={};
 										obj.materialid = item.materialid;
 										obj.shelfid = item.shelfid;
+										obj.warehouseid=item.warehouseid;
 						 				obj.formid=row.id;
 						 				obj.formtype="outstockform";
 						 				obj.quantity =qty;

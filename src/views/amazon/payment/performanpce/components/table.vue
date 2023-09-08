@@ -1,6 +1,6 @@
 <template >
  	 <!-- height="calc(100vh - 348px)"  -->
-	 <div class="settlementTable">
+	 <div class="">
 	<GlobalTable
 	:defaultSort="{ prop: 'order_amount', order: 'descending' }" 
 	 show-summary
@@ -9,111 +9,124 @@
 	 @selectionChange='selectChange'
 	 :tableData="tableData"
 	 @loadTable="loadTableData"
+	 height="calc(100vh - 300px)"
 	  >
 	<template #field>
 			 
-			<el-table-column   align="center" label="负责人" min-width="200px" header-align="center"   fixed="left"  show-overflow-tooltip  prop="sku" >
+			<el-table-column   label="负责人" width="200px"    fixed="left"  show-overflow-tooltip  prop="sku" >
 				<template #default="scope">
 						<span v-if="scope.row.ownername">	{{scope.row.ownername}}</span>
 						<span v-else>未对应本地产品负责人</span>
 				</template>
 			</el-table-column>
 	 
-			<el-table-column label="销售情况"  header-align="center"   width="170"  sortable="custom"   prop="principal" >
+			<el-table-column label="销售额"  sortable="custom"  prop="principal" width="110">
 				<template #default="scope">
-					<div><div class="text-green pull-left text-right width60"> 销售额：</div>
-					 <span v-if="scope.row.principal">{{scope.row.principal}}</span><span v-else>0</span></div>
-					 <div v-if="scope.row.rpt_adv_sales"><div class="font-extraSmall pull-left text-right width60"> 广告销售：</div> {{scope.row.rpt_adv_sales}}</div>
-					 <div v-if="scope.row.sales"><div class="font-extraSmall pull-left text-right width60"> 销量：</div> {{scope.row.sales}}</div>
-					 <div v-if="scope.row.rpt_adv_units"><div class="font-extraSmall pull-left text-right width60"> 广告销量：</div> {{scope.row.rpt_adv_units}}</div>
-					 <div v-if="scope.row.order_amount"><div class="font-extraSmall pull-left text-right width60"> 订单：</div> {{scope.row.order_amount}}</div>
-					 <div v-if="scope.row.avgprice"><div class="font-extraSmall pull-left text-right width60"> 平均售价：</div> {{scope.row.avgprice}}</div>
+					<span v-if="scope.row.principal">{{scope.row.principal}}</span><span v-else>0</span>
 				</template>
-			 </el-table-column>
-			 <el-table-column label="退款情况" header-align="center"    width="140"  sortable="custom"   prop="refund" >
-			 	<template #default="scope">
-			 		 <div><div class="font-extraSmall pull-left text-right width50"> 退款：</div> {{scope.row.refund}}</div>
-			 		 <div v-if="scope.row.refundsales"><div class="font-extraSmall pull-left text-right width50"> 数量：</div> {{scope.row.refundsales}}</div>
-			 		 <div v-if="scope.row.refundrate"><div class="font-extraSmall pull-left text-right width50"> 退款率：</div> {{scope.row.refundrate}}</div>
-			 	</template>
-			  </el-table-column>
-			  <el-table-column label="平台费用"  header-align="center"   width="160"  sortable="custom"   prop="fbafee" >
-			  	<template #default="scope">
-			  		 <div><div class="font-extraSmall pull-left text-right width50"> FBA费：</div> {{scope.row.fbafee}}</div>
-			  		 <div><div class="font-extraSmall pull-left text-right width50"> 佣金：</div> {{scope.row.commission}}</div>
-			  		 <div v-if="scope.row.shipping!='0'"><div class="font-extraSmall pull-left text-right width50"> 运费：</div> {{scope.row.shipping}}</div>
-					 <div v-if="scope.row.promotion!='0'"><div class="font-extraSmall pull-left text-right width50"> 促销：</div> {{scope.row.promotion}}</div>
-					 <div ><div class="font-extraSmall pull-left text-right width50"> 其它：</div> {{scope.row.otherfee}}</div>
-			  	</template>
-			   </el-table-column>
-			   <el-table-column label="SKU结算" header-align="center"   width="110"  sortable="custom"   prop="setincome" />
-			   <el-table-column label="店铺分摊"   header-align="center"  width="170"  sortable="custom"   prop="share_storage_fee" >
-			   	<template #default="scope">
-			   		 <div><div class="font-extraSmall pull-left text-right width60"> 仓储费：</div> {{scope.row.share_storage_fee}}</div>
-			   		 <div v-if="scope.row.share_long_storage_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 长期仓储：</div> {{scope.row.share_long_storage_fee}}</div>
-			   		 <div v-if="scope.row.share_adv_spend_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 广告：</div> {{scope.row.share_adv_spend_fee}}</div>
-					 <div v-if="scope.row.share_coupon_redemption_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 折扣券：</div> {{scope.row.share_coupon_redemption_fee}}</div>
-					 <div v-if="scope.row.share_reserve_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 预留金：</div> {{scope.row.share_reserve_fee}}</div>
-					 <div v-if="scope.row.share_reimbursement_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 赔偿金：</div> {{scope.row.share_reimbursement_fee}}</div>
-					 <div v-if="scope.row.share_shop_other_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 其它：</div> {{scope.row.share_shop_other_fee}}</div>
-			   	</template>
-			    </el-table-column>
-				<el-table-column label="店铺结算"  header-align="center"   width="120"  sortable="custom"   prop="income" >
-					 
-				 </el-table-column>
-				 <el-table-column label="本地预估"   header-align="center"  width="160"  sortable="custom"   prop="profit_local_shipmentfee" >
-				 	<template #default="scope">
-				 		 <div><div class="font-extraSmall pull-left text-right width60"> 运费：</div> {{scope.row.profit_local_shipmentfee}}</div>
-				 		 <div v-if="scope.row.profit_marketfee!='0'">
-							 <div class="font-extraSmall pull-left text-right width60"> 市场费用：</div> 
-							 {{scope.row.profit_marketfee}}
-					      </div>
-				 		 <div v-if="scope.row.profit_vat!='0'">
-							 <div class="font-extraSmall pull-left text-right width60"> VAT：</div> 
-							 {{scope.row.profit_vat}}
-						 </div>
-						 <div v-if="scope.row.profit_companytax!='0'">
-							 <div class="font-extraSmall pull-left text-right width60"> 所得税：</div> 
-							 {{scope.row.profit_companytax}}
-						  </div>
-						 <div v-if="scope.row.profit_customstax!='0'">
-							 <div class="font-extraSmall pull-left text-right width60"> 关税：</div> 
-							 {{scope.row.profit_customstax}}
-						  </div>
-						 <div v-if="scope.row.profit_exchangelost!='0'">
-							 <div class="font-extraSmall pull-left text-right width60"> 汇率损耗：</div> 
-							 {{scope.row.profit_exchangelost}}
-						 </div>
-						 <div v-if="scope.row.profit_lostrate!='0'">
-							 <div class="font-extraSmall pull-left text-right width60"> 固定费用：</div> 
-							 {{scope.row.profit_lostrate}}
-						 </div>
-						 <div v-if="scope.row.profit_otherfee!='0'">
-							 <div class="font-extraSmall pull-left text-right width60"> 其它费用：</div> 
-							 {{scope.row.profit_otherfee}}
-						</div>
-				 	</template>
-				  </el-table-column>
-				  <el-table-column label="报表费用"   header-align="center"  width="160"  sortable="custom"   prop="rpt_storage_fee" >
-				  	<template #default="scope">
-				  		 <div><div class="font-extraSmall pull-left text-right width60"> 仓储费：</div> {{scope.row.rpt_storage_fee}}</div>
-				  		 <div v-if="scope.row.rpt_long_storage_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 长期仓储：</div> {{scope.row.rpt_long_storage_fee}}</div>
-				  		 <div v-if="scope.row.rpt_adv_spend_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 广告：</div> {{scope.row.rpt_adv_spend_fee}}</div>
-						 <div v-if="scope.row.rpt_reimbursements_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 赔偿：</div> {{scope.row.rpt_reimbursements_fee}}</div>
-				  		 <div v-if="scope.row.fin_sum_fee!='0'"><div class="font-extraSmall pull-left text-right width60"> 其它自定义：</div> {{scope.row.fin_sum_fee}}</div>
-				  	</template>
-				   </el-table-column>
-				  <el-table-column label="本地费用"  header-align="center"   width="170"  sortable="custom"   prop="local_price" >
-				  	<template #default="scope">
-				  		 <div><div class="font-extraSmall pull-left text-right width40"> 采购：</div> {{scope.row.local_price}}</div>
-				  		 <div  v-if="scope.row.local_other_cost!='0'"><div class="font-extraSmall pull-left text-right width40"> 其它：</div> {{scope.row.local_other_cost}}</div>
-				  		 <div  v-if="scope.row.local_return_tax!='0'"><div class="font-extraSmall pull-left text-right width40"> 退税：</div> {{scope.row.local_return_tax}}</div>
-				  	</template>
-				   </el-table-column>
-			<el-table-column label="利润"   fixed="right"  header-align="center"  width="170" sortable="custom"   prop="profit" >
+			</el-table-column>
+			<el-table-column label="销量" sortable="custom"  prop="sales" width="75"/>
+			<el-table-column label="订单" sortable="custom"  prop="order_amount" width="75"/>
+			<el-table-column label="平均售价"  prop="avgprice" width="80"/>
+			<el-table-column label="广告销售额" sortable="custom"    prop="rpt_adv_sales" width="115"/>
+			<el-table-column label="广告销量" sortable="custom"  prop="rpt_adv_units" width="100"/>
+			<el-table-column label="退款数量" sortable="custom" prop="refundsales" width="100"/>
+			<el-table-column label="退款金额" sortable="custom"   prop="refund" width="100"/>
+			<el-table-column label="退款率" sortable="custom"  prop="refundrate" width="85"/>
+			<el-table-column label="FBA费用"   prop="fbafee" width="100"/>
+			<el-table-column label="销售佣金"    prop="commission" width="100"/>
+			<el-table-column label="运费"   prop="shipping" width="90"/>
+			<el-table-column label="促销费"    prop="promotion" width="100"/>
+			<el-table-column label="其它收支"    prop="otherfee" width="90"/>
+			<el-table-column label="SKU结算"    width="100"  sortable="custom"   prop="setincome" />
+			<el-table-column label="店铺分摊" label-class-name="bg-group-y" width="100" prop="share_storage_fee">
+			  <template #header>
+					<p class="l-h-none ">店铺分摊</p>
+					<p class="l-h-none">仓储费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="店铺分摊" label-class-name="bg-group-y" width="100" prop="share_long_storage_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">长期仓储费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="店铺分摊" label-class-name="bg-group-y" width="100" prop="share_coupon_redemption_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">coupon</p>
+			  </template>	
+			</el-table-column>			
+			<el-table-column label="店铺分摊" label-class-name="bg-group-y" width="100" prop="share_adv_spend_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">广告花费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="店铺分摊" label-class-name="bg-group-y" width="100" prop="share_reserve_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">预留金</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="店铺分摊" label-class-name="bg-group-y" width="100" prop="share_reimbursement_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">赔偿金</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="店铺分摊" label-class-name="bg-group-y" width="100" prop="share_shop_other_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">其他费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="店铺结算"   width="100"  sortable="custom"   prop="income" />
+			<el-table-column label="市场费用"    width="100"  prop="profit_marketfee" />
+			<el-table-column label="VAT"    width="100"  prop="profit_vat" />
+			<el-table-column label="所得税"    width="100"   prop="profit_companytax" />
+			<el-table-column label="关税"    width="100"   prop="profit_customstax" />
+			<el-table-column label="汇率损耗"    width="100"  prop="profit_exchangelost" />
+			<el-table-column label="固定费用"    width="100"  prop="profit_lostrate" />
+			<el-table-column label="其它费用"    width="100"   prop="profit_otherfee" />
+			<el-table-column label="SKU报表" label-class-name="bg-group-y" width="100" prop="rpt_storage_fee">
+			  <template #header>
+					<p class="l-h-none ">SKU报表</p>
+					<p class="l-h-none">仓储费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="SKU报表" label-class-name="bg-group-y" width="100" prop="rpt_long_storage_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">长期仓储费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="SKU报表" label-class-name="bg-group-y" width="100" prop="rpt_adv_spend_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">广告花费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="SKU报表" label-class-name="bg-group-y" width="100" prop="rpt_reimbursements_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">赔偿金</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label="SKU报表" label-class-name="bg-group-y" width="100" prop="fin_sum_fee">
+			  <template #header>
+					<p class="l-h-none ">&nbsp;</p>
+					<p class="l-h-none">其他费</p>
+			  </template>	
+			</el-table-column>	
+			<el-table-column label=" 预估运费"    width="100" sortable="custom"   prop="profit_local_shipmentfee" />
+			<el-table-column label="采购成本"  sortable="custom"    width="100"  prop="local_price" />
+			<el-table-column label="自定义费用"    width="100"   prop="local_other_cost" />
+			<el-table-column label="退税"    width="60"   prop="local_return_tax" />
+			<el-table-column label="毛利润" fixed="right"   width="110" sortable="custom"   prop="profit" >
 				<template #header>
 				<el-space :size="4">
-				  <span>利润</span>
+				  <span>毛利润</span>
 				   <el-tooltip
 				          effect="dark"
 				          content=""
@@ -127,10 +140,10 @@
 				</el-space>
 				</template>
 				<template #default="scope">
-					 <div><div class="font-extraSmall pull-left text-right width60"> 利润：</div>{{scope.row.profit}}</div>
-					 <div><div class="font-extraSmall pull-left text-right width60"> 利润率：</div>{{scope.row.profitrate}}</div>
+				 <span :class="scope.row.profit<0?'text-red':''">{{scope.row.profit}}</span>
 			    </template>
 			</el-table-column>	
+			<el-table-column label="毛利润率"  fixed="right" width="100"   prop="profitrate" />
 					<el-table-column label="月报表" fixed="right" width="80">
 						<template #default="scope">
 							<el-link @click="monthSales(scope.row)"
@@ -170,8 +183,11 @@
 			 if(value)return parseFloat(value);
 			 else return 0.0;
 	}
-		function monthSales(){
-			mrRef.value.show() 
+		function monthSales(row){
+			var data=JSON.parse(JSON.stringify(state.param));
+			data.ownerid=row.owner;
+			data.charttype="month";
+			mrRef.value.show(data);
 		}
 		onMounted(()=>{
 			settlementFormulaApi.loadformula().then((res)=>{
@@ -255,39 +271,16 @@
 	 	var arr = ["合计"];
 		var startindex=1;
 	 	columns.forEach((item,index)=>{
-	 		if(index>=startindex&&index<columns.length-1){
-	 			   var fee=0.0;
-	 				 if(item.property=='fbafee'){
-	 					 fee=fee+parseFloatValue(state.summary["commission"]);
-	 					 fee=fee+parseFloatValue(state.summary["fbafee"]);
-	 					 fee=fee+parseFloatValue(state.summary["promotion"]);
-	 					 fee=fee+parseFloatValue(state.summary["shipping"]);
-	 					 fee=fee+parseFloatValue(state.summary["otherfee"]);
-	 				 }else if(item.property.indexOf('share')==0){
-	 					 fee=fee+parseFloatValue(state.summary["share_storage_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["share_long_storage_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["share_adv_spend_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["share_coupon_redemption_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["share_reserve_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["share_shop_other_fee"]);
-	 				 }else if(item.property=='profit_local_shipmentfee'){
-	 					 fee=fee+parseFloatValue(state.summary["profit_local_shipmentfee"]);
-	 					 fee=fee+parseFloatValue(state.summary["profit_marketfee"]);
-	 					 fee=fee+parseFloatValue(state.summary["profit_vat"]);
-	 					 fee=fee+parseFloatValue(state.summary["profit_companytax"]);
-	 					 fee=fee+parseFloatValue(state.summary["profit_customstax"]);
-	 					 fee=fee+parseFloatValue(state.summary["profit_exchangelost"]);
-	 					 fee=fee+parseFloatValue(state.summary["profit_lostrate"]);
-	 					 fee=fee+parseFloatValue(state.summary["profit_otherfee"]);
-	 				 }else if(item.property=='rpt_storage_fee'){
-	 					 fee=fee+parseFloatValue(state.summary["rpt_storage_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["rpt_long_storage_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["rpt_reimbursements_fee"]);
-	 					 fee=fee+parseFloatValue(state.summary["fin_sum_fee"]);
+	 		if(index>=startindex){
+	 			 var fee=0.0;
+	 				 fee=state.summary[item.property];
+	 				 if(item.property=='sales'||item.property=='order_amount'||item.property=='rpt_adv_units'||item.property=='refundsales'){
+	 					 arr[index]=fee;
+	 				 }else if(item.property=='avgprice'||item.property=='refundrate'||item.property=='profitrate'){
+	 					  arr[index]='-';
 	 				 }else{
-	 					 fee=state.summary[item.property];
+	 					arr[index]=outputmoney(fee);
 	 				 }
-	 			 arr[index]=outputmoney(fee);
 	 		}
 	 	})
 	 	return  arr
@@ -330,39 +323,14 @@
 </script>
 
 <style>
-	.settlementTable .el-table__footer .cell {
-		text-align:center!important;
-	}
-	th.yellow-column {
-		background-color: var(--el-color-warning-light-9)!important;
-	}
-	th.green-column{
-		background-color: var(--el-color-success-light-9)!important;
-	}
 	.text-gray{
 		color: #999999;
 	}
-	.list-item p{
-		line-height: 32px;
+	.l-h-none{
+		line-height:14px;
 	}
-	.img80{
-			 width:80px;
-			 length:80px;
-	}
-	.width60{
-			 width:60px;
-	}
-	.width50{
-			 width:50px;
-	}
-	.width40{
-			 width:40px;
-	}
-	.pull-left{
-			 float:left;
-	}
-	.NonChildren .el-table__expand-icon{
-		display: none !important;
+	.bg-group-y{
+		background-color:#efefef !important;
 	}
 </style>
  

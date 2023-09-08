@@ -5,7 +5,15 @@
 	     <Header @getdata="loadData" ref="headerRef"  type="package"/>
 	</div>
 	<el-row>
-	   <GlobalTable ref="globalTable" :rowClassName="handleRowClassName" :defaultSort="defaultSort" @selectionChange='selectChange' :tableData="tableData" height="calc(100vh - 250px)"  @loadTable="loadTableData" :stripe="true"  style="width: 100%;margin-bottom:16px;">
+	   <GlobalTable ref="globalTable" 
+	   :rowClassName="handleRowClassName" 
+	   :defaultSort="defaultSort" 
+	   @selectionChange='selectChange' 
+	   :tableData="tableData" 
+	   height="calc(100vh - 250px)"  
+	   @loadTable="loadTableData" 
+	   :stripe="true"  
+	   style="width: 100%;margin-bottom:16px;">
 		   <template #field>
 	     <el-table-column   type="selection" width="38" />
 	    <el-table-column   prop="sku" min-width="200" label="名称/SKU" sortable="custom" show-overflow-tooltip>
@@ -92,7 +100,7 @@
 </template>
 
 <script setup>
-	import {ref,reactive,toRefs,onMounted,} from "vue"
+	import {ref,reactive,toRefs,onMounted,inject} from "vue"
 	import {Copy,MenuUnfold,Plus,SettingTwo,Help,MoreOne} from '@icon-park/vue-next';
 	import {Edit } from '@element-plus/icons-vue';
 	import Header from "./components/header.vue"
@@ -108,6 +116,7 @@
 	import consumableApi from '@/api/erp/purchase/plan/consumableApi.js';
 	import warehouseApi from '@/api/erp/warehouse/warehouseApi.js';
 	import {getLast} from '@/api/erp/purchase/plan/planApi';
+	const emitter = inject("emitter");
 	const headerRef=ref();
 	let router = useRouter()
 	const globalTable=ref();
@@ -139,6 +148,7 @@
 			  })
 		  }
 		  function productEdit(row){
+			    emitter.emit("removeCache", "编辑包材"+row.sku);
 				 router.push({
 				 	path:'/localproduct/editinfo',
 				 	query:{

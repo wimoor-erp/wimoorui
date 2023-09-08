@@ -59,8 +59,8 @@
 				      </div>
 				  </template>
 				</el-table-column>
-				<el-table-column label="上架日期" width="100" prop="opendate" sortable="custom"></el-table-column>
-			    <el-table-column  label="汇总"  prop="vsum"  sortable="custom"/>
+				<el-table-column label="上架日期" fixed width="100" prop="opendate" sortable="custom"></el-table-column>
+			    <el-table-column  label="汇总" fixed  prop="vsum"  sortable="custom"/>
 				<el-table-column v-for="item in fieldOptions" width="110" :prop="item.label" sortable="custom">
 					<template #header>
 						  {{item.name}} 

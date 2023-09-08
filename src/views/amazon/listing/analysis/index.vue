@@ -2,8 +2,8 @@
 	<div class="gird-line-head el-white-bg">
 		<div class="flex-center">
 			<el-space>
-		<Group @change="groupChange"   />
-		<el-input v-model="queryParams.search"  @input="handleQuery"  placeholder="请输入" class="input-with-select">
+		<Group @change="groupChange" ref="groupRef"  :init="true"/>
+		<el-input v-model="queryParams.search" clearable  @input="handleQuery"  placeholder="请输入" class="input-with-select">
 			<template #prepend>
 				<el-select v-model="queryParams.ftype" @change='handleQuery' style="width:100px;" placeholder="SKU">
 					<el-option label="平台SKU" value="sku">平台SKU</el-option>
@@ -67,8 +67,11 @@
 	import DataDeatils from"./components/data_deatils"
 	import Group from '@/components/header/group.vue';
 	import {ref,reactive,toRefs,onMounted}from"vue";
+	import { useRoute,useRouter } from 'vue-router'
 	import productAnysApi from '@/api/amazon/product/productAnysApi.js';
+	let router = useRouter();
 	let dataDeatilsRef=ref();
+	const groupRef =ref();
 	let state=reactive({
 		tableData:[],
 		total:10,
@@ -78,10 +81,21 @@
 			ftype:'sku',
 		}
 	})
+	const groupid = router.currentRoute.value.query.groupid;
+	const marketplaceid = router.currentRoute.value.query.marketplaceid;
+	const sku = router.currentRoute.value.query.sku;
 	let {tableData,total,queryParams} =toRefs(state);
 	let load = () => {
 	  console.log("滚动加载数据方法")
 	}
+	onMounted(()=>{
+	    if(sku){
+			state.queryParams.search=sku;
+			groupRef.value.init(groupid,marketplaceid);
+		}else{
+			groupRef.value.init(null,null);
+		}
+	})
 	function selectSku(sku){
 		state.tableData.forEach((item)=>{
 			item.active = false;

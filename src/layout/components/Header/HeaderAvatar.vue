@@ -40,10 +40,9 @@
 					 </el-menu-item>
 				     <el-menu-item index="1-3-1000" @click="bindVisible=true"><el-icon><people-plus    size="14"/></el-icon>添加账号</el-menu-item>
 				   </el-sub-menu>
-			       <el-menu-item index="1-4" @click="logout">退出</el-menu-item>
 				   <el-menu-item index="1-5" @click="clearCath">清缓存</el-menu-item>
 				   <el-menu-item index="1-6" v-if="isSSO()" @click="backOldsys">返回旧系统</el-menu-item>
-			       
+			       <el-menu-item index="1-4" @click="logout">退出</el-menu-item>
 			     </el-sub-menu>
 			   </el-menu>
 			 
@@ -160,7 +159,12 @@
 					 data.account=item.account;
 					 data.appType="website";
 					 userApi.changeLoginWechatApp(data).then((res)=>{
-					 	 window.location.reload();
+						 var query=this.$router.currentRoute.value.query;
+						 if(query["title"]&&query["path"]&&Object.keys(query).length==2){
+					 	     window.location.reload();
+						 }else{
+							  window.location="/home";
+						 }
 					 });
 				});
 				

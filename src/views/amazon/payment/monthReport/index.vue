@@ -12,7 +12,7 @@
 		 	<el-select v-model="queryParams.datetype" @change="handleQuery">
 		 		<el-option v-for="item in dateOptions" :label="item.label" :value="item.value"></el-option>
 		 	</el-select>
-			<DatepickerMonth  ref="datepickersMonth" @changedate="changedateMonth" />
+			<Datepicker  type="monthrange"   ref="datepickersMonth" @changedate="changedateMonth" />
 		 </div>
 	  </el-space>
 	  </el-row>
@@ -47,7 +47,7 @@
 <script setup>
 	import { ref,reactive,onMounted,toRefs,computed} from 'vue'
 	import {Search,ArrowDownBold,Download,Upload} from '@element-plus/icons-vue';
-	import DatepickerMonth from '@/components/header/datepicker_month.vue';
+	import Datepicker from '@/components/header/datepicker.vue';
     import '@/assets/css/packbox_table.css';
 	import Group from '@/views/amazon/listing/common/group.vue';
 	import settlementAccRptApi from '@/api/amazon/finances/settlementAccRptApi.js';
@@ -302,8 +302,8 @@
 	}  
 	 
 	function changedateMonth(dates){
-		state.queryParams.fromDate=dates[0].format("yyyy-MM-dd");
-		state.queryParams.endDate=dates[1].format("yyyy-MM-dd");
+		state.queryParams.fromDate=dates.start;
+		state.queryParams.endDate=dates.end;
 		if(state.isload==false){
 			handleQuery();
 		}

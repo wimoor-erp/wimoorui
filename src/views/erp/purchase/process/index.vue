@@ -53,7 +53,21 @@
 					 <div>{{scope.row.amount}}</div>
 					</template>
 					</el-table-column>
-				<el-table-column label="可处理数量" prop="hasqty" width="110" sortable="custom">
+			
+				<el-table-column  label="采购需求量" 
+								  v-if="queryParams.auditstatus=='2'&&queryParams.operate=='false'"
+								  prop="needin" 
+								  width="110" 
+								  sortable="custom">
+					<template #default="scope">
+						<div>
+						<span v-if="scope.row.needin">{{scope.row.needin}}</span>
+						<span v-else>0</span>
+						</div>
+						 <el-tag type="danger"  size="small" v-if="scope.row.needin>0">需要采购</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column v-else label="可处理数量" prop="hasqty" width="110" sortable="custom">
 					<template #default="scope">
 						<div>
 						<span v-if="scope.row.hasqty">{{scope.row.hasqty}}</span>

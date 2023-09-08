@@ -1,15 +1,33 @@
 import request from "@/utils/request";
-function getWarehouseList(data){
-	 return request.get("/erp/api/v1/warehouse/list",{params:data})
+const getShelfList=(data)=>{
+	return request({url:'/erp/api/v1/warehoue/shelfInventory/getShelfList',method:"POST","data":data});
 }
+const getShelfInventoryList=(data)=>{
+	return request({url:'/erp/api/v1/warehoue/shelfInventory/getShelfInventoryList',method:"POST","data":data});
+}
+const shelfInventoryOptRecord=(data)=>{
+	return request({url:'/erp/api/v1/warehouse/shelfInventoryOptRecord',method:"GET","data":data});
+}
+const getShelfInfo=(data)=>{
+	return request({url:'/erp/api/v1/warehouse/shelf/getShelfInfo',method:"GET","data":data});
+}
+const invAdd=(data)=>{
+ 	return request({url:'/erp/api/v1/warehoue/shelfInventory/add',method:"POST","data":data});
+}
+const invSub=(data)=>{
+  	return request({url:'/erp/api/v1/warehoue/shelfInventory/sub',method:"POST","data":data});
+ }
+ function getWarehouseList(data){
+ 	 return request.get("/erp/api/v1/warehouse/list",{params:data})
+ }
+ function getWarehouseUseable(){
+ 	 return request.get("/erp/api/v1/warehouse/getlist",{params:{"ftype":"self_usable"} })
+ }
 function getWarehouseListPage(data){
 	 return request.post("/erp/api/v1/warehouse/listpage",data)
 }
 function getWarehouse(data){
 	 return request.get("/erp/api/v1/warehouse/getlist",{params:data })
-}
-function getWarehouseUseable(){
-	 return request.get("/erp/api/v1/warehouse/getlist",{params:{"ftype":"self_usable"} })
 }
 function getOversaWarehouse(data){
 	 return request.get("/erp/api/v1/warehouse/getOverseaList",{params:data });
@@ -41,6 +59,9 @@ function updateData(id,data){
 function detail(id){
 	return request.get("/erp/api/v1/warehouse/detail/"+id);
 }
+function getNamelistByAddressid(addressid){
+		return request.get("/erp/api/v1/warehouse/getNamelistByAddressid/"+addressid);
+}
 function updateDefault(id){
 	return request.post("/erp/api/v1/warehouse/updateDefault/"+id);
 }
@@ -55,5 +76,11 @@ export default{
 	getWarehouseTest,getSelfWarehouseById,getWarehouseNameList,
 	getWarehouseListPage,deleteInfo,saveData,detail,updateData,updateDefault,
 	updateIndex,updateStockByChange,getOversaWarehouseUseable,getWarehouse,
-	getOversaWarehouse
+	getOversaWarehouse,getNamelistByAddressid,
+	getShelfList,
+	getShelfInventoryList,
+	getShelfInfo,
+	invAdd,
+	invSub,
+    shelfInventoryOptRecord
 }

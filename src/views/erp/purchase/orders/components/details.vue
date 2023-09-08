@@ -64,13 +64,13 @@
 		state.dialogVisable = true;
 		if(state.entry){
 			setTimeout(function(){
-				arrivalRef.value.show(state.entry.id,"all");
+				arrivalRef.value.show(state.entry,"all");
 			},400);
 		}
 	}
 	function handleClick(val){
 		if(val=="1"){
-			arrivalRef.value.show(state.entry.id,"all");
+			arrivalRef.value.show(state.entry,"all");
 		}else if(val=="2"){
 			logisRef.value.show(state.entry.id);
 		}else if(val=="3"){

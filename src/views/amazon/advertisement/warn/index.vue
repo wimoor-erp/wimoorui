@@ -10,29 +10,23 @@
 				    <el-select v-model="campagin" placeholder="全部广告组" clearable filterable >
 						<el-option v-for="item in campaginsData" :label="item.name" :value="item.value"></el-option>
 					</el-select>
+				    <el-select v-model="campagin" placeholder="创建人" clearable filterable >
+						<el-option v-for="item in campaginsData" :label="item.name" :value="item.value"></el-option>
+					</el-select>
+					<el-input  v-model="searchKeywords" @input="loadData" placeholder="请输入SKU或关键词" clearable="true" class="input-with-select" >
+					    <template #suffix>
+					                <el-icon><search/></el-icon>
+					    </template>
+					</el-input>
+					<el-button>重置</el-button>
 				</el-space>
 			</el-row>
             <el-row>
                 <el-space >
-                    <el-button @click="Add" type="primary" class="im-but-one">
+                    <el-button @click="handdleAdd" type="primary" class="im-but-one">
                         <plus theme="outline" size="18" fill="#fff" :strokeWidth="4"/>
                         <span>添加提醒</span>
                     </el-button>
-                    <el-input  v-model="searchKeywords" @input="loadData" placeholder="请输入品牌名称" clearable="true" class="input-with-select" >
-                        <!-- <template #prepend>
-                            <el-select v-model="selectlabel" placeholder="品牌名称" style="width: 110px">
-                                <el-option label="品牌名称" value="1"></el-option>
-                                <el-option label="创建人" value="2"></el-option>
-                            </el-select>
-                        </template> -->
-                        <template #append>
-                            <el-button @click.stop="loadData">
-                                <el-icon style="font-size: 16px;align-itmes:center">
-                                    <search />
-                                </el-icon>
-                            </el-button>
-                        </template>
-                    </el-input>
                 </el-space>
                 <div class='rt-btn-group'>
                     <el-button   class='ic-btn' title='帮助文档'>
@@ -44,16 +38,23 @@
         <!--表单-->
         <el-row>
             <GlobalTable ref="globalTable" :tableData="tableData" @selectionChange='handleSelect' :defaultSort="{ prop: 'opttime', order: 'descending' }"  @loadTable="loadTableData" :stripe="true" 
-			height="calc(100vh - 198px)"
+			height="calc(100vh - 246px)"
 			>
             	<template #field>
-               <!-- <el-table-column type="selection" width="38" /> -->
-                <el-table-column prop="name"  label="品牌名称" sortable />
-				<el-table-column prop="remark"  label="备注"   />
-                <el-table-column prop="opttime"  label="操作时间" sortable />
-                <el-table-column prop="operate"  label="操作" width="140" sortable >
+                <el-table-column prop="object"  label="提醒对象" width="100" />
+                <el-table-column prop="market"  label="店铺站点"  />
+				<el-table-column prop="name"  label="名称"   />
+                <el-table-column prop="cycle"  label="计算周期"  />
+                <el-table-column prop="term"  label="触发条件"  />
+                <el-table-column prop="opttime"  label="创建日期"  />
+                <el-table-column prop="state"  label="状态"  >
+				<template #default="scope">
+					  <el-tag type="info">未触发</el-tag>
+				  </template>
+				</el-table-column>
+                <el-table-column prop="operate"  label="创建人"  />
+                <el-table-column  label="操作" width="140" sortable >
                     <template #default="scope">
-                        <el-button class='el-button--blue' @click="Edit(scope.row)">编辑</el-button>
                         <el-button class='el-button--blue' @click="Remove(scope.row)">删除</el-button>
                     </template>
                 </el-table-column>
@@ -62,32 +63,7 @@
         </el-row>
 
     </div>
-	<el-dialog
-	   v-model="dialogVisible"
-	   title="编辑品牌"
-	   width="400px"
-	 >
-	<el-form
-	    ref="dataFormRef"
-	    :model="formData"
-	    :rules="rules"
-	  >
-	    <el-form-item label="品牌名称" prop="name">
-	      <el-input v-model="formData.name" placeholder="请输入品牌名称" />
-	    </el-form-item>
-		<el-form-item label="品牌备注" prop="remark">
-		  <el-input v-model="formData.remark" :rows="5" placeholder="请输入备注..." type="textarea" />
-		</el-form-item>
-	  </el-form>
-	   <template #footer>
-	     <span class="dialog-footer">
-	       <el-button @click.stop="cancel">取消</el-button>
-	       <el-button type="primary" @click.stop="submitForm">
-	         提交
-	       </el-button>
-	     </span>
-	   </template>
-	 </el-dialog>
+	<Create ref="createRef"/>
 
 </template>
 <script setup>
@@ -96,6 +72,26 @@
 	import { ElMessage, ElMessageBox,ElForm } from 'element-plus'
 	import {ref,reactive,toRefs,onMounted}from"vue";
 	import AdGroup from '@/components/header/ad_group.vue';
+	import Create from"./components/create.vue"
+	const createRef = ref()
+	const state = reactive({
+		     tableData:{records:[
+				 {
+					 object:"广告活动",
+					 name:"A2012TKJJA Spider Web Decoration AU",
+					 cycle:"近七天",
+					 term:'花费超过 $1',
+					 opttime:'2022-22-02',
+					 state:'active',
+				 }
+			 ],total:0},
+		})
+	const{
+		tableData,
+	}=toRefs(state)	
+	function handdleAdd(){
+		createRef.value.show()
+	}
 </script>
 <style>
 </style>

@@ -8,7 +8,7 @@
 			</el-table-column>
 			<el-table-column label="名称/SKU"  show-overflow-tooltip>
 				<template #default="scope"> 
-					<div class='name'>{{scope.row.name}}</div>
+					<div class='name text-omit-1'>{{scope.row.name}}</div>
 					<div class='sku'>{{scope.row.sellersku}} 
 					<span v-if="scope.row.prep&&scope.row.prep.prepInstructionList&&scope.row.prep.prepInstructionList.length>0">
 						<el-tag style="margin-left:3px;" v-for="prepitem in scope.row.prep.prepInstructionList">
@@ -110,11 +110,13 @@
 		</el-row>
 		  <el-alert   type="info " show-icon class="mar-bot">
 			  <template #default>
+				  <el-space direction="vertical" alignment="left">
 				 <p>1．点击发货前请确保发货实物的SKU和数量完全与创建的货件一致，不然会影响您的卖家绩效和商品销售，可点击上方“打印配货单” 打印纸质清单与实物核对。</p>
 				<p>2．若不一致，需要在点击发货前请修改已有商品发货数量； （修改的数量浮动只能在 5% 或 6 个SKU）</p>	
+			</el-space>
 			  </template>  
 		  </el-alert>
-		   <el-row class="mar-bot">
+		   <el-row >
 		  <el-space>
 			    <ShipmentOpt ref="optRef"  />
 				 <el-button @click="validateShipment" :loading="validateLoading" >验证货件是否正确</el-button>	 
@@ -125,26 +127,15 @@
 			  <el-button type="primary"  @click="stepclick(1)" plain>下一步</el-button>
 		  </div>
 		  </el-row>
-		  <el-row v-if="hasAssembly">
+		  <el-row v-if="hasAssembly" class="m-t-16">
 			  <el-col :span="24">
-			   <el-card  shadow="never"   class=" assemblynoticecls">
-				   <el-space>
-					 <div>
-						 <el-icon class="text-red" style="font-size:24px;margin-top:3px;"><WarningFilled /></el-icon>
-					 </div>  
-					 <div  style="maring-top:-4px;">
-						该货件生成了1个组装任务，
-						系统已经入库可组装库存，
-						请在该货件发货前，
-						完成相应主SKU的组装任务，
-						<el-button link type="primary" @click.stop="handleToAssemblyForm" size="large">
-							<span style="font-size:16px;">去查看</span></el-button>
-						组装单 
-					 </div>
-					   						
-				   </el-space>
-				
-			   </el-card>
+				  <el-alert
+				    @click.stop="handleToAssemblyForm" 
+				     title="该货件生成了1个组装任务,点击查看组装单."
+				     type="warning"
+				     description="系统已经入库可组装库存，请在该货件发货前，完成相应主SKU的组装任务，"
+				     show-icon
+				   /> 
 			   </el-col>
 		  </el-row>
 		   
@@ -250,7 +241,6 @@
 						productData.list.forEach(item=>{
 							item.prep=res.data[item.sellersku];
 						});
-						console.log(productData.list);
 					}
 					
 					 
@@ -327,8 +317,7 @@
 		margin-left: 8px;
 		color: var(--el-color-primary);
 	}
-	.assemblynoticecls{
-		background:#FFF3D8;
-		border: solid 1px #FFDDA2;
+	.m-t-16{
+		margin-top:16px;
 	}
 </style>

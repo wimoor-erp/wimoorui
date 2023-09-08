@@ -1,5 +1,6 @@
 <template>
-	<el-row :gutter="24" v-if="state.LogisticsResult.length>0">
+	<div v-loading="loading">
+	<el-row  :gutter="24" v-if="state.LogisticsResult.length>0">
 		<el-col  :span="10">
 			<el-card shadow="never"  v-for="logistics in state.LogisticsResult">
 			<el-descriptions title="物流单" size="small" :column="1">
@@ -45,11 +46,13 @@
 		  </el-card>
 	</el-col>
 	</el-row>
+	
 	<el-row v-else>
 	  <el-space>
 		  <div>绑定运单号：</div>	<el-input v-model="logisticsId"></el-input> 
 		  <el-button @click="handleBindLogisticsId">绑定</el-button></el-space>
 	</el-row>
+	</div>
 	<el-dialog
 	    v-model="dialog.visible"
 	    title="打印订单"
@@ -214,12 +217,13 @@
 		logisticsTrace:[],
 		orderResult:{},
 		entryid:"",
+		loading:false,
 		logisticsId:"",
 		content:{id:"printPage",popTitle:""},
 		dialog:{visible:false},
 	})
 	const {
-		LogisticsResult,logisticsTrace,orderResult,dialog,content,logisticsId
+		loading,LogisticsResult,logisticsTrace,orderResult,dialog,content,logisticsId
 	}=toRefs(state)
 	function loadLogisticsNumber(entryid){
 		purchasealibabaApi.getLogisticsId({'purchaseEntryid':entryid}).then(res=>{
@@ -240,7 +244,9 @@
 		state.logisticsTrace=[];
 		state.orderResult={};
 		state.entryid=entryid;
+		state.loading=true;
 		purchasealibabaApi.catchLogisticsInfo({'purchaseEntryid':entryid}).then(res=>{
+			state.loading=false;
 			if(res.data){
 				if(res.data.LogisticsResult){
 					state.LogisticsResult=res.data.LogisticsResult.result;
@@ -257,6 +263,8 @@
 				loadLogisticsNumber(entryid);
 			}
 			console.log(res);
+		}).catch(e=>{
+			state.loading=false;
 		}) 
 	}
 	defineExpose({

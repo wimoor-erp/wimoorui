@@ -58,9 +58,14 @@
 		       'primary','success','info','danger','warning'],
 		plan:{},
 	})
-	let{eu,tableData,plan,types,transtypeOptions}=toRefs(state)
+	let{eu,tableData,plan,types,transtypeOptions}=toRefs(state);
+	
+	// let props = defineProps({itemlist:[]});
+	// const {itemlist} = toRefs(props);
 	let router = useRouter() ;
 	const planid=router.currentRoute.value.query.planid;
+    const list=router.currentRoute.value.query.list;
+ 
 	onMounted(async ()=>{
 		 getPlanList().then(res=>{
 			if(res.data&&res.data.length>0){
@@ -71,7 +76,7 @@
 				 })
 			}
 		 });
-	    listItem({"planid":planid}).then(res=>{
+	    listItem(planid,list).then(res=>{
 			state.tableData=res.data;
 		});
 	})

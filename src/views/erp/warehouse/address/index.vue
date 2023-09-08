@@ -314,7 +314,6 @@ import WarehouseDialog from "@/views/erp/warehouse/base/warehouseDialog"
 	       warehouseAddressApi.disableWarehouseAddress(ids,{'disable':'true'})
 	          .then(() => {
 	            handleQuery();
-	            ElMessage.success('删除成功');
 	          })
 	          .catch(() => {
 	            console.log(`删除失败`);

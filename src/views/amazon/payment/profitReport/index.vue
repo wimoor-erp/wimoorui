@@ -63,7 +63,7 @@
 							 <el-button @click="downloadList" :loading="loading">导出</el-button>
 			  				   <el-button
 			  				    @click="recalculation"
-			  				    type="primary" > 重算 </el-button>
+			  				    > 重算 </el-button>
 			  				   <el-button class='ic-btn' @click="formulaConfig" title='毛利润计算公式'>
 			  					  <formula theme="outline" size="14"  :strokeWidth="3"/>
 			  				   </el-button>
@@ -105,7 +105,6 @@
 		const tableRef =ref();
 		const refreshDataDialogRef=ref();
 		const calcDialogRef=ref();
-		 
 		let state=reactive({
 			visable:false,
 			dialogVisible:false,

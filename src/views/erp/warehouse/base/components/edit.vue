@@ -159,7 +159,6 @@
 	}
 	function submitForm(){
 		 dataFormRef.value.validate((isValid) => {if(isValid){
-			  console.log(state.formData);
 			 if(state.formData.ftype
 			 &&state.formData.ftype.indexOf("oversea")>-1
 			 && (state.formData.country==null

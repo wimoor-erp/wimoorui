@@ -108,13 +108,18 @@
 			 	<el-table-column label="待入库" prop="inbound"  width="150" sortable="custom"  >
 			 		<template #default="scope">
 						<el-popover
-						  v-if="scope.row.inbound>0"
+						  v-if="scope.row.inbound>0||scope.row.issfg=='1'"
 						  placement="top"
 						  trigger="hover"
 						  @show="findInboundDetail(scope.row)"
 						>
 						  <div v-for="(item,index) in inboundlist" style="margin-top: 3px;"><span>{{item.name}}:</span>
-						  <el-tag class="ml-2" type="success" >{{item.quantity}}</el-tag></div>
+						  <el-tag class="ml-2" type="success" >{{item.quantity}}</el-tag>
+						  <span v-if="item.status=='inbound_assembly'">
+							  <el-icon class="pointer" title="修复组装待入库库存" @click.stop="handleRefreshInbound(item)"><RefreshRight /></el-icon>
+						  </span>
+						  </div>
+						   <el-icon  v-if="inboundlist.length==0" class="pointer" title="修复组装待入库库存" @click.stop="handleRefreshInbound(item)"><RefreshRight /></el-icon>
 						  <template #reference>
 								<span>
 									{{scope.row.inbound}}
@@ -161,9 +166,10 @@
 	import { ElMessage, ElMessageBox,ElForm } from 'element-plus'
 	import Warehouse from '@/components/header/warehouse.vue';
 	import inventoryApi from '@/api/erp/inventory/inventoryApi.js';
+    import {refreshInbound } from '@/api/erp/assembly/assemblyApi.js'
 	import warehouseApi from '@/api/erp/warehouse/warehouseApi';
 	import {dateFormat,formatFloat,dateTimesFormat} from '@/utils/index';
-	import {Search} from '@element-plus/icons-vue';
+	import {Search,RefreshRight} from '@element-plus/icons-vue';
 	import AssemblyDialog from "@/views/erp/components/assembly_dialog";
 	import {sublit} from "@/api/erp/assembly/assemblyApi";
 	
@@ -181,7 +187,7 @@
 		queryParams:{
 			itemsku:"",
 			conssku:"",
-			hasinv:false,
+			hasinv:true,
 		},
 		warehouseCheck:null,
 		warehouseData:[],
@@ -271,6 +277,13 @@
 					
 				 
 			 })
+		 }
+		 function handleRefreshInbound(item){
+			 refreshInbound({"materialid":item.materialid,"warehouseid":item.warehouseid}).then((res)=>{
+			 		ElMessage.success("操作成功");	
+					findInboundDetail(item);
+				    handleQuery();
+			 });
 		 }
 		 function findInboundDetail(row){
 			 if(row.warehouseid && row.materialid){

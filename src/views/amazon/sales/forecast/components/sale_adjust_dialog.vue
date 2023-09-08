@@ -96,10 +96,14 @@
 		</el-row>
 		<el-row class="m-t-16">
 			<el-col :span="24">
-				<h5>预估销量趋势</h5>
-				<div :id="chartid" style='height:160px;width:100%'>
+				    <el-radio-group v-model="radiotype" @change="handleQuery" size="small">
+				       <el-radio-button label="预估销量(日度)" />
+				       <el-radio-button label="预估销量(月度)" />
+				     </el-radio-group>
+				<div v-if="radiotype=='预估销量(日度)'" :id="chartid" style='height:160px;width:100%'>
 				 
 				</div>
+				<div v-else id="calendar" style='height:300px;width:100%'></div>
 			</el-col>
 		</el-row>
 	<template #footer>
@@ -113,7 +117,7 @@
 	import{ref,defineExpose,reactive,toRefs,onMounted,nextTick}from"vue"
 	import {Close} from '@element-plus/icons-vue';
 	import * as echarts from 'echarts';
-	import {getSales,save,clear} from "@/api/amazon/listing/preSalesApi.js";
+	import {getSales,save,clear,getProductPreSalesByMonth,getProductPreSales} from "@/api/amazon/listing/preSalesApi.js";
 	import {CheckInputInt} from "@/utils/index.js";
 	import { ElMessage, ElMessageBox } from 'element-plus'
 	const preinputRef=ref()
@@ -124,6 +128,7 @@
 		  presale:"",
 		  presaleRange:"",
 		  chartid:"adjustchart",
+		  radiotype:"预估销量(日度)",
 		  itemrow:{},
 		  dateRange:{},
 		  saveloading:false,
@@ -132,7 +137,7 @@
 		  data:{name:"",sku:"",image:""},
 	})
 	const {
-	  formData,dialog,data,lastType,chartid,presale,listPresale,presaleRange,dateRange,saveloading
+	  formData,radiotype,dialog,data,lastType,chartid,presale,listPresale,presaleRange,dateRange,saveloading
 	} = toRefs(state);
 	var myChart =null ;
 	function show(itemrow,parentrow){
@@ -316,14 +321,23 @@
 		 })
 	 }
 	 function handleQuery(){
-		 var data={};
-		 data.marketplaceid=state.itemrow.marketplaceid;
-		 data.amazonauthid=state.itemrow.amazonauthid;
-		 data.sku=state.itemrow.sku;
-		 getSales(data).then(res=>{
-			 saleChart(res.data);
-		 })
-	 }
+	 		 var data={};
+	 		 data.marketplaceid=state.itemrow.marketplaceid;
+	 		 data.amazonauthid=state.itemrow.amazonauthid;
+	 		 data.sku=state.itemrow.sku;
+	 		 if(state.radiotype=="预估销量(日度)"){
+	 			 getSales(data).then(res=>{
+	 			 	 saleChart(res.data);
+	 			 })
+	 		 }else{
+	 			 data.groupid=state.itemrow.groupid;
+	 			 //加载月度图表
+	 			 getProductPreSalesByMonth(data).then((res)=>{
+					 chartPreSale(res.data,"month");
+	 			 })
+	 		 }
+	 		
+	 	 }
 	function saleChart(chart){
 		nextTick(()=>{
 			var saleschart=document.getElementById(state.chartid);
@@ -502,6 +516,228 @@
 	]
  
  
+ var isdown=false;
+ var yAx=[];
+ var calendarMyChart=null;
+ var olddata=[];
+ var moveindex=null;
+ var stopplus=false;
+ function chartPreSale(data,type){
+ 	//initCalendar(groupid,marketplaceid,sku,rowid,data);
+ 	calendarMyChart = echarts.init(document.getElementById("calendar"));
+ 	document.getElementById("calendar").oncontextmenu=function(){return false;}
+ 	  var symbolSize = 8;
+ 	  var labeldata=[];
+ 	  var color=[];
+ 	  olddata=data;
+ 	  var serialdata = [];
+ 	  var oldserialdata  =[]
+ 	  for(var i=0;i<data.length;i++){
+ 	      var holiday="";
+ 		  if(data[i]["holiday"]){
+ 			  holiday=data[i].holiday;
+ 		  } 
+ 		  if(data[i].value){
+ 			  var item={value:data[i].value,date:data[i].date,holiday:holiday, itemStyle:{normal:{color:'#00a65a'}}};
+ 			  serialdata.push(item);
+ 		  }else{
+ 			  var item={value:data[i].oldvalue,date:data[i].date,holiday:holiday, itemStyle:{normal:{color:'#808080'}}};
+ 			  serialdata.push(item);
+ 		  }
+ 		  if(data[i].oldvalue){
+ 			  var item={value:data[i].oldvalue,date:data[i].date,holiday:holiday, itemStyle:{normal:{color:'#808080'}}};
+ 			  oldserialdata.push(item);
+ 		  }else{
+ 			  var item={value:0,date:data[i].date,holiday:holiday, itemStyle:{normal:{color:'#808080'}}};
+ 			  oldserialdata.push(item);
+ 		  }
+ 		  yAx.push(0);
+ 	      labeldata.push(data[i].date);
+ 	  }
+ 	  var option = {
+ 	      tooltip: {
+ 	            trigger: 'axis',
+ 	            formatter: function (option) {
+ 	            	var holiday="";
+ 	            	if(option[0].data["holiday"]){
+ 	            		holiday="<br/>节日："+option[0].data["holiday"];
+ 	            	}
+ 	            	  if(option[0].data.itemStyle.color=="#00a65a"){
+ 	            		  return  "日期:"+option[0].name+"<br>当前预估:"+parseInt(option[0].value)+"<br/>去年同期:"+parseInt(option[1].value)+holiday;
+ 	            	  }else if(option[0].data.itemStyle.color=="#FA8072"){
+ 	            		  return  "日期:"+option[0].name+"<br>当前预估:"+parseInt(option[0].value)+"<br/>去年同期:"+parseInt(option[1].value)+holiday;
+ 	            	  }else{
+ 	            		  return  "日期:"+option[0].name+"<br>去年同期:"+parseInt(option[1].value)+holiday;
+ 	            	  }
+ 		          },
+ 			  axisPointer: {
+ 			        lineStyle: {
+ 			            type: 'dashed'
+ 			        } 
+ 			    }
+ 	        },
+ 	      grid: {
+ 	          top:'30px',
+ 	          bottom:'30px',
+ 	          left:'50px',
+ 	          right:'30px'
+ 	      },
+ 	      xAxis: {
+ 	          type: 'category',
+ 	          data: labeldata,
+ 	          splitLine:{show:true},
+			  
+ 	      },
+ 	 
+ 	      yAxis: {
+ 	          type: 'value',
+ 	          axisLabel:{
+ 	        	  formatter: function (value) {
+ 	        	      return parseInt(value);
+ 	        	  }
+ 	          },
+ 	          splitLine:{show:false},
+ 	          scale:false,
+ 	          minInterval:1
+ 	      },
+ 	      series: [
+ 	          {   id: 'a',
+ 	              type: 'line',
+ 	              smooth: false,
+ 	              symbolSize: symbolSize,
+ 	              showAllSymbol:true,
+ 	              data: serialdata,
+ 	      		  itemStyle:{
+ 	      		 		normal: {
+ 	      		 			lineStyle:{
+ 	                              width:1,
+ 	                              color:'#ffa400',  
+ 	                              type:'solid'  //'dotted'虚线 'solid'实线
+ 	                          },
+ 	      		 			 label:{
+ 	      		 		     formatter: function (option) {
+ 	      			              return  parseInt(option.data.value);
+ 	      			          },
+ 	      		 				show: true,
+ 	      		 				textStyle:{
+ 	      		 					color:'#999'
+ 	      		 				},
+ 	      		 			},
+ 	      		  
+ 	      		 		}       
+ 	      		 	}
+ 	          },
+ 	          {   id: 'old',
+ 	              type: 'line',
+ 	              smooth: false,
+ 	              symbolSize: 0,
+ 	              showAllSymbol:true,
+ 	              data: oldserialdata,
+ 	      		  itemStyle:{
+ 	      		 		normal: {
+ 	      		 			lineStyle:{
+ 	                              width:1,
+ 	                              color:'#dedede',  
+ 	                              type:'dotted'  //'dotted'虚线 'solid'实线
+ 	                          },
+ 	      		 			 label:{
+ 	      		 		     formatter: function (option) {
+ 	      			              return  parseInt(option.data.value);
+ 	      			          },
+ 	      		 				show: false,
+ 	      		 				textStyle:{
+ 	      		 					color:'#999'
+ 	      		 				},
+ 	      		 			},
+ 	      		  
+ 	      		 		}       
+ 	      		 	}
+ 	          }
+ 	      ]
+ 	  };
+  
+ 	 
+ 	  setTimeout(function () {
+ 	      // Add shadow circles (which is not visible) to enable drag.
+ 		  calendarMyChart.setOption(option);
+ 		  for(var i=0;i<labeldata.length;i++){
+ 			  // calendarMyChart.on('mousemove', {seriesIndex: 0, name: labeldata[i]}, function (params) {
+ 				 //   var chartheight=this._coordSysMgr._coordinateSystems[0]._rect.height;
+ 				 //   var maxchartvalue=this._coordSysMgr._coordinateSystems[0]._axesMap.y[0].scale._extent[1];
+ 				 //   var moveindex=params.dataIndex;
+ 		   //  	    if(yAx[moveindex]!=0){
+ 		   //  	        var movepx=(yAx[moveindex]-params.event.offsetY);
+ 		   //  	        var movevalue=(movepx/chartheight*maxchartvalue);
+ 		   //  	          option.series[0].data[moveindex].value=option.series[0].data[moveindex].value+movevalue;
+ 		   //  	          if(option.series[0].data[moveindex].value<0){
+ 		   //  	        	  option.series[0].data[moveindex].value=0;
+ 		   //  	          }
+ 		   //  	    	  option.series[0].data[moveindex].itemStyle.normal.color="#FA8072";
+ 		   //  	    	  calendarMyChart.setOption(option);
+ 			  //   		  yAx[params.dataIndex]=params.event.offsetY;
+ 			  //   		  moveindex=params.dataIndex;
+ 			  //   	  }
+ 		   //  	    stopplus=true;
+ 		   //  	});
+ 		 
+ 			   
+ 			  // calendarMyChart.on('mousedown', {seriesIndex: 0, name: labeldata[i]}, function (params) {
+ 		   //  	    yAx[params.dataIndex]=params.event.offsetY;
+ 		   //  	    stopplus=true;
+ 		   //  	});
+ 			  // calendarMyChart.on('mouseout', {seriesIndex: 0, name: labeldata[i]}, function (params) {
+ 		   //  	    if(moveindex!=null&&params.dataIndex==moveindex){
+ 		   //  	    	if(maxchartvalue!=this._coordSysMgr._coordinateSystems[0]._axesMap.y[0].scale._extent[1]){
+ 		   //  	    		maxchartvalue=this._coordSysMgr._coordinateSystems[0]._axesMap.y[0].scale._extent[1];
+ 		   //  	    	}
+ 		   //  	    }
+ 		   //  	});
+ 		
+ 		
+ 			  calendarMyChart.on('contextmenu', {seriesIndex: 0, name: labeldata[i]}, function (params) {
+ 				  if(olddata[params.dataIndex].oldvalue&& option.series[0].data[params.dataIndex].itemStyle.normal.color!="#808080"){
+ 			    	       option.series[0].data[params.dataIndex].value=olddata[params.dataIndex].oldvalue;
+ 			    	       option.series[0].data[params.dataIndex].itemStyle.normal.color="#808080";
+ 				  }else{
+ 					  if(olddata[params.dataIndex]["value"]&&params.value!=olddata[params.dataIndex]["value"]){
+ 						    option.series[0].data[params.dataIndex].value=olddata[params.dataIndex].value;
+ 				    	    option.series[0].data[params.dataIndex].itemStyle.normal.color="#00a65a";
+ 					  }else{
+ 						    if(olddata[params.dataIndex].oldvalue){
+ 						    	option.series[0].data[params.dataIndex].value=olddata[params.dataIndex].oldvalue;
+ 						    }else{
+ 						    	option.series[0].data[params.dataIndex].value=0;	
+ 						    }
+ 				    	    option.series[0].data[params.dataIndex].itemStyle.normal.color="#808080";
+ 					  }
+ 					    
+ 				  }
+ 		    	    calendarMyChart.setOption(option);
+ 		    	});
+  
+ 			  calendarMyChart.on('click', {seriesIndex: 0, name: labeldata[i]}, function (params) {
+ 		    	    if("month"==type){
+ 		    	    	showCalendarByDay(params.name);
+ 		    	    }else{
+						handleQuery();
+					}
+ 		    	});
+ 		  }
+ 
+ 	  },1000);
+ }
+ 
+ function showCalendarByDay(month){
+ 	 var param={};
+	 param.sku=state.itemrow.sku;
+	 param.groupid=state.itemrow.groupid;
+	 param.marketplaceid=state.itemrow.marketplaceid;
+	 param.month=month;
+ 	getProductPreSales(param).then((res)=>{
+		chartPreSale(res.data,"day");
+	});
+ }
+    
 </script>
 
 <style>

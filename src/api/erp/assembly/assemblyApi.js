@@ -70,7 +70,9 @@ export function findProcessHandle(data){
 											downloadhandler.downloadFail(e);
 									}); 
 }
-
+export function refreshInbound(data){
+ 	return request.get('/erp/api/v1/assembly/refreshInbound',{params:data});
+}
 
 
 

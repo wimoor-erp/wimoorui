@@ -35,8 +35,10 @@
 		import productinoptApi from '@/api/amazon/product/productinoptApi.js';
 		import productinfoApi from '@/api/amazon/product/productinfoApi.js';
 		import {ElMessage,ElDivider} from 'element-plus';
+		import {decodeText} from '@/utils/index';
 		export default{
-			setup(){
+			emits:["change"],
+			setup(props,context){
 				let remarksVisable =ref(false);
 				let dataRow=ref({});
 				let remarkHis = ref([]);
@@ -47,7 +49,8 @@
 							ElMessage({
 							  message: "操作成功！",
 							  type: 'success',
-							})
+							});
+							dataRow.value.htmlremark=decodeText(dataRow.value.remark);
 							remarkvisible.value = false;
 							loadData(dataRow.value);
 						}else{

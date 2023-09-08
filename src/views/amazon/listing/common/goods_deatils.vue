@@ -48,15 +48,14 @@
 						   </div>
 			 			<div class=" flex-t">
 							<p>备注</p>
-							<span class="gary-bg">
-							{{productInfoData.remark}}</span>
+							<span class="gary-bg" v-html="productInfoData.htmlremark"> </span>
 						</div>
 			 	   </div>
 			    </div>		
 			<div >
 				<el-divider></el-divider>
 				<el-row :gutter="16">
-				<el-col :span="8">
+				<el-col :span="12">
 					        <h5>销售数据</h5>
 					 <el-row >
 						 <el-col :span="12">
@@ -112,7 +111,7 @@
 					 						 </el-col>
 					 </el-row>
 				</el-col>	
-				<el-col :span="8" >
+				<el-col :span="12" >
 						        <h5>成本利润</h5>
 						<el-row >
 							 <el-col :span="12">
@@ -145,47 +144,7 @@
 								 </el-col>
 						</el-row>
 				</el-col>	
-				<el-col :span="8" >
-						        <h5>广告数据</h5>
-						<el-row >
-								 <el-col :span="12">
-								<div class="font-extraSmall">七日访问量|转化率</div>
-								{{NullTransform(productInfoData.sessions)}}|{{formatPercent(productInfoData.sessionrate)}}%
-								 </el-col> 
-								 <el-col :span="12">
-								<div class="font-extraSmall">ACOS</div>
-									{{formatPercent(productInfoData.advacos)}}%  
-								 </el-col>
-						</el-row> 
-						<el-row class="m-t-24">
-								 <el-col :span="12">
-								<div class="font-extraSmall">IMPR</div>
-									{{NullTransform(productInfoData.advimpr)}} 
-								 </el-col> 
-								 <el-col :span="12">
-								<div class="font-extraSmall">CTR</div>
-									{{formatPercent(productInfoData.advctr)}}%
-								 </el-col>
-						</el-row> 
-						<el-row class="m-t-24">
-								 <el-col :span="12">
-								<div class="font-extraSmall">CLICKS</div>
-					          {{NullTransform(productInfoData.advclick)}} 
-								 </el-col> 
-								 <el-col :span="12">
-				 				  <div class="font-extraSmall">CPC</div>
-				 					{{NullTransform(productInfoData.advcpc)}}
-								 </el-col>
-						</el-row> 
-						<el-row class="m-t-24">
-								 <el-col :span="12">
-				 				  <div class="font-extraSmall">SPEND</div>
-				 					{{productInfoData.landedCurrency}}{{NullTransform(productInfoData.advspend)}} 
-								 </el-col>
-						</el-row> 
-				</el-col>
-					</el-row>
-		
+			    </el-row>
 			<el-row>
 			 </el-row>
 			 </div>
@@ -201,7 +160,7 @@
 	import {ref, reactive,} from 'vue'
 	import productinfoApi from '@/api/amazon/product/productinfoApi.js';
 	import NullTransform from"@/utils/null-transform";
-	import {formatFloat,formatPercent,formatInteger} from '@/utils/index';
+	import {formatFloat,formatPercent,formatInteger,decodeText} from '@/utils/index';
 	let visible=ref(false);
 	let loading=ref(false);
 	let productInfoData=ref([]);
@@ -215,10 +174,12 @@
 	function show(param){
 		visible.value=true;
 		loading.value=true;
+		param.marketplace=param.marketplaceid;
 		productinfoApi.productList(param).then((res)=>{
 			if(res.data.records && res.data.total>0){
 				productInfoData.value=res.data.records[0];
 				productInfoData.value.sku=param.sku;
+				productInfoData.value.htmlremark=decodeText(productInfoData.value.remark);
 			}
 			loading.value=false;
 		});	 

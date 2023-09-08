@@ -153,7 +153,11 @@
 						<el-tag type="info" v-else> 备选</el-tag>
 						</div>
 						<div><span class="font-extraSmall">供货周期:</span>{{scope.row.deliverycycle}}天</div>
-						<div><span class="font-extraSmall">采购链接:</span>{{scope.row.purchaseUrl}} </div>
+						<div><span class="font-extraSmall">采购链接:</span>{{scope.row.purchaseUrl}} 
+						     <el-link target="_blank" :href="scope.row.purchaseUrl" type="primary">
+							     <el-icon><Link /></el-icon>打开链接
+						     </el-link>
+					    </div>
 					</template>
 				</el-table-column>
 				<el-table-column label="采购阶梯价" width="270" >
@@ -356,17 +360,17 @@
 					  <el-table-column label="SKU" prop="sku"></el-table-column>
 					  <el-table-column label="安全库存周期(天)" prop="stockingCycle" width="120">
 						  <template #default="scope">
-							   <el-input v-model="scope.row.stockingCycle" @input="scope.row.stockingCycle=CheckInputInt(scope.row.stockingCycle)" ></el-input>
+							   <el-input  v-loading="scope.row.loading" v-model="scope.row.stockingCycle" @input="scope.row.stockingCycle=CheckInputInt(scope.row.stockingCycle)" ></el-input>
 						  </template>
 					  </el-table-column>
 					  <el-table-column label="发货频率(天)" prop="mincycle" width="120">
 						  <template #default="scope">
-								<el-input v-model="scope.row.mincycle" @input="scope.row.mincycle=CheckInputInt(scope.row.mincycle)" ></el-input>
+								<el-input  v-loading="scope.row.loading" v-model="scope.row.mincycle" @input="scope.row.mincycle=CheckInputInt(scope.row.mincycle)" ></el-input>
 						  </template>
 					  </el-table-column>
 					  <el-table-column label="头程运费费用" prop="firstlegcharges" width="120">
 							  <template #default="scope">
-								  	<el-input v-model="scope.row.firstlegcharges" @input="scope.row.firstlegcharges=CheckInputFloat(scope.row.firstlegcharges)" ></el-input>
+								  	<el-input v-loading="scope.row.loading" v-model="scope.row.firstlegcharges" @input="scope.row.firstlegcharges=CheckInputFloat(scope.row.firstlegcharges)" ></el-input>
 							  </template>
 					  </el-table-column>
 					  <el-table-column label="可售" prop="afnFulfillableQuantity"></el-table-column>
@@ -382,7 +386,7 @@
 
 <script setup>
 import { ref,reactive,defineExpose,toRefs,} from 'vue'
-import {Edit} from '@element-plus/icons-vue';
+import {Edit,Link} from '@element-plus/icons-vue';
 import {useRouter } from 'vue-router'
 import {ElMessage } from 'element-plus';
 import {dateFormat} from '@/utils/index.js';
@@ -480,18 +484,24 @@ import warehouseApi from '@/api/erp/warehouse/warehouseApi.js';
 				}
 			})
 		}
-		function submitInvFBA(){
+		async function submitInvFBA(){
 			var isok=true;
-			 state.fbainventoryList.forEach(function(item){
-			 	if(item.stockingCycle&& item.mincycle){
-					fbaCycleApi.updateStockByChange({"marketplaceid":item.marketplaceid,"groupid":item.groupid,"sku":item.sku,"cycle":item.stockingCycle.toString(),
+			for(var i=0;i<state.fbainventoryList.length;i++){
+				var item=state.fbainventoryList[i];
+				if(item.stockingCycle&& item.mincycle){
+					item.loading=true;
+					await fbaCycleApi.updateStockByChange({"marketplaceid":item.marketplaceid,"groupid":item.groupid,"sku":item.sku,"cycle":item.stockingCycle.toString(),
 					"mincycle":item.mincycle.toString(),"fee":item.firstlegcharges.toString()}).then((res)=>{
 						if(res.data.type=="error"){
 							isok=false;
 						}
+						item.loading=false;
+					}).catch(e=>{
+						item.loading=false;
 					})
 				}
-			 });
+			}
+		 
 			 if(isok==true){
 			 	ElMessage.success('批量操作成功！');
 			 }else{

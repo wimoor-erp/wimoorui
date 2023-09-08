@@ -404,6 +404,7 @@
 							})
 							visible.value = false;
 							localData.value.haslocked=true;
+							localData.value.lockedtime=new Date(lockedDate.value);
 						}else{
 							ElMessage({
 							  message: "操作失败！",
@@ -523,7 +524,7 @@
 							  type: 'success',
 							})
 							loadJustPriceList();
-							context.emit("change");
+							context.emit("change",data);
 						}
 						else  {
 							if(res.data.issues&&res.data.issues.length>0){
@@ -552,7 +553,6 @@
 			}
 			function loadJustPriceList(){
 				listingApi.getPriceRecord({"pid":localData.value.id,"byday":""}).then((res)=>{
-					console.log(res.data);
 					justPriceList.value=res.data;
 				});
 			}

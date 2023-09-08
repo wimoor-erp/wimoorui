@@ -9,7 +9,7 @@
 			</el-tabs>
 			<el-row>
 				<el-space>
-					<el-button v-if="queryParams.auditstatus!='2'" type="primary" class="im-but-one" @click="handleAdd">
+					<el-button v-hasPerm="'erp:po:ass:add'" v-if="queryParams.auditstatus!='2'" type="primary" class="im-but-one" @click="handleAdd">
 					  <plus theme="outline" size="18" fill="#fff" :strokeWidth="4"/>
 					  <span>添加加工单</span>
 					</el-button>

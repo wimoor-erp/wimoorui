@@ -747,3 +747,21 @@ export function outputdollars(number) {
        return (output);  
    }  
 }  			
+
+export function  decodeText(str) {
+	if(str){
+		var reg = new RegExp("\n", "g");
+		 str = str.replace(reg, "<br>");
+		return str;
+	}else{
+		return "";
+	}
+}
+ 
+//<br/> 转 textArea换行符
+export function encodeText(str) {
+ if(!str)return;
+  var reg = new RegExp("<br>", "g");
+  str = str.replace(reg, "\n");
+ return str;
+}

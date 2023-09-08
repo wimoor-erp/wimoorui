@@ -45,7 +45,9 @@
 				<span v-if="scope.row.iseu">  </span>
 				     <div class="table-edit-flex"
 					@click="e=>editStockCycle(e,scope.row)">
-				     	<span>{{scope.row.shipday}}|{{getTransName(scope.row.transtype,transtypeOptions)}}</span>
+				     	<span>{{scope.row.shipday}}
+						| <span class="font-extraSmall"> {{getTransName(scope.row.transtype,transtypeOptions)}}</span>
+						</span>
 				     	<el-icon ><Edit/></el-icon>
 				     </div>
 			</template>
@@ -60,10 +62,10 @@
 				  class="text-center pointer">{{scope.row.quantity}} 
 				   <span class="font-extraSmall" v-if="scope.row.overseaqty">+{{getZeroValue(scope.row.overseaqty)}}</span>  
 				 </div>
-				<div class="font-extraSmall pointer" v-if="scope.row.inbounddiff" @click="showWarningDialog(scope.row)">
+				 <div class="font-extraSmall pointer" v-if="scope.row.inbounddiff" @click="showWarningDialog(scope.row)">
 				     <span v-if="scope.row.inbounddiff>0" >+{{scope.row.inbounddiff}} </span>  
 									    <span v-else >{{scope.row.inbounddiff}} </span>  
-				</div> 
+				</div>  
 				</el-space>
 			</template>
 		</el-table-column>

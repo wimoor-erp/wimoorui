@@ -11,8 +11,19 @@
 			 default-expand-all
 		    @check="handleCheckChange"
 			@current-change="handleCurrentChange"
+			 highlight-current
 			@node-click="handleClick"
-		  />
+		  >
+		  <template #default="scope">
+			  <el-space>
+				<span>{{scope.data.name}}</span>
+				<span v-show="scope.data.permissions">
+				<el-icon class="ic-cen text-orange"><Pointer /></el-icon>
+				</span>
+			  </el-space>
+			
+		  </template>
+		 </el-tree>
 	    </el-scrollbar>
 	</div>
 </template>
@@ -22,10 +33,10 @@ import { onMounted, reactive, ref, toRefs, watch } from 'vue';
 	import {listCompanyMenuTree,roleMenuIds} from "@/api/sys/admin/menu"
 	import {getRoleMenus,updateRoleMenu} from "@/api/sys/admin/roles"
 	import { ElForm, ElMessage, ElMessageBox } from 'element-plus';
-	import {Help} from '@icon-park/vue-next';
+	import {Pointer} from '@element-plus/icons-vue'
 	export default {
 	  name: 'MenuList',
-	  components: {Help,ElForm, ElMessage, ElMessageBox,},
+	  components: {Pointer,ElForm, ElMessage, ElMessageBox,},
 	   emits:["selectMenu"],
 	  setup(props,context){
 		  const menuTree=ref();
@@ -117,5 +128,11 @@ import { onMounted, reactive, ref, toRefs, watch } from 'vue';
 	}
 	.con-body{
 		padding:16px;
+	}
+
+</style>
+<style>
+	.el-tree--highlight-current .el-tree-node.is-current>.el-tree-node__content {
+	    background-color: #fff1e7;
 	}
 </style>

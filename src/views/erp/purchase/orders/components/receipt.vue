@@ -1,5 +1,5 @@
 <template>
-	<el-dialog :title="operateType.dialogTitle" v-model="dialogVisable" width="60%">
+	<el-dialog class="myreceiptdailog" :title="operateType.dialogTitle" v-model="dialogVisable" width="60%">
 	
 		<div  class="product-box">
 			<el-image v-if="queryParams.entry.image" :src="queryParams.entry.image" class="img-40"  width="40" height="40"  ></el-image>
@@ -55,7 +55,7 @@
 					</el-col>
 			</el-row>
 			</el-tab-pane>
-		    <el-tab-pane :label="operateType.tabsType+'记录'" name="2">
+		    <el-tab-pane label="操作记录" name="2">
 				<!-- 到货记录 -->
 			     <ArrivalRecord @change="changeDelete" ref="arrRecordRef" />
 			</el-tab-pane>
@@ -186,9 +186,7 @@
 				state.queryParams.entry.inwhstatus=res.data.entry.inwhstatus;
 				state.queryParams.entry.auditstatus=res.data.entry.auditstatus;
 				emit("change");
-				if(res.data.entry.inwhstatus==1){
-					state.dialogVisable=false;
-				}
+				state.activeName ="2";
 			}
 		});
 	}
@@ -292,7 +290,20 @@
 		show,
 	})
 </script>
-
+<style>
+	.myreceiptdailog .el-dialog__footer{
+		background:#f5f5f5;
+		border-bottom-right-radius:2px;
+		border-bottom-left-radius:2px;
+		text-align:center;
+	}
+	.dark .mypaymentdailog .el-dialog__footer{
+		background:#1b1b1b;
+		border-bottom-right-radius:2px;
+		border-bottom-left-radius:2px;
+		text-align:center;
+	}
+</style>
 <style scoped="scoped">
 .m-b-16{
 		margin-bottom: 16px;

@@ -6,13 +6,13 @@
 	    			<Group ref="groups" @change="changeGroup"  defaultValue="onlyEU"/>
 	    			<Owner   @owner="changeOwner" />
 					        <el-date-picker
-					                v-model="queryParams.dateValue"
+					                v-model="dateValue"
 					        		@change = "dateChange"
 					                type="daterange"
 					        		:clearable="false"
 					                range-separator="至"
-					                start-placeholder="开始日期"
-					                end-placeholder="结束日期"
+					                start-placeholder="开始上架日期"
+					                end-placeholder="结束上架日期"
 					                :shortcuts="shortcuts"
 					              />
 	    			<el-input v-model="localParams.searchKeywords"  clearable  @input="handleQuery"  placeholder="请输入" class="input-with-select">
@@ -76,7 +76,7 @@
 						<div class="font-extraSmall">{{scope.row.marketname}}</div>
 					</template>
 				</el-table-column>
-				<el-table-column label="本地库存" width="120" prop="fulfillable" :sort-orders="sortOrders"  sortable="custom" >
+				<el-table-column label="本地库存" width="120" prop="fulfillable"  >
 					<template #default="scope">
 						<div >{{scope.row.fulfillable}}</div>
 						<div class="font-extraSmall">待入库:{{scope.row.inbound}}</div>
@@ -183,12 +183,13 @@
 		queryParams:{needplan:false},
 		downLoading:false,
 		upLoading:false,
+		dateValue:[],
 		sortOrders:[ 'descending','ascending', null],
 		tableData:{records:[],total:0},
 		header:{month1:"",month2:"",month3:""},
 		localParams:{selectlabel:"sku"},
 	})
-	const { queryParams ,sortOrders,localParams,header,downLoading,upLoading,tableData}=toRefs(state);
+	const { queryParams ,dateValue,sortOrders,localParams,header,downLoading,upLoading,tableData}=toRefs(state);
 	const shortcuts = [
 	  {
 	    text: '近一个月上架',
@@ -399,9 +400,9 @@
 		salechartRef.value.show(row.groupid,row.marketplaceid,row.amazonAuthId,row.sku,row.msku);
 	}
 	onMounted(() => {
-	state.queryParams.dateValue= shortcuts[0].value();
-	state.queryParams.fromDate = state.queryParams.dateValue[0];
-	state.queryParams.toDate = state.queryParams.dateValue[1];
+	state.dateValue= "";
+	state.queryParams.fromDate = null;
+	state.queryParams.toDate = null;
 	});
 </script>
 

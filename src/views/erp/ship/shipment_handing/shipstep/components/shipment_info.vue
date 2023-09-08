@@ -1,12 +1,11 @@
 <template>
 	<div>
-		<el-card shadow="hover">
 			<el-row class="ship-sty">
 				<el-col :span="8">
 					<div class="ship-info">
 						<div class="ship-title ">
-							<transaction-order theme="outline" size="18" fill="#696969" :strokeWidth="2"/>
-							<span >货件信息</span>
+							<el-icon class='font-medium text-gray'><List /></el-icon> 
+							<h4>&nbsp;货件信息</h4>
 						</div>
 						<el-space direction="vertical" alignment="left"	>
 							<div class='item-list-from'>
@@ -45,8 +44,8 @@
 				<el-col :span="10">
 					<div class="ship-data">
 						<div class="ship-title ">
-							<take-off theme="outline" size="24" fill="#696969" :strokeWidth="2"/>
-							<span >运输信息</span>
+							<el-icon class='font-medium text-gray'><Promotion /></el-icon>
+							<h4 >&nbsp;运输信息</h4>
 						</div>
 						<el-space :size="32">
 							<div class="ship-dea-data">
@@ -93,8 +92,8 @@
 				<el-col :span="6">
 					<div class="ship-addr">
 						<div class="ship-title ">
-							<local theme="outline" size="20" fill="#696969" :strokeWidth="2"/>
-							<span >地址信息</span>
+							<el-icon class='font-large text-gray'><LocationFilled /></el-icon>
+							<h4 >&nbsp;地址信息</h4 >
 						</div>
 						<el-timeline >
 						    <el-timeline-item  :hollow="true"  timestamp="发货地址" >
@@ -113,13 +112,13 @@
 					</div>
 				</el-col>
 			</el-row>
-		</el-card>
 	</div>
 </template>
 
 <script setup>
 	import {TakeOff,TransactionOrder,Local} from '@icon-park/vue-next';
 	import { ref,reactive,onMounted } from 'vue';
+	import {List,Promotion,LocationFilled} from '@element-plus/icons-vue'
 	import {dateFormat,formatFloat} from '@/utils/index';
 	import shipmenthandlingApi from '@/api/erp/ship/shipmenthandlingApi.js';
 	import {tranStatus,tranStatusType} from "@/hooks/erp/shipment/shipment_status.js"
@@ -213,14 +212,16 @@
 
 <style>
 	.ship-sty .item-list-from,.ship-sty .el-timeline{
-		font-size: var(--el-font-size-extra-small);
+		font-size: 14px;
 	}
 	.ship-info{
 		
 	}
 	.ship-text{
-		font-size: 12px;
-		color: rgb(102, 102, 102);
+		font-size:14px;
+		color:#999;
+		margin-bottom:4px;
+		white-space: nowrap;
 	}
 
 	.ship-num{
@@ -231,6 +232,9 @@
 	}
 	.ad-weight{
 		font-weight: 600;
+	}
+	.text-gray{
+		color:#999;
 	}
 	.ship-dea-data{width:90px}
 	.ship-title{display: flex;

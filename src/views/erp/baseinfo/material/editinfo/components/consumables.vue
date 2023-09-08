@@ -21,11 +21,6 @@
 			 	<div class='sku'>{{scope.row.sku}} </div>
 			 </template>
 		 </el-table-column>
-		 <el-table-column label="单价">
-			  <template #default="scope">
-			 <el-input v-model="scope.row.price" @input="scope.row.price=CheckInputFloat(scope.row.price)"></el-input>
-			  </template>
-		 </el-table-column>
 		 <el-table-column label="关联数量">
 			 <template #default="scope">
 			 <el-input v-model="scope.row.amount" @input="scope.row.amount=CheckInputFloat(scope.row.amount)"></el-input>
@@ -77,9 +72,8 @@
 				  row.id=item.id;
 				  row.sku=item.sku;
 				  row.image=item.image;
-				  row.price=item.price;
 				  row.name=item.name;
-				  row.amount=0;
+				  row.amount=1;
 				  var ispush=true;
 				  props.dataForms.forEach(function(items){
 					  if(items.sku==row.sku){
