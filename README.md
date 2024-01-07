@@ -15,23 +15,7 @@ npm install -g @vue/cli<br>
   7>save this config(N)<br>
 
 <strong><p>4、进入项目目录(安装依赖)</p></strong>
-npm install axios --save
-<br>
-npm install @icon-park/vue-next --save
-<br>
-npm install @element-plus/icons-vue
-<br>
-npm install element-plus --save
-<br>
-npm install echart --save
-<br>
-npm install mitt
-<br>
-npm i -S vuedraggable@next
-<br>
-npm install jquery --save;
-<br>
-npm install vue3-print-nb
+npm install 
 <br>
 <strong><p>5、运行项目</p></strong>
 npm run serve
